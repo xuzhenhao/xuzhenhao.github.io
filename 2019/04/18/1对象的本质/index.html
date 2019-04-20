@@ -15,12 +15,12 @@
 <meta property="og:site_name" content="欢迎来到Cloud的Blog">
 <meta property="og:description" content="众所周知，OC是基于C实现了面向对象的扩展的语言。面向对象语言有3大特性:封装、继承和多态。那么，OC是如何基于C来实现这些特性的呢？带着这个疑问来帮助我们更有目的的探索。 OC转c/c++为了探索本质,我们需要将oc的代码转化为对应的c代码。首先的oc代码，如下所示：123456789101112131415161718192021222324252627#import &amp;lt;Foundati">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="https://xuzhenhao.github.io/2019/04/18/1对象的本质/object-c实现原理/objc_object.png">
-<meta property="og:updated_time" content="2019-04-20T06:39:50.263Z">
+<meta property="og:image" content="https://xuzhenhao.github.io/2019/04/18/1对象的本质/objc_object.png">
+<meta property="og:updated_time" content="2019-04-20T06:43:57.732Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="object-c实现原理(一):对象的本质">
 <meta name="twitter:description" content="众所周知，OC是基于C实现了面向对象的扩展的语言。面向对象语言有3大特性:封装、继承和多态。那么，OC是如何基于C来实现这些特性的呢？带着这个疑问来帮助我们更有目的的探索。 OC转c/c++为了探索本质,我们需要将oc的代码转化为对应的c代码。首先的oc代码，如下所示：123456789101112131415161718192021222324252627#import &amp;lt;Foundati">
-<meta name="twitter:image" content="https://xuzhenhao.github.io/2019/04/18/1对象的本质/object-c实现原理/objc_object.png">
+<meta name="twitter:image" content="https://xuzhenhao.github.io/2019/04/18/1对象的本质/objc_object.png">
   
     <link rel="alternative" href="/atom.xml" title="欢迎来到Cloud的Blog" type="application/atom+xml">
   
@@ -198,7 +198,7 @@
 <li><strong>oc中所有的对象都会包含一个isa_t类型的成员变量</strong>。objc_class类也是一个对象，通过继承于objc_object拿到了的isa_t结构类型的isa成员。</li>
 <li>对象或者说实例对象，只有isa，用来找到对应的类对象。类对象才有superclass 父类指针、cache方法缓存和bits类数据信息。（bits里包含了ivars成员变量列表、methods方法列表、protocals协议列表和properties属性列表等类信息）</li>
 </ol>
-<p><img src="/2019/04/18/1对象的本质/object-c实现原理/objc_object.png" alt="objc对象本质"></p>
+<p><img src="/2019/04/18/1对象的本质/objc_object.png" alt="objc对象本质"></p>
 <h3 id="封装-类和对象的本质是结构体"><a href="#封装-类和对象的本质是结构体" class="headerlink" title="封装:类和对象的本质是结构体"></a>封装:类和对象的本质是结构体</h3><h3 id="继承-super指针查找父类"><a href="#继承-super指针查找父类" class="headerlink" title="继承:super指针查找父类"></a>继承:super指针查找父类</h3><h3 id="多态-消息机制查找目标方法"><a href="#多态-消息机制查找目标方法" class="headerlink" title="多态:消息机制查找目标方法"></a>多态:消息机制查找目标方法</h3><h2 id="Category"><a href="#Category" class="headerlink" title="Category"></a>Category</h2><h2 id="Load-amp-amp-Initialize"><a href="#Load-amp-amp-Initialize" class="headerlink" title="Load &amp;&amp; Initialize"></a>Load &amp;&amp; Initialize</h2><h2 id="关联对象"><a href="#关联对象" class="headerlink" title="关联对象"></a>关联对象</h2><h2 id="Block"><a href="#Block" class="headerlink" title="Block"></a>Block</h2><h2 id="KVO"><a href="#KVO" class="headerlink" title="KVO"></a>KVO</h2><h2 id="KVC"><a href="#KVC" class="headerlink" title="KVC"></a>KVC</h2>
       
 

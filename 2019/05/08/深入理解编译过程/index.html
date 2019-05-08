@@ -6,15 +6,21 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="dns-prefetch" href="https://xuzhenhao.github.io">
-  <title>Archives: 2019 | 欢迎来到Cloud的Blog</title>
+  <title>深入理解编译过程 | 欢迎来到Cloud的Blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="欢迎来到Cloud的Blog">
-<meta property="og:url" content="https://xuzhenhao.github.io/archives/2019/index.html">
+  <meta name="description" content="编译器把一种编程语言(原始语言)转换为另一种编程语言(目标语言)的程序叫做编译器。 编译器一般由前端和后端两部分组成，前端负责词法分析、语法分析，生成中间代码。后端以中间代码作为输入，进行架构无关的优化，接着针对不同的架构生成不同的机器码。  前后端分离及通过中间代码(IR)协作的设计，使得前后端可以独立变化。新增一门语言只需要修改前端，而新增一个CPU架构只需要修改后端即可。  LLVM什么是L">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解编译过程">
+<meta property="og:url" content="https://xuzhenhao.github.io/2019/05/08/深入理解编译过程/index.html">
 <meta property="og:site_name" content="欢迎来到Cloud的Blog">
+<meta property="og:description" content="编译器把一种编程语言(原始语言)转换为另一种编程语言(目标语言)的程序叫做编译器。 编译器一般由前端和后端两部分组成，前端负责词法分析、语法分析，生成中间代码。后端以中间代码作为输入，进行架构无关的优化，接着针对不同的架构生成不同的机器码。  前后端分离及通过中间代码(IR)协作的设计，使得前后端可以独立变化。新增一门语言只需要修改前端，而新增一个CPU架构只需要修改后端即可。  LLVM什么是L">
 <meta property="og:locale" content="default">
+<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/08/深入理解编译过程/编译流程.png">
+<meta property="og:updated_time" content="2019-05-08T10:11:15.027Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="欢迎来到Cloud的Blog">
+<meta name="twitter:title" content="深入理解编译过程">
+<meta name="twitter:description" content="编译器把一种编程语言(原始语言)转换为另一种编程语言(目标语言)的程序叫做编译器。 编译器一般由前端和后端两部分组成，前端负责词法分析、语法分析，生成中间代码。后端以中间代码作为输入，进行架构无关的优化，接着针对不同的架构生成不同的机器码。  前后端分离及通过中间代码(IR)协作的设计，使得前后端可以独立变化。新增一门语言只需要修改前端，而新增一个CPU架构只需要修改后端即可。  LLVM什么是L">
+<meta name="twitter:image" content="https://xuzhenhao.github.io/2019/05/08/深入理解编译过程/编译流程.png">
   
     <link rel="alternative" href="/atom.xml" title="欢迎来到Cloud的Blog" type="application/atom+xml">
   
@@ -150,76 +156,169 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
+            <article id="post-深入理解编译过程" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
   
+    <h1 class="article-title" itemprop="name">
+      深入理解编译过程
+    </h1>
   
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2019" class="archive-year">2019</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/08/深入理解编译过程/" class="archive-article-date">
+
+        
+        <a href="/2019/05/08/深入理解编译过程/" class="archive-article-date">
   	<time datetime="2019-05-08T08:05:25.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-08</time>
 </a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/08/深入理解编译过程/">深入理解编译过程</a>
-    </h1>
-  
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="编译器"><a href="#编译器" class="headerlink" title="编译器"></a>编译器</h2><p>把一种编程语言(原始语言)转换为另一种编程语言(目标语言)的程序叫做编译器。</p>
+<p>编译器一般由前端和后端两部分组成，前端负责词法分析、语法分析，生成中间代码。后端以中间代码作为输入，进行架构无关的优化，接着针对不同的架构生成不同的机器码。</p>
+<blockquote>
+<p>前后端分离及通过中间代码(IR)协作的设计，使得前后端可以独立变化。新增一门语言只需要修改前端，而新增一个CPU架构只需要修改后端即可。</p>
+</blockquote>
+<h2 id="LLVM"><a href="#LLVM" class="headerlink" title="LLVM"></a>LLVM</h2><p>什么是LLVM,他是一系列编译器组件和工具链的集合。引用维基百科的解释</p>
+<blockquote>
+<p>LLVM包含一系列模块化的编译器组件和工具链，用来开发编译器前端和后端。现今LLVM已单纯成为一个品牌，适用于LLVM下的所有项目，包含LLVM中介码（LLVM IR）、LLVM调试工具、LLVM C++标准库等。</p>
+</blockquote>
+<blockquote>
+<p>LLVM引发一些人来为许多语言开发新的编译器，其中一个最引发注意的就是Clang，它是一个新的编译器，同时支持C、Objective-C以及C++.</p>
+</blockquote>
+<p>这里引出了我们的主角Clang。Object-c/c/c++编译器的前端就是Clang。以下是编译器编译的大致流程。</p>
+<p><img src="/2019/05/08/深入理解编译过程/编译流程.png" alt="编译流程"></p>
 
-        <div class="article-info info-on-right">
-          
-          
+      
 
+      
+        <div class="page-reward">
+          <a href="javascript:;" class="page-reward-btn tooltip-top">
+            <div class="tooltip tooltip-east">
+            <span class="tooltip-item">
+              赏
+            </span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                <span class="tooltip-inner">
+                  <p class="reward-p"><i class="icon icon-quo-left"></i>谢谢你请我吃糖果<i class="icon icon-quo-right"></i></p>
+                  <div class="reward-box">
+                    
+                    
+                  </div>
+                </span>
+              </span>
+            </span>
+          </div>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
+        </div>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://xuzhenhao.github.io/2019/05/08/深入理解编译过程/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/04/18/1对象的本质/" class="archive-article-date">
-  	<time datetime="2019-04-18T10:53:29.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-04-18</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/2019/04/18/1对象的本质/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">object-c实现原理(一):对象的本质</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
+        
+        
+    </div>
+</aside>
+
+
+
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/04/18/1对象的本质/">object-c实现原理(一):对象的本质</a>
-    </h1>
+  
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
   
 
-    
+  
+
+  
 
 
           </div>
@@ -242,8 +341,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,

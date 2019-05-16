@@ -152,6 +152,263 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-深入理解Block" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/05/14/深入理解Block/">深入理解Block</a>
+    </h1>
+  
+
+        
+        <a href="/2019/05/14/深入理解Block/" class="archive-article-date">
+  	<time datetime="2019-05-14T09:41:15.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-14</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="Block的本质"><a href="#Block的本质" class="headerlink" title="Block的本质"></a>Block的本质</h2><p>还是使用重写为C语言的方法，来探索底层实现。</p>
+<p>源代码:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    </span><br><span class="line">    int age = 18;</span><br><span class="line">    void (^ageBlock)(void) = ^&#123;</span><br><span class="line">        NSLog(@&quot;年龄是%d岁&quot;,age);</span><br><span class="line">    &#125;;</span><br><span class="line">    ageBlock();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>使用命令:</p>
+<blockquote>
+<p>xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc main.m -o mainarm64.cpp</p>
+</blockquote>
+<p>摘入.cpp文件中的关键代码如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line"></span><br><span class="line">    int age = 18;</span><br><span class="line">    void (*ageBlock)(void) = (&amp;__main_block_impl_0(</span><br><span class="line">                                                   __main_block_func_0,</span><br><span class="line">                                                   &amp;__main_block_desc_0_DATA,</span><br><span class="line">                                                   age)</span><br><span class="line">                              );</span><br><span class="line">    (ageBlock-&gt;FuncPtr)(ageBlock);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">struct __main_block_impl_0 &#123;</span><br><span class="line">  struct __block_impl impl;</span><br><span class="line">  struct __main_block_desc_0* Desc;</span><br><span class="line">  int age;</span><br><span class="line">  __main_block_impl_0(void *fp, struct __main_block_desc_0 *desc, int _age, int flags=0) : age(_age) &#123;</span><br><span class="line">    impl.isa = &amp;_NSConcreteStackBlock;</span><br><span class="line">    impl.Flags = flags;</span><br><span class="line">    impl.FuncPtr = fp;</span><br><span class="line">    Desc = desc;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">struct __block_impl &#123;</span><br><span class="line">  void *isa;</span><br><span class="line">  int Flags;</span><br><span class="line">  int Reserved;</span><br><span class="line">  void *FuncPtr;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">static void __main_block_func_0(struct __main_block_impl_0 *__cself) &#123;</span><br><span class="line">  int age = __cself-&gt;age; // bound by copy</span><br><span class="line"></span><br><span class="line">        NSLog((NSString *)&amp;__NSConstantStringImpl__var_folders_8c_jf6slqz973v1dxj8z9g8z02w0000gn_T_main_f2862d_mi_0,age);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">static struct __main_block_desc_0 &#123;</span><br><span class="line">  size_t reserved;</span><br><span class="line">  size_t Block_size;</span><br><span class="line">&#125; __main_block_desc_0_DATA = &#123; 0, sizeof(struct __main_block_impl_0)&#125;;</span><br></pre></td></tr></table></figure>
+<p>在main函数看到，ageBlock通过<strong>main_block_impl_0的构造函数生成，参数分别为</strong>main_block_func_0（block内代码的封装）、__main_block_desc_0_DATA(Block描述信息)及age(被捕获的变量).</p>
+<p>当我们调用block时，实质上是调用了封装的函数FuncPtr。</p>
+<p>至此，关于Block的本质我们可以得出如下结论：</p>
+<ol>
+<li>Block本质是一个OC对象，内部有isa指针指向类对象。</li>
+<li>Block会封装函数调用，并通过变量捕获封装函数调用的环境。</li>
+</ol>
+<h2 id="Block的类型"><a href="#Block的类型" class="headerlink" title="Block的类型"></a>Block的类型</h2><p>在上文中我们会看到类似 impl.isa = &amp;_NSConcreteStackBlock; 的代码，Block既然是对象，我们就可以通过 [NSObject class] 或 object_getClass方法查看对应的类。</p>
+<p>Block分为 NSGlobalBlock、NSStackBlock、NSMallocBlock3种类型，分别对应的内存地址为data区、栈区和堆区。</p>
+<p>Block类型归纳如下:<br><img src="/2019/05/14/深入理解Block/block类型.png" alt="block类型"></p>
+<p>在定义block类型属性时，我们往往使用copy关键字来修饰。在此处我们就能理解真正的用意。栈区变量的内存在离开作用域后就会被回收，为了不让block在使用前被回收，就需要将其从栈区拷贝到堆区内存。</p>
+<p>例如如下代码:(MRC环境下)<br><img src="/2019/05/14/深入理解Block/stackBlock.png" alt="stackBlock"></p>
+<p>加了copy后，block才能正常返回。在ARC下，编译器会帮我们自动处理。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">typedef void(^block_t)(void);</span><br><span class="line">block_t getBlock()&#123;</span><br><span class="line">    int age = 10;</span><br><span class="line">    return [^&#123;</span><br><span class="line">        NSLog(@&quot;age is %d&quot;,age);</span><br><span class="line">    &#125; copy];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>而如果我们block内不访问auto变量age,此时是GlobalBlock，位于data内存区，也是可以正常使用的。</p>
+<h2 id="Block的变量捕获"><a href="#Block的变量捕获" class="headerlink" title="Block的变量捕获"></a>Block的变量捕获</h2><p>在第一节，我们分析重写后的c代码时，发现<strong>main_block_impl_0结构体中有变量age的定义，而且在</strong>main_block_impl_0的构造函数中会把外部的age通过值传递的方式给结构体的age赋值。</p>
+<p>正因为是值传递的方式，所以我们只能读取使用，不能在block内部修改。</p>
+<p>此时我们会想到，只要使用<strong>block修饰，就能在block内部修改了。那么就来看下</strong>block内部的具体实现。</p>
+<p>还是第一章节的代码，加了__block 修饰age,重新重写为c++代码。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line"></span><br><span class="line">    __Block_byref_age_0 age = &#123;0,&amp;age, 0, sizeof(__Block_byref_age_0), 18&#125;;</span><br><span class="line">    void (*ageBlock)(void) = (&amp;__main_block_impl_0(</span><br><span class="line">                                                   __main_block_func_0,</span><br><span class="line">                                                   &amp;__main_block_desc_0_DATA,</span><br><span class="line">                                                   &amp;age,</span><br><span class="line">                                                   570425344));</span><br><span class="line">    (ageBlock)-&gt;FuncPtr)(ageBlock);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">struct __main_block_impl_0 &#123;</span><br><span class="line">  struct __block_impl impl;</span><br><span class="line">  struct __main_block_desc_0* Desc;</span><br><span class="line">  __Block_byref_age_0 *age; // by ref</span><br><span class="line">  __main_block_impl_0(void *fp, struct __main_block_desc_0 *desc, __Block_byref_age_0 *_age, int flags=0) : age(_age-&gt;__forwarding) &#123;</span><br><span class="line">    impl.isa = &amp;_NSConcreteStackBlock;</span><br><span class="line">    impl.Flags = flags;</span><br><span class="line">    impl.FuncPtr = fp;</span><br><span class="line">    Desc = desc;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">struct __Block_byref_age_0 &#123;</span><br><span class="line">  void *__isa;</span><br><span class="line">__Block_byref_age_0 *__forwarding;</span><br><span class="line"> int __flags;</span><br><span class="line"> int __size;</span><br><span class="line"> int age;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>在main函数可以看到，使用了<strong>block修饰后，age变量变成了</strong>Block_byref_age_0对象类型。__Block_byref_age_0结构体内部也有isa指针，是个对象。</p>
+<p>在<strong>main_block_impl_0的构造函数中，age对象以引用传递的方式传入block中。所以才有了block内部可以修改外部变量的效果。</strong>block的设计很好的屏蔽了内部实现细节。</p>
+<h2 id="Block的内存管理"><a href="#Block的内存管理" class="headerlink" title="Block的内存管理"></a>Block的内存管理</h2><p>在上一节中有一个细节，<strong>Block_byref_age_0结构体中有一个指向自己的forwarding指针。</strong>main_block_desc_0结构体中也多了copy和dispose两个函数。这些都和block的内存管理有关。具体如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">static struct __main_block_desc_0 &#123;</span><br><span class="line">  size_t reserved;</span><br><span class="line">  size_t Block_size;</span><br><span class="line">  void (*copy)(struct __main_block_impl_0*, struct __main_block_impl_0*);</span><br><span class="line">  void (*dispose)(struct __main_block_impl_0*);</span><br><span class="line">&#125;</span><br><span class="line">struct __Block_byref_age_0 &#123;</span><br><span class="line">  void *__isa;</span><br><span class="line">__Block_byref_age_0 *__forwarding;</span><br><span class="line"> int __flags;</span><br><span class="line"> int __size;</span><br><span class="line"> int age;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>还是以__block int age;为例，</p>
+<p>当block在栈上时，并不会对age变量产生强引用。</p>
+<p>当block被copy到堆时，会调用内部的copy函数对__block变量产生强引用。</p>
+<p>当block从堆中移除时，会调用内部的dispose函数，释放引用的变量。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">static void __main_block_func_0(struct __main_block_impl_0 *__cself) &#123;</span><br><span class="line">  __Block_byref_age_0 *age = __cself-&gt;age; // bound by ref</span><br><span class="line"></span><br><span class="line">        (age-&gt;__forwarding-&gt;age)++;</span><br><span class="line">        NSLog((NSString *)&amp;__NSConstantStringImpl__var_,(age-&gt;__forwarding-&gt;age));</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>在源码中，我们看到无论是读取age还是修改age，都是先通过自身的forwarding指针来访问和修改的，这是为什么呢？请看下图。<br><img src="/2019/05/14/深入理解Block/block内存管理.jpg" alt="stackBlock"></p>
+<p>当一个<strong>block变量从栈上被复制到堆上时，栈上的结构体中的</strong>forwarding指针也会指向堆上的结构体。所以通过forwarding修改可以保证修改的都是堆上的结构体，main函数释放的时候，只是释放了栈上的东西。而所有的对局部变量的修改都早已经转移到堆上了。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2019/05/14/深入理解Block/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-Flutter系列一-基本配置" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/05/10/Flutter系列一-基本配置/">Flutter系列一:基本配置</a>
+    </h1>
+  
+
+        
+        <a href="/2019/05/10/Flutter系列一-基本配置/" class="archive-article-date">
+  	<time datetime="2019-05-10T02:25:59.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-10</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="配置全局环境变量"><a href="#配置全局环境变量" class="headerlink" title="配置全局环境变量"></a>配置全局环境变量</h2><p>1 .<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cd ~</span><br><span class="line">touch .bash_proflie</span><br><span class="line">open .bash_profile</span><br></pre></td></tr></table></figure></p>
+<p>切换到根目录，建立配置文件。(无此文件会建立，已存在也不会影响)。之后打开文件。</p>
+<ol start="2">
+<li>写入配置<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#使用国内镜像</span><br><span class="line">export PUB_HOSTED_URL=https://pub.flutter-io.cn</span><br><span class="line">export FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn</span><br><span class="line">#Flutter</span><br><span class="line">export FLUTTER_HOME=/Users/zhenhaoxu/Code/flutter</span><br><span class="line">export PATH=$PATH:$&#123;FLUTTER_HOME&#125;/bin</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>FLUTTER_HOME中的路径是从官网下载的SDK的存放地址。</p>
+<ol start="3">
+<li>刷新环境变量<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source .bash_profile</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>之后输入flutter指令，检查是否配置成功。</p>
+<ol start="4">
+<li>配置开发环境<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">flutter doctor</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>根据反馈结果安装所需要的环境</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2019/05/10/Flutter系列一-基本配置/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-关于Reactive-Programming的思考" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/05/09/关于Reactive-Programming的思考/">关于Reactive Programming的思考</a>
+    </h1>
+  
+
+        
+        <a href="/2019/05/09/关于Reactive-Programming的思考/" class="archive-article-date">
+  	<time datetime="2019-05-09T02:00:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-09</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="主动命令与被动响应"><a href="#主动命令与被动响应" class="headerlink" title="主动命令与被动响应"></a>主动命令与被动响应</h2><p><img src="/2019/05/09/关于Reactive-Programming的思考/命令式与响应式区别.png" alt="命令式与响应式区别"><br>以一个歌曲列表界面为例，如果我们在列表页侧滑删除了一首歌，可以明显看到两种编程方式处理事件的区别。</p>
+<p>在命令式的事件回调中，我们除了要更新数据源，还要主动调用逻辑相关的一系列数据变更和UI操作。需求或逻辑越复杂的页面，在处理这类事件回调时负担就会越重，而且越容易出错。特别是当换人维护页面时，他必须先通读整个页面逻辑，才有把握去修改。</p>
+<p>在响应式的事件回调中，我们只需要关心对应的数据源修改。这个数据源修改会造成哪些连锁反应，不在我们响应这个事件的逻辑考虑范围内。这些逻辑只需要在页面初始化时进行订阅绑定。在这种模式下，无论是何种增删改查，都只需要处理相应的数据源即可。</p>
+<p>小结:响应式是一种去中心化的方式，不再需要一个中枢系统来组织、负责业务逻辑。各个组件只需要关心状态及对应的动作，客观上降低了系统的复杂度。</p>
+<h2 id="Monad"><a href="#Monad" class="headerlink" title="Monad"></a>Monad</h2><h3 id="为什么需要Monad"><a href="#为什么需要Monad" class="headerlink" title="为什么需要Monad"></a>为什么需要Monad</h3><p>将处理数据的流程比作流水线，假如每一个部分(函数)都遵守一个约定:接受同一数量(通常1个)、同一类型的参数。由于参数数量和类型的统一，同时不依赖其他状态，我们可以自由组装流程中每一个步骤，同时不影响其他步骤。</p>
+<p>那网络返回发生错误怎么办呢？因为成功或失败对应了不同的处理流程，之前我们至少需要两个参数才能完成。将两个或多个参数合为一个，需要一层额外的抽象。Monad就是这个抽象。</p>
+<h3 id="Monad条件"><a href="#Monad条件" class="headerlink" title="Monad条件"></a>Monad条件</h3><p>Monad一般要符合以下两个条件:</p>
+<ol>
+<li>需要封装一个Box<t>，将流程中关心的信息放在里面</t></li>
+<li>flatMap方法（也叫bind/lift）.</li>
+</ol>
+<p>在对Box<t>链式调用每一步中，需要做以下几件事：</t></p>
+<ol>
+<li>对Box<t>拆包，拿到我们真正关心的数据T</t></li>
+<li>处理数据</li>
+<li>仍然封包成Box类型（可能变换了数据，也可能封装类型发生改变，如Box<r>）</r></li>
+</ol>
+<p>可以看到入参与出参同为Box类型，因此只要所有方法都遵守这个规则，它们就可以被拼接起来，如同接口统一的乐高积木一样实现各种各样的可能。<br>这一整套拆包/封包的逻辑，称作flatMap方法，它构成了Monad的第二个要素。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2019/05/09/关于Reactive-Programming的思考/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-深入理解编译过程" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -186,7 +443,58 @@
 </blockquote>
 <p>这里引出了我们的主角Clang。Object-c/c/c++编译器的前端就是Clang。以下是编译器编译的大致流程。</p>
 <p><img src="/2019/05/08/深入理解编译过程/编译流程.png" alt="编译流程"></p>
-
+<h2 id="m文件编译流程"><a href="#m文件编译流程" class="headerlink" title=".m文件编译流程"></a>.m文件编译流程</h2><p>本节将从代码层面跟踪一个文件的编译过程，文件名为main.c。代码如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#define IPhoneXBarHeight 88</span><br><span class="line">#define DEBUG 1</span><br><span class="line"></span><br><span class="line">int main() &#123;</span><br><span class="line">    //屏幕宽度</span><br><span class="line">    int barHeight = IPhoneXBarHeight;</span><br><span class="line">#ifdef DEBUG</span><br><span class="line">    printf(&quot;hello debug\n&quot;);</span><br><span class="line">#else</span><br><span class="line">    printf(&quot;hello world\n&quot;);</span><br><span class="line">#endif</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="预处理"><a href="#预处理" class="headerlink" title="预处理"></a>预处理</h3><p>预处理阶段会进行头文件引入替换、宏替换、注释处理、条件编译等操作。</p>
+<p>用clang进行预处理</p>
+<blockquote>
+<p>xcrun clang -E main.c</p>
+</blockquote>
+<p>结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">int main() &#123;</span><br><span class="line">    int barHeight = 88;</span><br><span class="line">    printf(&quot;hello debug\n&quot;);</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>#include &lt;stdio.h&gt;在预处理阶段会被替换成stido.h中的内容，这个过程是递归的，因为stdio.h也有可能引用了其他头文件。</p>
+<p>在省略了几百行stdio.h的内容后，在末尾看到main函数预处理后只有3行。</p>
+<p>IPhoneXBarHeight这个宏被替换成了具体的数字。</p>
+<p>条件编译后，只留下了符合条件的printf(“hello debug\n”);</p>
+<h3 id="词法分析"><a href="#词法分析" class="headerlink" title="词法分析"></a>词法分析</h3><p>词法分析器读入预处理后的字符流，将他们组织成有意义的词素(最小的意义单位)序列。对于每个词素，词法分析器产生词法单元(token)作为输出。</p>
+<blockquote>
+<p> xcrun clang -fmodules -fsyntax-only -Xclang -dump-tokens main.c</p>
+</blockquote>
+<p>结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">annot_module_include &apos;#include &lt;s&apos;		Loc=&lt;main.c:1:1&gt;</span><br><span class="line">int &apos;int&apos;	 [StartOfLine]	Loc=&lt;main.c:5:1&gt;</span><br><span class="line">identifier &apos;main&apos;	 [LeadingSpace]	Loc=&lt;main.c:5:5&gt;</span><br><span class="line">l_paren &apos;(&apos;		Loc=&lt;main.c:5:9&gt;</span><br><span class="line">r_paren &apos;)&apos;		Loc=&lt;main.c:5:10&gt;</span><br><span class="line">l_brace &apos;&#123;&apos;	 [LeadingSpace]	Loc=&lt;main.c:5:12&gt;</span><br><span class="line">int &apos;int&apos;	 [StartOfLine] [LeadingSpace]	Loc=&lt;main.c:7:5&gt;</span><br><span class="line">identifier &apos;barHeight&apos;	 [LeadingSpace]	Loc=&lt;main.c:7:9&gt;</span><br><span class="line">...</span><br></pre></td></tr></table></figure></p>
+<p>identifier ‘barHeight’     [LeadingSpace]    Loc=<a href="main.c:7:9" target="_blank" rel="noopener">main.c:7:9</a>表示 barHeight 这个变量名位于 main.c 第7行，左起第9个字符开始。这里的位置是基于原始代码的位置，而不是预处理后的。保存token在源文件中的位置方便后续clang分析的时候能够找出出错的原始位置。</p>
+<h3 id="语法分析"><a href="#语法分析" class="headerlink" title="语法分析"></a>语法分析</h3><p>词法分析的Token流会被解析成一颗抽象语法树(AST).</p>
+<blockquote>
+<p>xcrun clang -fsyntax-only -Xclang -ast-dump main.c | open -f</p>
+</blockquote>
+<p>部分结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[0;34m`-[0m[0;1;32mFunctionDecl[0m[0;33m 0x7fbdbe8b5630[0m &lt;[0;33mmain.c:5:1[0m, [0;33mline:14:1[0m&gt; [0;33mline:5:5[0m[0;1;36m main[0m [0;32m&apos;int ()&apos;[0m</span><br><span class="line">[0;34m  `-[0m[0;1;35mCompoundStmt[0m[0;33m 0x7fbdbe8b58f8[0m &lt;[0;33mcol:12[0m, [0;33mline:14:1[0m&gt;</span><br><span class="line">[0;34m    |-[0m[0;1;35mDeclStmt[0m[0;33m 0x7fbdbe8b5768[0m &lt;[0;33mline:7:5[0m, [0;33mcol:37[0m&gt;</span><br><span class="line">[0;34m    | `-[0m[0;1;32mVarDecl[0m[0;33m 0x7fbdbe8b56e8[0m &lt;[0;33mcol:5[0m, [0;33mline:2:26[0m&gt; [0;33mline:7:9[0m[0;1;36m barHeight[0m [0;32m&apos;int&apos;[0m cinit</span><br><span class="line">[0;34m    |   `-[0m[0;1;35mIntegerLiteral[0m[0;33m 0x7fbdbe8b5748[0m &lt;[0;33mline:2:26[0m&gt; [0;32m&apos;int&apos;[0m[0;36m[0m[0;36m[0m[0;1;36m 88[0m</span><br></pre></td></tr></table></figure></p>
+<p>有了抽象语法树，clang就可以对这个数进行分析，找出代码中的错误，如类型不匹配，调用了未声明的方法等。</p>
+<h3 id="CodeGen"><a href="#CodeGen" class="headerlink" title="CodeGen"></a>CodeGen</h3><p>CodeGen遍历语法树，生成LLVM IR代码。IR是前端的输出，后端的输入。</p>
+<blockquote>
+<p>xcrun clang -S -emit-llvm main.c -o main.ll</p>
+</blockquote>
+<p>部分结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">@.str = private unnamed_addr constant [13 x i8] c&quot;hello debug\0A\00&quot;, align 1</span><br><span class="line"></span><br><span class="line">; Function Attrs: noinline nounwind optnone ssp uwtable</span><br><span class="line">define i32 @main() #0 &#123;</span><br><span class="line">  %1 = alloca i32, align 4</span><br><span class="line">  %2 = alloca i32, align 4</span><br><span class="line">  store i32 0, i32* %1, align 4</span><br><span class="line">  store i32 88, i32* %2, align 4</span><br><span class="line">  %3 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @.str, i32 0, i32 0))</span><br><span class="line">  ret i32 0</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Objective-c代码会在这一步进行runtime的桥接:property合成，ARC处理等。</p>
+<h3 id="LLVM-Optimizer"><a href="#LLVM-Optimizer" class="headerlink" title="LLVM Optimizer"></a>LLVM Optimizer</h3><p>LLVM对IR进行优化后，会针对不同架构生成不同的目标代码，最后以汇编代码的格式输出。</p>
+<blockquote>
+<p>xcrun clang -S main.c -o main.s</p>
+</blockquote>
+<p>部分代码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">_main:                                  ## @main</span><br><span class="line">	.cfi_startproc</span><br><span class="line">## %bb.0:</span><br><span class="line">	pushq	%rbp</span><br><span class="line">	.cfi_def_cfa_offset 16</span><br><span class="line">	.cfi_offset %rbp, -16</span><br><span class="line">	movq	%rsp, %rbp</span><br><span class="line">	.cfi_def_cfa_register %rbp</span><br><span class="line">	subq	$16, %rsp</span><br><span class="line">	movl	$0, -4(%rbp)</span><br><span class="line">	movl	$88, -8(%rbp)</span><br><span class="line">	leaq	L_.str(%rip), %rdi</span><br><span class="line">	movb	$0, %al</span><br><span class="line">	callq	_printf</span><br></pre></td></tr></table></figure></p>
+<h3 id="汇编器"><a href="#汇编器" class="headerlink" title="汇编器"></a>汇编器</h3><p>汇编器以汇编代码作为输入，将汇编代码转换为机器代码，最后输出.o目标文件 。</p>
+<blockquote>
+<p>xcrun clang -fmodules -c main.c -o main.o</p>
+</blockquote>
+<p>生成了main.o文件后，我们可以通过如下命令查看其中的符号。</p>
+<blockquote>
+<p>xcrun nm -nm main.o</p>
+</blockquote>
+<p>结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">                 (undefined) external _printf</span><br><span class="line">0000000000000000 (__TEXT,__text) external _main</span><br></pre></td></tr></table></figure></p>
+<p>注意printf前的修饰。undefined表示在当前文件找不到符号。external表示这个符号是外部可以访问的。</p>
+<h3 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h3><p>连接器把编译产生的.o文件和(dylib、a、tbd)文件一起生成mach-o可执行文件。</p>
+<blockquote>
+<p>xcrun clang main.o -o main</p>
+</blockquote>
+<p>执行后可以看到控制器会输出 “hello debug”<br>此时再查看可执行文件的符号表，<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">                 (undefined) external _printf (from libSystem)</span><br><span class="line">                 (undefined) external dyld_stub_binder (from libSystem)</span><br><span class="line">0000000100000000 (__TEXT,__text) [referenced dynamically] external __mh_execute_header</span><br><span class="line">0000000100000f50 (__TEXT,__text) external _main</span><br></pre></td></tr></table></figure></p>
+<p>from libSystem表示这个符号来自于libSystem，会在运行时动态绑定。</p>
+<h2 id="XCode编译过程"><a href="#XCode编译过程" class="headerlink" title="XCode编译过程"></a>XCode编译过程</h2>
       
 
       

@@ -152,68 +152,6 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-iOS底层/深入理解Runtime-项目实践" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/05/20/iOS底层/深入理解Runtime-项目实践/">深入理解runtime(三):项目实践</a>
-    </h1>
-  
-
-        
-        <a href="/2019/05/20/iOS底层/深入理解Runtime-项目实践/" class="archive-article-date">
-  	<time datetime="2019-05-20T09:51:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-20</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2019/05/20/iOS底层/深入理解Runtime-项目实践/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
     <article id="post-iOS底层/深入理解Runtime-消息机制" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -244,7 +182,20 @@
 <li>根据reciverClass的super指针往上遍历，重复2，3查找流程。</li>
 <li>还没找到，进入动态方法解析阶段。</li>
 </ol>
-<h2 id="动态方法解析"><a href="#动态方法解析" class="headerlink" title="动态方法解析"></a>动态方法解析</h2><h2 id="消息转发"><a href="#消息转发" class="headerlink" title="消息转发"></a>消息转发</h2>
+<h2 id="动态方法解析"><a href="#动态方法解析" class="headerlink" title="动态方法解析"></a>动态方法解析</h2><ol>
+<li>判断是否已经进行过动态解析，如果是，进入消息转发阶段。</li>
+<li>调用 + (BOOL)resolveInstanceMethod:(SEL)sel 或 + (BOOL)resolveClassMethod:(SEL)sel。开发者可以在此动态添加方法实现</li>
+<li>标记为已经进行过动态解析。</li>
+<li>重新走消息发送流程。如果确实动态添加了方法实现，此时消息发送流程中能找到方法并缓存，如果没有添加，进入消息转发阶段。</li>
+</ol>
+<h2 id="消息转发"><a href="#消息转发" class="headerlink" title="消息转发"></a>消息转发</h2><ol>
+<li>调用- (id)forwardingTargetForSelector:(SEL)aSelector方法来尝试确定能处理方法的其他对象。如果返回值不为空，效果类似于objc_msgSend(返回值,SEL)。若为空，进入下一环节。</li>
+<li><p>调用- (NSMethodSignature *)methodSignatureForSelector:方法来确定SEL的方法签名。官方文档对此有如下描述: This method is used in situations where an NSInvocation object must be created, such as during message forwarding.可见主要是为了将消息调用封装成NSInvocation对象搜集方法签名信息。如果有返回值，进入下一环节，否则就会抛出UnRecognize selector的错误。</p>
+</li>
+<li><p>调用-/+ (void)forwardInvocation方法。NSInvocation对象包括了消息的所有元素：调用者、选择器、参数和返回值。因此拿到NSInvocation后可以自定义处理逻辑。至此，方法调用完毕。</p>
+</li>
+</ol>
+
       
 
       
@@ -306,7 +257,8 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="对象的本质"><a href="#对象的本质" class="headerlink" title="对象的本质"></a>对象的本质</h1><h2 id="NSObject的底层实现"><a href="#NSObject的底层实现" class="headerlink" title="NSObject的底层实现"></a>NSObject的底层实现</h2><h3 id="OC转c-c"><a href="#OC转c-c" class="headerlink" title="OC转c/c++"></a>OC转c/c++</h3><p>为了探索本质,我们需要将oc的代码转化为对应的c代码。<br>待转化的oc代码，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">#import &lt;Foundation/Foundation.h&gt;</span><br><span class="line"></span><br><span class="line">@interface ZHAnimal : NSObject</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      age;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHAnimal</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@interface ZHCat : ZHAnimal</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      legs;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHCat</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+        <p>runtime不只是一些C语言的API，更包括了一套完整的面向对象的数据结构。研究runtime，首先需要研究对象模型。</p>
+<h1 id="对象的本质"><a href="#对象的本质" class="headerlink" title="对象的本质"></a>对象的本质</h1><h2 id="NSObject的底层实现"><a href="#NSObject的底层实现" class="headerlink" title="NSObject的底层实现"></a>NSObject的底层实现</h2><h3 id="OC转c-c"><a href="#OC转c-c" class="headerlink" title="OC转c/c++"></a>OC转c/c++</h3><p>为了探索本质,我们需要将oc的代码转化为对应的c代码。<br>待转化的oc代码，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">#import &lt;Foundation/Foundation.h&gt;</span><br><span class="line"></span><br><span class="line">@interface ZHAnimal : NSObject</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      age;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHAnimal</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@interface ZHCat : ZHAnimal</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      legs;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHCat</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>准备的事例代码使用了oc的类、属性及继承特性，以便我们探索这些特性的底层实现。</p>
 <p>之后，我们使用如下命令进行转换。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc main.m -o mainarm64.cpp</span><br></pre></td></tr></table></figure></p>
 <p>这个命令是意思是使用Clang编译器将main.m文件重写输出为mainarm64.cpp文件，指定的架构参数是arm64。</p>
@@ -338,7 +290,8 @@
 <h3 id="class-data-bits-t"><a href="#class-data-bits-t" class="headerlink" title="class_data_bits_t"></a>class_data_bits_t</h3><p><img src="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/深入理解Runtime/class_rw_t.png" alt="class_rw_t"></p>
 <p>class_ro_t存储着类的原始信息，在运行时根据class_ro_t生成class_rw_t，并通过ro指针指回了class_ro_t.</p>
 <p>以方法列表为例，假如Animal类有run方法，同时通过分类扩展了eat方法。那么，run方法首先位于class_ro_t中的baseMethodList中，在运行时，会加载所有分类，把分类中的方法和baseMethodList合并成methods，且分类中的方法在前。</p>
-<h3 id="method-t"><a href="#method-t" class="headerlink" title="method_t"></a>method_t</h3><p>method_list_t数组中存储着method_t，method_t是对方法的封装。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">struct method_t &#123;</span><br><span class="line">    SEL name;//方法名</span><br><span class="line">    const char *types;//编码，内含返回值类型、参数类型等信息</span><br><span class="line">    IMP imp; //函数实现的地址</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>class_rw_t中没有定义ivars的字段，在访问成员变量时，直接通过isa_t找到对应的objc_class,并通过class_ro_t的ivarlist做地址偏移，查找对应的对象内存。因此，内存布局在编译时就已经确定，runtime不能动态修改ivars，会破坏已有的内存布局。只能通过类似关联对象的方式重新开辟一开专门的内存空间。</p>
+<h3 id="method-t"><a href="#method-t" class="headerlink" title="method_t"></a>method_t</h3><p>method_list_t数组中存储着method_t，method_t是对方法的封装。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">struct method_t &#123;</span><br><span class="line">    SEL name;//方法名</span><br><span class="line">    const char *types;//编码，内含返回值类型、参数类型等信息</span><br><span class="line">    IMP imp; //本质为函数指针，存储函数实现的地址</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
 <h3 id="cache-t"><a href="#cache-t" class="headerlink" title="cache_t"></a>cache_t</h3><p>方法调用是在methods中通过receiver和SEL查找定位IMP的过程。如果一个方法被多次调用，通过缓存技术就能提高效率。</p>
 <p>cache_t就是这样一个缓存，他通过散列表来缓存曾经调用过的方法，用以提高方法的查找速度。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">struct cache_t &#123;</span><br><span class="line">    struct bucket_t *_buckets;//散列表</span><br><span class="line">    mask_t _mask;//散列表的长度 - 1</span><br><span class="line">    mask_t _occupied;//已经缓存的方法数量</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">struct bucket_t &#123;</span><br><span class="line">    IMP _imp;</span><br><span class="line">    cache_key_t _key;//SEL为key</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Class points to cache. SEL is key. Cache buckets store SEL+IMP.</span><br><span class="line">// Caches are never built in the dyld shared cache.</span><br><span class="line">static inline mask_t cache_hash(cache_key_t key, mask_t mask) </span><br><span class="line">&#123;</span><br><span class="line">    return (mask_t)(key &amp; mask);</span><br><span class="line">&#125;</span><br><span class="line">//objc-cache.mm</span><br></pre></td></tr></table></figure>
@@ -740,96 +693,6 @@
       
         <p class="article-more-link">
           <a class="article-more-a" href="/2019/05/08/iOS底层/深入理解编译过程/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-iOS底层/1对象的本质" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/04/18/iOS底层/1对象的本质/">object-c实现原理(一):对象的本质</a>
-    </h1>
-  
-
-        
-        <a href="/2019/04/18/iOS底层/1对象的本质/" class="archive-article-date">
-  	<time datetime="2019-04-18T10:53:29.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-04-18</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>众所周知，OC是基于C实现了面向对象的扩展的语言。面向对象语言有3大特性:封装、继承和多态。那么，OC是如何设计来基于C实现这些特性的呢？带着这个疑问来探索底层，进而逐步学习优秀的设计理念。</p>
-<h3 id="OC转c-c"><a href="#OC转c-c" class="headerlink" title="OC转c/c++"></a>OC转c/c++</h3><p>为了探索本质,我们需要将oc的代码转化为对应的c代码。<br>待转化的oc代码，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">#import &lt;Foundation/Foundation.h&gt;</span><br><span class="line"></span><br><span class="line">@interface ZHAnimal : NSObject</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      age;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHAnimal</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@interface ZHCat : ZHAnimal</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      legs;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHCat</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>准备的事例代码使用了oc的类、属性及继承特性，以便我们探索这些特性的底层实现。</p>
-<p>之后，我们使用如下命令进行转换。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc main.m -o mainarm64.cpp</span><br></pre></td></tr></table></figure></p>
-<p>这个命令是意思是使用Clang编译器将main.m文件重写输出为mainarm64.cpp文件，指定的架构参数是arm64。</p>
-<p>在mainarm64.cpp文件中，我们首先搜索”ZHCat_IMPL {“,可以找到如下代码：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct ZHCat_IMPL &#123;</span><br><span class="line">	struct ZHAnimal_IMPL ZHAnimal_IVARS;</span><br><span class="line">	NSInteger _legs;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>除了自身的成员变量_legs,还能看到 ZHAnimal_IMPL ZHAnimal_IVARS 的结构体变量，很容易猜测，这应该是父类ZHAnimal的类定义和成员变量。</p>
-<p>同理，我们搜索”ZHAnimal_IMPL {“,可以找到如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct ZHAnimal_IMPL &#123;</span><br><span class="line">	struct NSObject_IMPL NSObject_IVARS;</span><br><span class="line">	NSInteger _age;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
-<p>这段代码逻辑和上面的一样。那么接着看NSObject。可以找到如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">struct objc_selector; struct objc_class;</span><br><span class="line"></span><br><span class="line">typedef struct objc_class *Class;</span><br><span class="line"></span><br><span class="line">struct NSObject_IMPL &#123;</span><br><span class="line">    Class isa;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
-<p>到此为止，简单小结一下：</p>
-<ol>
-<li>NSObject的实现是struct,里面包含一个objc_class类型的结构体指针isa.</li>
-<li>对象之间存在继承关系，子类的结构体中会包含父类的结构体成分，且父类的成分在前。</li>
-</ol>
-<p>现在，所有的谜题都指向objc_class，我们当然想知道objc_class里都有些什么，但是在mainarm64.cpp中只有声明。下一节，我们将继续探索。</p>
-<h3 id="探寻objc-class"><a href="#探寻objc-class" class="headerlink" title="探寻objc_class"></a>探寻objc_class</h3><p>在<a href="https://opensource.apple.com/tarballs/objc4/" target="_blank" rel="noopener">objc4源码</a>可以下载到开源代码，注意下载序号大的新版本。</p>
-<p>在objc-runtime-new文件中，我们终于看到了objc_class的实现。代码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">struct objc_class : objc_object &#123;</span><br><span class="line">    // Class ISA;</span><br><span class="line">    Class superclass;</span><br><span class="line">    cache_t cache;             // formerly cache pointer and vtable</span><br><span class="line">    class_data_bits_t bits;    // class_rw_t * plus custom rr/alloc flags</span><br><span class="line"></span><br><span class="line">    class_rw_t *data() &#123; </span><br><span class="line">        return bits.data();</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">struct objc_object &#123;</span><br><span class="line">private:</span><br><span class="line">    isa_t isa;</span><br><span class="line"></span><br><span class="line">public:</span><br><span class="line"></span><br><span class="line">    // ISA() assumes this is NOT a tagged pointer object</span><br><span class="line">    Class ISA();</span><br><span class="line"></span><br><span class="line">    // getIsa() allows this to be a tagged pointer object</span><br><span class="line">    Class getIsa();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">typedef struct objc_object *id;</span><br></pre></td></tr></table></figure></p>
-<p>通过这段源码，我们可以看到，追踪到最后的数据结构是objc_object，里面有一个isa_t类型的isa成员。</p>
-<ol>
-<li><strong>oc中所有的对象都会包含一个isa_t类型的成员变量</strong>。objc_class类也是一个对象，通过继承于objc_object拿到了的isa_t结构类型的isa成员。</li>
-<li>对象或者说实例对象，只有isa，用来找到对应的类对象。类对象才有superclass(父类指针)、cache(方法缓存)和bits(类数据信息)。（bits里包含了ivars成员变量列表、methods方法列表、protocals协议列表和properties属性列表等类信息）</li>
-</ol>
-<p><img src="/2019/04/18/iOS底层/1对象的本质/objc_object.png" alt="objc对象本质"></p>
-<h3 id="对象的分类"><a href="#对象的分类" class="headerlink" title="对象的分类"></a>对象的分类</h3><p>OC中的对象可分为instance、class、meta-class3类。<br>3者的关系可用下面这张经典的图表示：</p>
-<p><img src="/2019/04/18/iOS底层/1对象的本质/classrelation.png" alt="objc对象关系"></p>
-<p>前文分析过，实例对象只有isa指针，类对象除了isa还有superclass指针。当实例对象调用方法时，通过自身当isa指针找到对应的类，在类的方法列表中查找。如果没有找到，通过superclass指针往父类查找直到RootClass(NSObject).</p>
-<p>同理，meta-class存储了类方法列表，调用类方法的过程类似。</p>
-<h3 id="多态-消息机制查找目标方法"><a href="#多态-消息机制查找目标方法" class="headerlink" title="多态:消息机制查找目标方法"></a>多态:消息机制查找目标方法</h3><h2 id="Category"><a href="#Category" class="headerlink" title="Category"></a>Category</h2><h2 id="Load-amp-amp-Initialize"><a href="#Load-amp-amp-Initialize" class="headerlink" title="Load &amp;&amp; Initialize"></a>Load &amp;&amp; Initialize</h2><h2 id="关联对象"><a href="#关联对象" class="headerlink" title="关联对象"></a>关联对象</h2><h2 id="Block"><a href="#Block" class="headerlink" title="Block"></a>Block</h2><h2 id="KVO"><a href="#KVO" class="headerlink" title="KVO"></a>KVO</h2><h2 id="KVC"><a href="#KVC" class="headerlink" title="KVC"></a>KVC</h2>
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2019/04/18/iOS底层/1对象的本质/">展开全文 >></a>
         </p>
       
 

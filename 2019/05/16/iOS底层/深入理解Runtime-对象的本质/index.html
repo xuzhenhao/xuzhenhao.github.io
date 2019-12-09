@@ -15,14 +15,14 @@
 <meta property="og:site_name" content="欢迎来到Cloud的Blog">
 <meta property="og:description" content="runtime不只是一些C语言的API，更包括了一套完整的面向对象的数据结构。研究runtime，首先需要研究对象模型。 对象的本质NSObject的底层实现OC转c/c++为了探索本质,我们需要将oc的代码转化为对应的c代码。待转化的oc代码，如下所示：123456789101112131415161718192021222324252627#import &amp;lt;Foundation/Foun">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/16/iOS底层/深入理解Runtime-对象的本质/objc_object.png">
-<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/16/iOS底层/深入理解Runtime-对象的本质/位域.jpg">
-<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/16/iOS底层/深入理解Runtime-对象的本质/class_rw_t.png">
+<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/16/iOS底层/深入理解Runtime-对象的本质/深入理解Runtime-对象的本质/objc_object.png">
+<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/16/iOS底层/深入理解Runtime-对象的本质/深入理解Runtime-对象的本质/位域.jpg">
+<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/16/iOS底层/深入理解Runtime-对象的本质/深入理解Runtime-对象的本质/class_rw_t.png">
 <meta property="og:updated_time" content="2019-05-23T02:30:35.229Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入理解Runtime(一):对象的本质">
 <meta name="twitter:description" content="runtime不只是一些C语言的API，更包括了一套完整的面向对象的数据结构。研究runtime，首先需要研究对象模型。 对象的本质NSObject的底层实现OC转c/c++为了探索本质,我们需要将oc的代码转化为对应的c代码。待转化的oc代码，如下所示：123456789101112131415161718192021222324252627#import &amp;lt;Foundation/Foun">
-<meta name="twitter:image" content="https://xuzhenhao.github.io/2019/05/16/iOS底层/深入理解Runtime-对象的本质/objc_object.png">
+<meta name="twitter:image" content="https://xuzhenhao.github.io/2019/05/16/iOS底层/深入理解Runtime-对象的本质/深入理解Runtime-对象的本质/objc_object.png">
   
     <link rel="alternative" href="/atom.xml" title="欢迎来到Cloud的Blog" type="application/atom+xml">
   
@@ -201,14 +201,14 @@
 <li><strong>oc中所有的对象都会包含一个isa_t类型的成员变量</strong>。objc_class类也是一个对象，通过继承于objc_object拿到了的isa_t结构类型的isa成员。</li>
 <li>对象或者说实例对象，只有isa，用来找到对应的类对象。类对象才有superclass(父类指针)、cache(方法缓存)和bits(类数据信息)。（bits里包含了ivars成员变量列表、methods方法列表、protocals协议列表和properties属性列表等类信息）</li>
 </ol>
-<p><img src="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/objc_object.png" alt="objc对象本质"></p>
+<p><img src="深入理解Runtime-对象的本质/objc_object.png" alt="objc对象本质"></p>
 <h2 id="Class-objc-class-中的数据结构"><a href="#Class-objc-class-中的数据结构" class="headerlink" title="Class(objc_class)中的数据结构"></a>Class(objc_class)中的数据结构</h2><h3 id="isa-t"><a href="#isa-t" class="headerlink" title="isa_t"></a>isa_t</h3><p>isa数据结构的定义，摘录于objc4-750.1</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">union isa_t &#123;</span><br><span class="line">    isa_t() &#123; &#125;</span><br><span class="line">    isa_t(uintptr_t value) : bits(value) &#123; &#125; </span><br><span class="line"></span><br><span class="line">    Class cls;</span><br><span class="line">    uintptr_t bits;</span><br><span class="line">#if defined(ISA_BITFIELD)</span><br><span class="line">    struct &#123;</span><br><span class="line">        ISA_BITFIELD;  // defined in isa.h</span><br><span class="line">    &#125;;</span><br><span class="line">#endif</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">#   define ISA_BITFIELD                                                        \</span><br><span class="line">      uintptr_t nonpointer        : 1;                                         \</span><br><span class="line">      uintptr_t has_assoc         : 1;                                         \</span><br><span class="line">      uintptr_t has_cxx_dtor      : 1;                                         \</span><br><span class="line">      uintptr_t shiftcls          : 44; /*MACH_VM_MAX_ADDRESS 0x7fffffe00000*/ \</span><br><span class="line">      uintptr_t magic             : 6;                                         \</span><br><span class="line">      uintptr_t weakly_referenced : 1;                                         \</span><br><span class="line">      uintptr_t deallocating      : 1;                                         \</span><br><span class="line">      uintptr_t has_sidetable_rc  : 1;                                         \</span><br><span class="line">      uintptr_t extra_rc          : 8</span><br></pre></td></tr></table></figure>
 <p>在arm64架构之前，isa就是一个普通的指针，存储着Class、Meta-Class对象地址</p>
 <p>从arm64架构开始，isa成了一个union结构的共同体，并使用位域来存储更多的信息。</p>
 <p>其含义如图所示:可以看到大多与内存管理相关</p>
-<p><img src="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/位域.jpg" alt="weiyu"></p>
-<h3 id="class-data-bits-t"><a href="#class-data-bits-t" class="headerlink" title="class_data_bits_t"></a>class_data_bits_t</h3><p><img src="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/class_rw_t.png" alt="class_rw_t"></p>
+<p><img src="深入理解Runtime-对象的本质/位域.jpg" alt="weiyu"></p>
+<h3 id="class-data-bits-t"><a href="#class-data-bits-t" class="headerlink" title="class_data_bits_t"></a>class_data_bits_t</h3><p><img src="深入理解Runtime-对象的本质/class_rw_t.png" alt="class_rw_t"></p>
 <p>class_ro_t存储着类的原始信息，在运行时根据class_ro_t生成class_rw_t，并通过ro指针指回了class_ro_t.</p>
 <p>以方法列表为例，假如Animal类有run方法，同时通过分类扩展了eat方法。那么，run方法首先位于class_ro_t中的baseMethodList中，在运行时，会加载所有分类，把分类中的方法和baseMethodList合并成methods，且分类中的方法在前。</p>
 <p>class_rw_t中没有定义ivars的字段，在访问成员变量时，直接通过isa_t找到对应的objc_class,并通过class_ro_t的ivarlist做地址偏移，查找对应的对象内存。因此，内存布局在编译时就已经确定，runtime不能动态修改ivars，会破坏已有的内存布局。只能通过类似关联对象的方式重新开辟一开专门的内存空间。</p>

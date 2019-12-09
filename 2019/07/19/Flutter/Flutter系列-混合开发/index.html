@@ -6,15 +6,21 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="dns-prefetch" href="https://xuzhenhao.github.io">
-  <title>Archives: 2019/5 | 欢迎来到Cloud的Blog</title>
+  <title>Flutter系列-混合开发 | 欢迎来到Cloud的Blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="欢迎来到Cloud的Blog">
-<meta property="og:url" content="https://xuzhenhao.github.io/archives/2019/05/index.html">
+  <meta name="description" content="1.集成到现有的Native工程中官方教程地址参考教程参考教程 假定已经有原生App,位于/PATH/flutter-android(flutter-iOS)。执行如下命令，构建 flutter modlue,与现有项目同级。 1flutter create -t module flutter_module 1.1. 搭建iOS Native Flutter混合工程官方指导操作在podfile文件">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flutter系列-混合开发">
+<meta property="og:url" content="https://xuzhenhao.github.io/2019/07/19/Flutter/Flutter系列-混合开发/index.html">
 <meta property="og:site_name" content="欢迎来到Cloud的Blog">
+<meta property="og:description" content="1.集成到现有的Native工程中官方教程地址参考教程参考教程 假定已经有原生App,位于/PATH/flutter-android(flutter-iOS)。执行如下命令，构建 flutter modlue,与现有项目同级。 1flutter create -t module flutter_module 1.1. 搭建iOS Native Flutter混合工程官方指导操作在podfile文件">
 <meta property="og:locale" content="default">
+<meta property="og:image" content="https://xuzhenhao.github.io/2019/07/19/Flutter/Flutter系列-混合开发/Flutter系列-混合开发/message.png">
+<meta property="og:updated_time" content="2019-07-25T06:42:33.720Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="欢迎来到Cloud的Blog">
+<meta name="twitter:title" content="Flutter系列-混合开发">
+<meta name="twitter:description" content="1.集成到现有的Native工程中官方教程地址参考教程参考教程 假定已经有原生App,位于/PATH/flutter-android(flutter-iOS)。执行如下命令，构建 flutter modlue,与现有项目同级。 1flutter create -t module flutter_module 1.1. 搭建iOS Native Flutter混合工程官方指导操作在podfile文件">
+<meta name="twitter:image" content="https://xuzhenhao.github.io/2019/07/19/Flutter/Flutter系列-混合开发/Flutter系列-混合开发/message.png">
   
     <link rel="alternative" href="/atom.xml" title="欢迎来到Cloud的Blog" type="application/atom+xml">
   
@@ -150,238 +156,274 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-Flutter/Flutter系列-混合开发" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Flutter系列-混合开发
+    </h1>
+  
+
+        
+        <a href="/2019/07/19/Flutter/Flutter系列-混合开发/" class="archive-article-date">
+  	<time datetime="2019-07-19T07:01:31.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-07-19</time>
+</a>
+        
+      </header>
     
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="1-集成到现有的Native工程中"><a href="#1-集成到现有的Native工程中" class="headerlink" title="1.集成到现有的Native工程中"></a>1.集成到现有的Native工程中</h1><p><a href="https://github.com/flutter/flutter/wiki/Add-Flutter-to-existing-apps" target="_blank" rel="noopener">官方教程地址</a><br><a href="https://juejin.im/post/5c3ae5ef518825242165c5ca" target="_blank" rel="noopener">参考教程</a><br><a href="https://juejin.im/post/5c6eba82518825626b76f0eb" target="_blank" rel="noopener">参考教程</a></p>
+<p>假定已经有原生App,位于/PATH/flutter-android(flutter-iOS)。<br>执行如下命令，构建 flutter modlue,与现有项目同级。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">flutter create -t module flutter_module</span><br></pre></td></tr></table></figure>
+<h2 id="1-1-搭建iOS-Native-Flutter混合工程"><a href="#1-1-搭建iOS-Native-Flutter混合工程" class="headerlink" title="1.1. 搭建iOS Native Flutter混合工程"></a>1.1. 搭建iOS Native Flutter混合工程</h2><h3 id="官方指导操作"><a href="#官方指导操作" class="headerlink" title="官方指导操作"></a>官方指导操作</h3><p>在podfile文件中添加如下两行:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">flutter_application_path = &apos;../flutter_module&apos;</span><br><span class="line">eval(File.read(File.join(flutter_application_path,&apos;.ios&apos;,&apos;Flutter&apos;,&apos;podhelper.rb&apos;)),binding)</span><br></pre></td></tr></table></figure></p>
+<p>执行 pod install。当你修改了path/flutter_module/pubspec.yaml中的依赖时,必须重新执行pod install来更新。</p>
+<p>目前Flutter不支持bitcode，因此必须将Bitcode设为NO.(TARGETS-&gt;Build Settings-&gt;Build Options-&gt;Enable Bitcode)</p>
+<p>添加build phase 来编译Dart 代码。在Build Phases选项卡下，点击加号,New Run Script Phase。添加如下代码:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&quot;$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh&quot; build</span><br><span class="line">&quot;$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh&quot; embed</span><br></pre></td></tr></table></figure></p>
+<h3 id="解析"><a href="#解析" class="headerlink" title="解析"></a>解析</h3><p>在podfile中添加的podhelper.rb ruby脚本会在pod install/update时执行,脚本主要做以下事情:</p>
+<ol>
+<li>解析’Generated.xcconfig’文件,获取Flutter工程配置信息，文件在’/path/flutter_module/.ios/Flutter/‘目录下,文件中包含了Flutter SDK路径、Flutter工程路径、Flutter工程入口、编译目录等信息。</li>
+<li>将Flutter SDK中的Flutter.framework通过pod 添加到Native工程。</li>
+<li>将Flutter工程依赖的插件通过pod添加到Native工程，因为有些插件有Native部分代码.</li>
+</ol>
+<p>Generated.xcconfig信息如下所示,在多人合作开发时，会出现FLUTTER_ROOT和FLUTTER_APPLICATION_PATH团队间不一致的问题。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">FLUTTER_ROOT=/Users/zhenhaoxu/Code/flutter</span><br><span class="line">FLUTTER_APPLICATION_PATH=/Users/zhenhaoxu/Code/FlutterProj/flutter-hybrid/flutter_module</span><br><span class="line">FLUTTER_TARGET=lib/main.dart</span><br><span class="line">FLUTTER_BUILD_DIR=build</span><br><span class="line">SYMROOT=$&#123;SOURCE_ROOT&#125;/../build/ios</span><br><span class="line">FLUTTER_BUILD_NAME=1.0.0</span><br><span class="line">FLUTTER_BUILD_NUMBER=1</span><br></pre></td></tr></table></figure></p>
+<h3 id="最佳实践"><a href="#最佳实践" class="headerlink" title="最佳实践"></a>最佳实践</h3><p>基于官方的教程,结合实际开发稍作修改,推荐如下方案，即flutter_module在原生项目中使用 git submodule的形式进行管理。</p>
+<p>在flutter create 创建好flutter_module后,使用git管理起来。另外需要编辑flutter_module内的.gitigonre文件,添加’.ios/Flutter/Generated.xcconfig’。正如前文所说，每个人的环境都是不一样的。不同的开发人员在拉取到flutter_module后,需要使用flutter packages get 来重新生成Generated.xcconfig配置文件。</p>
+<p>此时在iOS原生项目中,可以通过如下命令集成:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git submodule add &#123;你的flutter module的仓库地址&#125;</span><br><span class="line">git submodule update</span><br></pre></td></tr></table></figure></p>
+<p>而podfile中的路径也就变成了flutter_application_path = ‘./flutter_module’ 即在iOS原生项目的当前目录下。其他配置和前文一样。</p>
+<p>团队中其他同事协同开发的步骤为:</p>
+<ol>
+<li>拉取项目源码git clone xxxxx{项目地址}</li>
+<li>初始化项目中的子模块git submodule init &amp;&amp; git submodule update</li>
+<li>执行flutter packages get (有时候可能出现无法运行可以进入.ios和.android中分别执行pod install 和 gradle assembleDebug,或者flutter build ios,flutter build apk等命令构建一次)</li>
+<li>Run…</li>
+</ol>
+<h2 id="1-2-搭建Android-Native-Flutter混合工程"><a href="#1-2-搭建Android-Native-Flutter混合工程" class="headerlink" title="1.2. 搭建Android Native Flutter混合工程"></a>1.2. 搭建Android Native Flutter混合工程</h2><ol>
+<li><p>在原生的Android项目中添加子模块,将上面创建的flutter module项目拉取到原生Android项目中。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git submodule add &#123;你的flutter module的仓库地址&#125;</span><br><span class="line">git submodule update</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在根目录的settings.gradle中添加如下配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">setBinding(new Binding([gradle: this]))                                 </span><br><span class="line">evaluate(new File(                                                                 </span><br><span class="line">  &apos;./flutter_module/.android/include_flutter.groovy&apos;                    </span><br><span class="line">))</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在原生项目的app目录下的build.gradle文件中添加Flutter库的依赖</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dependencies &#123;</span><br><span class="line">  implementation project(&apos;:flutter&apos;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>如果出现编译错误,是因为flutter_module中的Android没有升级androidX引起的。解决方案如下:</p>
+<ol>
+<li>Android studio 打开 flutter_module项目,右键.android目录,Flutter,Open Android Module.</li>
+<li>顶部菜单Refactor,Migrate to AndroidX.</li>
+</ol>
+<h2 id="1-3-原生项目与Flutter联合调试"><a href="#1-3-原生项目与Flutter联合调试" class="headerlink" title="1.3. 原生项目与Flutter联合调试"></a>1.3. 原生项目与Flutter联合调试</h2><p>以iOS为例。</p>
+<ol>
+<li>先用Xcode运行起原生项目,此时可以调试原生界面;</li>
+<li>如果安装了Android Studio,在Run菜单可以点击flutter attach。此时可以在Android Studio上断点调试Dart代码。</li>
+<li>也可以打开终端，进入到flutter_module目录，执行flutter attach命令,终端会显示输入r刷新;用编辑器修改flutter源码,在终端输入r,会发现界面hot reload了;</li>
+</ol>
+<h1 id="2-Native与Flutter通信"><a href="#2-Native与Flutter通信" class="headerlink" title="2. Native与Flutter通信"></a>2. Native与Flutter通信</h1><h2 id="2-1-概述"><a href="#2-1-概述" class="headerlink" title="2.1. 概述"></a>2.1. 概述</h2><p>阅读前建议先跟着<a href="https://flutter.dev/docs/development/platform-integration/platform-channels" target="_blank" rel="noopener">官方教程</a>过一遍demo，以获得基本概念。</p>
+<p><img src="Flutter系列-混合开发/message.png" alt="通信过程"></p>
+<p>如图所示,当在Native端初始化一个Channel并注册处理消息的Handler时，会同步生成一个与之对应的BinaryMessageHandler。BinaryMessageHandler以channel name 为key注册到BinaryMessenger中。</p>
+<p>当Flutter端发送消息到BinaryMessenger时，它以入参channel找到对应的BinaryMessageHandler，交由其处理。Channel从BinaryMessageHandler接收到二进制消息后，通过Codec解码后传递给Handler处理。</p>
+<p>Handler处理完毕后，回调result。并将result通过Codex编码为二进制数据格式，通过BinaryMessenger发送回Flutter端。</p>
+<h2 id="2-2-概念详解"><a href="#2-2-概念详解" class="headerlink" title="2.2. 概念详解"></a>2.2. 概念详解</h2><h3 id="2-2-1-Channel概述"><a href="#2-2-1-Channel概述" class="headerlink" title="2.2.1 Channel概述"></a>2.2.1 Channel概述</h3><p>Flutter共定义了3种不同类型的Channel，分别是</p>
+<ul>
+<li>BasicMessageChannel:用于传递字符串和半结构化的信息,持续通信,收到消息后可以回复此次消息。比如Flutter将从服务端陆续获取到的信息交给Native加工,Native处理完返回等。</li>
+<li>MethodChannel: 用于传递方法调用(method invocation)。一次性通信,如Flutter调用Native拍照;</li>
+<li>EventChannel: 用于数据流(event streams)的通信。持续通信,收到消息后无法回复此次消息,通常用于Native向Dart的通信,如:网络连接变化、传感器等;</li>
+</ul>
+<p>每种Channel均有三个重要成员变量:</p>
+<ul>
+<li>name:String 类型,代表Channel的名字，也是其唯一标识符;</li>
+<li>binaryMessenger:BinaryMessenger类型,代表消息信使,是消息的发送与接收的工具;</li>
+<li>codec:MessageCodec或MethodCodec类型，代表消息的编解码器;</li>
+</ul>
+<h3 id="2-2-2-channel-name"><a href="#2-2-2-channel-name" class="headerlink" title="2.2.2 channel name"></a>2.2.2 channel name</h3><p>一个Flutter应用中可能存在多个Channel,每个Channel在创建时必须指定一个独一无二的name,Channel之间使用name来区分彼此。当有消息从Flutter端发送到Native端时,会根据其传递过来的channel name 找到该channel对应的Handler。</p>
+<h3 id="2-2-3-消息信使-BinaryMessenger类型"><a href="#2-2-3-消息信使-BinaryMessenger类型" class="headerlink" title="2.2.3 消息信使:BinaryMessenger类型"></a>2.2.3 消息信使:BinaryMessenger类型</h3><p>BinaryMessenger是Native端与Flutter端通信的工具,其通信使用的消息格式为二进制格式数据。当我们向channel注册处理消息的Handler时，会以channelName为key,存储在BinaryMessenger中。</p>
+<p>当Flutter端发送消息到BinaryMessenger时，会根据name找到对应的Handler来处理。</p>
+<p>从源码中可以看到,接收到的是被编码的二进制数据,需要通过codec解码后，才能作为handler的入参。当handler处理完毕后,codec又会重新编码为二进制数据返回。</p>
+<p>BinaryMessenger在Android端是一个接口，其具体实现为FlutterNativeView。在iOS端是一个协议,名为FlutterBinaryMessenger,FlutterViewController遵守该协议。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">//platform_channel.dart 源码</span><br><span class="line">void setMessageHandler(Future&lt;T&gt; handler(T message)) &#123;</span><br><span class="line">    if (handler == null) &#123;</span><br><span class="line">      binaryMessenger.setMessageHandler(name, null);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      binaryMessenger.setMessageHandler(name, (ByteData message) async &#123;</span><br><span class="line">        return codec.encodeMessage(await handler(codec.decodeMessage(message)));</span><br><span class="line">      &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-4-消息编解码器-Codec"><a href="#2-2-4-消息编解码器-Codec" class="headerlink" title="2.2.4 消息编解码器 Codec"></a>2.2.4 消息编解码器 Codec</h3><p>Codec用于将二进制格式的数据转化为Handler能够识别的数据,Flutter定义了两种Codec:</p>
+<ul>
+<li>MessageCodec:二进制数据与基础数据之间的编解码。BasicMessageChannel所用。</li>
+<li>MethodCodec:二进制数据与MethodCall对象和返回结果之间的编解码。MethodChannel和EventChannel所用。</li>
+</ul>
+<p>MessageCodec有以下实现:</p>
+<ul>
+<li><p>BinaryCodec</p>
+<p>此种方式没有做任何操作，只是将二进制数据消息返回。</p>
+</li>
+<li><p>StringCodec</p>
+<p>此种方式用于字符串与二进制数据之间的编解码，格式为UTF-8</p>
+</li>
+<li><p>JSONMessageCodec</p>
+<p>此种方式用于基础数据与二进制之间的编解码，支持基础数据、列表、字典。</p>
+</li>
+<li><p>StandardMessageCodec</p>
+<p>此种方式是BasicMessageChannel的默认编解码器，支持基础数据、字典和列表。</p>
+</li>
+</ul>
+<p>MethodCodec有以下实现:</p>
+<ul>
+<li><p>JSONMethodCodec</p>
+<p>此种方式的编解码依赖于JSONMessageCodec,当在编码MethodCall时,会先将MethodCall转化为字典{“method”:method,”args”:args}。当在编码调用结果时,会将其转化为一个数组,调用成功为[result],调用失败为[code,message,detail]。再使用JSONMessageCodec将字典或数组转化为二进制数据。</p>
+</li>
+<li><p>StandardMethodCodec</p>
+<p>MethodCodec的默认实现，同上,依赖于StandardMethodCodec.</p>
+</li>
+</ul>
+<h1 id="3-详解消息传递过程"><a href="#3-详解消息传递过程" class="headerlink" title="3. 详解消息传递过程"></a>3. 详解消息传递过程</h1><p>接下来将以官方获取电量demo中,以一次MethodChannel的调用为例,详细解析消息的传递过程。</p>
+<h2 id="3-1-消息传递"><a href="#3-1-消息传递" class="headerlink" title="3.1 消息传递"></a>3.1 消息传递</h2><h3 id="3-1-1-Dart层"><a href="#3-1-1-Dart层" class="headerlink" title="3.1.1 Dart层"></a>3.1.1 Dart层</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">static const platform = const MethodChannel(&apos;samples.flutter.io/battery&apos;);</span><br><span class="line"></span><br><span class="line">Future&lt;void&gt; _getBatteryLevel() async &#123;</span><br><span class="line">  String batteryLevel;</span><br><span class="line">  try &#123;</span><br><span class="line">    final int result = await platform.invokeMethod(&apos;getBatteryLevel&apos;);</span><br><span class="line">    batteryLevel = &apos;Battery level at $result %.&apos;;</span><br><span class="line">  &#125; on PlatformException catch (e)&#123;</span><br><span class="line">    batteryLevel = &quot;failed to get battery level:$&#123;e.message&#125;&quot;;</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先,dart中会先创建一个MethodChannel对象,并用”samples.flutter.io/battery”的名字唯一标识这个通道。之后通过异步方式调用invokeMethod方法传入方法名来获取电量信息。</p>
+<p>invokeMethod源码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Future&lt;T&gt; invokeMethod&lt;T&gt;(String method, [ dynamic arguments ]) async &#123;</span><br><span class="line">    assert(method != null);</span><br><span class="line">    final ByteData result = await binaryMessenger.send(</span><br><span class="line">      name,</span><br><span class="line">      codec.encodeMethodCall(MethodCall(method, arguments)),</span><br><span class="line">    );</span><br><span class="line">    if (result == null) &#123;</span><br><span class="line">      throw MissingPluginException(&apos;No implementation found for method $method on channel $name&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">    final T typedResult = codec.decodeEnvelope(result);</span><br><span class="line">    return typedResult;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到,是通过上文提到的消息信息,binaryMessenger.send()方法来发送调用消息。send方法有两个参数,第一个是channel name,第二个是通过对MethodCall对象进行编码得到的二进制数据,ByteData对象。<br>send方法的源码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Future&lt;ByteData&gt; send(String channel, ByteData message) &#123;</span><br><span class="line">    final MessageHandler handler = _mockHandlers[channel];</span><br><span class="line">    if (handler != null)</span><br><span class="line">      return handler(message);</span><br><span class="line">    return _sendPlatformMessage(channel, message);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>会先从_mockHandlers中查找是否有缓存的MessageHandler对象，如果没有则通过_sendPlatformMessage方法发送消息,在方法中传入了一个callback,在数据返回后被回调。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">Future&lt;ByteData&gt; _sendPlatformMessage(String channel, ByteData message) &#123;</span><br><span class="line">    final Completer&lt;ByteData&gt; completer = Completer&lt;ByteData&gt;();</span><br><span class="line">    ui.window.sendPlatformMessage(channel, message, (ByteData reply) &#123;</span><br><span class="line">      try &#123;</span><br><span class="line">        completer.complete(reply);</span><br><span class="line">      &#125; catch (exception, stack) &#123;</span><br><span class="line">        ...</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    return completer.future;</span><br><span class="line">&#125;</span><br><span class="line">void sendPlatformMessage(String name,</span><br><span class="line">                           ByteData data,</span><br><span class="line">                           PlatformMessageResponseCallback callback) &#123;</span><br><span class="line">    final String error =</span><br><span class="line">        _sendPlatformMessage(name, _zonedPlatformMessageResponseCallback(callback), data);</span><br><span class="line">    if (error != null)</span><br><span class="line">      throw Exception(error);</span><br><span class="line">&#125;</span><br><span class="line">String _sendPlatformMessage(String name,</span><br><span class="line">                              PlatformMessageResponseCallback callback,</span><br><span class="line">                              ByteData data) native &apos;Window_sendPlatformMessage&apos;;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到，最终调用的是_sendPlatformMessage,而它是engine注册的名叫”Window_sendPlatformMessage”的本地方法。</p>
+<h3 id="3-1-2-Native层"><a href="#3-1-2-Native层" class="headerlink" title="3.1.2 Native层"></a>3.1.2 Native层</h3><h2 id="3-2-消息处理"><a href="#3-2-消息处理" class="headerlink" title="3.2 消息处理"></a>3.2 消息处理</h2><h1 id="4-混合栈方案"><a href="#4-混合栈方案" class="headerlink" title="4. 混合栈方案"></a>4. 混合栈方案</h1><p><a href="https://github.com/alibaba/flutter_boost" target="_blank" rel="noopener">https://github.com/alibaba/flutter_boost</a></p>
+<h1 id="5-参考资料"><a href="#5-参考资料" class="headerlink" title="5. 参考资料"></a>5. 参考资料</h1><p><a href="https://juejin.im/post/5b84ff6a6fb9a019f47d1cc9" target="_blank" rel="noopener">深入理解Flutter Platform Channel</a></p>
+<p><a href="https://mp.weixin.qq.com/s/-vyU1JQzdGLUmLGHRImIvg" target="_blank" rel="noopener">让Flutter真正支持View级别的混合开发</a></p>
+<p><a href="https://juejin.im/post/5c95de85518825638621b2d7" target="_blank" rel="noopener">全面解析Flutter Platform Channel原理</a></p>
+
+      
+
+      
+        <div class="page-reward">
+          <a href="javascript:;" class="page-reward-btn tooltip-top">
+            <div class="tooltip tooltip-east">
+            <span class="tooltip-item">
+              赏
+            </span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                <span class="tooltip-inner">
+                  <p class="reward-p"><i class="icon icon-quo-left"></i>谢谢你请我吃糖果<i class="icon icon-quo-right"></i></p>
+                  <div class="reward-box">
+                    
+                    
+                  </div>
+                </span>
+              </span>
+            </span>
+          </div>
+          </a>
+        </div>
+      
+    </div>
+    <div class="article-info article-info-index">
       
       
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2019" class="archive-year">2019</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/28/iOS底层/深入理解RunLoop/" class="archive-article-date">
-  	<time datetime="2019-05-28T06:12:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-28</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/28/iOS底层/深入理解RunLoop/">深入理解RunLoop</a>
-    </h1>
-  
+      
 
-        <div class="article-info info-on-right">
-          
-          
+      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://xuzhenhao.github.io/2019/07/19/Flutter/Flutter系列-混合开发/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/24/iOS底层/深入理解Runtime-KVC及KVO/" class="archive-article-date">
-  	<time datetime="2019-05-24T03:16:06.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-24</time>
-</a>
+<nav id="article-nav">
+  
+    <a href="/2019/08/21/Flutter/Flutter系列-动画/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          Flutter系列-动画
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/07/19/Flutter/Flutter系列-基础概念/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Flutter系列-基础概念</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
+        
+        
+    </div>
+</aside>
+
+
+
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/24/iOS底层/深入理解Runtime-KVC及KVO/">深入理解runtime-KVC及KVO</a>
-    </h1>
+  
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/24/iOS底层/深入理解Runtime-分类及关联对象/" class="archive-article-date">
-  	<time datetime="2019-05-24T03:12:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-24</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/24/iOS底层/深入理解Runtime-分类及关联对象/">深入理解runtime(三):分类及关联对象</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/20/iOS底层/深入理解Runtime-消息机制/" class="archive-article-date">
-  	<time datetime="2019-05-20T09:42:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-20</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/20/iOS底层/深入理解Runtime-消息机制/">深入理解runtime(二):消息机制</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/" class="archive-article-date">
-  	<time datetime="2019-05-16T09:58:33.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-16</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/">深入理解Runtime(一):对象的本质</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/15/iOS底层/深入理解编译过程/" class="archive-article-date">
-  	<time datetime="2019-05-15T08:05:25.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-15</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/15/iOS底层/深入理解编译过程/">深入理解编译过程</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/14/iOS底层/深入理解Block/" class="archive-article-date">
-  	<time datetime="2019-05-14T09:41:15.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-14</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/14/iOS底层/深入理解Block/">深入理解Block</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/09/iOS架构/关于Reactive-Programming的思考/" class="archive-article-date">
-  	<time datetime="2019-05-09T02:00:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-09</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/09/iOS架构/关于Reactive-Programming的思考/">关于Reactive Programming的思考</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
 
 
           </div>
@@ -404,8 +446,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,

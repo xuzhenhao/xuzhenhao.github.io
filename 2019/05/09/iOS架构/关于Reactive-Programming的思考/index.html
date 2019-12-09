@@ -15,12 +15,12 @@
 <meta property="og:site_name" content="欢迎来到Cloud的Blog">
 <meta property="og:description" content="主动命令与被动响应以一个歌曲列表界面为例，如果我们在列表页侧滑删除了一首歌，可以明显看到两种编程方式处理事件的区别。 在命令式的事件回调中，我们除了要更新数据源，还要主动调用逻辑相关的一系列数据变更和UI操作。需求或逻辑越复杂的页面，在处理这类事件回调时负担就会越重，而且越容易出错。特别是当换人维护页面时，他必须先通读整个页面逻辑，才有把握去修改。 在响应式的事件回调中，我们只需要关心对应的数据源">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/09/iOS架构/关于Reactive-Programming的思考/命令式与响应式区别.png">
+<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/09/iOS架构/关于Reactive-Programming的思考/关于Reactive-Programming的思考/命令式与响应式区别.png">
 <meta property="og:updated_time" content="2019-05-09T06:37:19.160Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="关于Reactive Programming的思考">
 <meta name="twitter:description" content="主动命令与被动响应以一个歌曲列表界面为例，如果我们在列表页侧滑删除了一首歌，可以明显看到两种编程方式处理事件的区别。 在命令式的事件回调中，我们除了要更新数据源，还要主动调用逻辑相关的一系列数据变更和UI操作。需求或逻辑越复杂的页面，在处理这类事件回调时负担就会越重，而且越容易出错。特别是当换人维护页面时，他必须先通读整个页面逻辑，才有把握去修改。 在响应式的事件回调中，我们只需要关心对应的数据源">
-<meta name="twitter:image" content="https://xuzhenhao.github.io/2019/05/09/iOS架构/关于Reactive-Programming的思考/命令式与响应式区别.png">
+<meta name="twitter:image" content="https://xuzhenhao.github.io/2019/05/09/iOS架构/关于Reactive-Programming的思考/关于Reactive-Programming的思考/命令式与响应式区别.png">
   
     <link rel="alternative" href="/atom.xml" title="欢迎来到Cloud的Blog" type="application/atom+xml">
   
@@ -176,7 +176,7 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="主动命令与被动响应"><a href="#主动命令与被动响应" class="headerlink" title="主动命令与被动响应"></a>主动命令与被动响应</h2><p><img src="/2019/05/09/iOS架构/关于Reactive-Programming的思考/命令式与响应式区别.png" alt="命令式与响应式区别"><br>以一个歌曲列表界面为例，如果我们在列表页侧滑删除了一首歌，可以明显看到两种编程方式处理事件的区别。</p>
+        <h2 id="主动命令与被动响应"><a href="#主动命令与被动响应" class="headerlink" title="主动命令与被动响应"></a>主动命令与被动响应</h2><p><img src="关于Reactive-Programming的思考/命令式与响应式区别.png" alt="命令式与响应式区别"><br>以一个歌曲列表界面为例，如果我们在列表页侧滑删除了一首歌，可以明显看到两种编程方式处理事件的区别。</p>
 <p>在命令式的事件回调中，我们除了要更新数据源，还要主动调用逻辑相关的一系列数据变更和UI操作。需求或逻辑越复杂的页面，在处理这类事件回调时负担就会越重，而且越容易出错。特别是当换人维护页面时，他必须先通读整个页面逻辑，才有把握去修改。</p>
 <p>在响应式的事件回调中，我们只需要关心对应的数据源修改。这个数据源修改会造成哪些连锁反应，不在我们响应这个事件的逻辑考虑范围内。这些逻辑只需要在页面初始化时进行订阅绑定。在这种模式下，无论是何种增删改查，都只需要处理相应的数据源即可。</p>
 <p>小结:响应式是一种去中心化的方式，不再需要一个中枢系统来组织、负责业务逻辑。各个组件只需要关心状态及对应的动作，客观上降低了系统的复杂度。</p>
@@ -287,11 +287,11 @@
   
 <nav id="article-nav">
   
-    <a href="/2019/05/10/Flutter/Flutter系列一-基本配置/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/2019/05/14/iOS底层/深入理解Block/" id="article-nav-newer" class="article-nav-link-wrap">
       <i class="icon-circle-left"></i>
       <div class="article-nav-title">
         
-          Flutter系列一:基本配置
+          深入理解Block
         
       </div>
     </a>

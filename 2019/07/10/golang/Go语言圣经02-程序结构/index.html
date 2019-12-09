@@ -6,15 +6,19 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="dns-prefetch" href="https://xuzhenhao.github.io">
-  <title>Archives: 2019/5 | 欢迎来到Cloud的Blog</title>
+  <title>Go语言圣经02-程序结构 | 欢迎来到Cloud的Blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="欢迎来到Cloud的Blog">
-<meta property="og:url" content="https://xuzhenhao.github.io/archives/2019/05/index.html">
+  <meta name="description" content="命名Go语言中包括函数名、变量名、包名等所有的命名都遵守相同的命名规则:以字母或下划线开头，后跟任意数量的字母、数字或下划线，并且区分大小写，不能使用保留关键字。 变量和函数名的首字母是大写，表示可以被外部的包访问。如fmt包的Printf函数。 包本身的名字总是用小写字母。 声明每个Go源文件总是以包的声明开始，package name 说明源文件属于哪个包。包声明语句之后是import语句导入">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go语言圣经02-程序结构">
+<meta property="og:url" content="https://xuzhenhao.github.io/2019/07/10/golang/Go语言圣经02-程序结构/index.html">
 <meta property="og:site_name" content="欢迎来到Cloud的Blog">
+<meta property="og:description" content="命名Go语言中包括函数名、变量名、包名等所有的命名都遵守相同的命名规则:以字母或下划线开头，后跟任意数量的字母、数字或下划线，并且区分大小写，不能使用保留关键字。 变量和函数名的首字母是大写，表示可以被外部的包访问。如fmt包的Printf函数。 包本身的名字总是用小写字母。 声明每个Go源文件总是以包的声明开始，package name 说明源文件属于哪个包。包声明语句之后是import语句导入">
 <meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-07-11T06:10:51.351Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="欢迎来到Cloud的Blog">
+<meta name="twitter:title" content="Go语言圣经02-程序结构">
+<meta name="twitter:description" content="命名Go语言中包括函数名、变量名、包名等所有的命名都遵守相同的命名规则:以字母或下划线开头，后跟任意数量的字母、数字或下划线，并且区分大小写，不能使用保留关键字。 变量和函数名的首字母是大写，表示可以被外部的包访问。如fmt包的Printf函数。 包本身的名字总是用小写字母。 声明每个Go源文件总是以包的声明开始，package name 说明源文件属于哪个包。包声明语句之后是import语句导入">
   
     <link rel="alternative" href="/atom.xml" title="欢迎来到Cloud的Blog" type="application/atom+xml">
   
@@ -150,238 +154,186 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-golang/Go语言圣经02-程序结构" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Go语言圣经02-程序结构
+    </h1>
+  
+
+        
+        <a href="/2019/07/10/golang/Go语言圣经02-程序结构/" class="archive-article-date">
+  	<time datetime="2019-07-10T09:31:41.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-07-10</time>
+</a>
+        
+      </header>
     
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="命名"><a href="#命名" class="headerlink" title="命名"></a>命名</h2><p>Go语言中包括函数名、变量名、包名等所有的命名都遵守相同的命名规则:以字母或下划线开头，后跟任意数量的字母、数字或下划线，并且区分大小写，不能使用保留关键字。</p>
+<p>变量和函数名的首字母是大写，表示可以被外部的包访问。如fmt包的Printf函数。</p>
+<p>包本身的名字总是用小写字母。</p>
+<h2 id="声明"><a href="#声明" class="headerlink" title="声明"></a>声明</h2><p>每个Go源文件总是以包的声明开始，package name 说明源文件属于哪个包。包声明语句之后是import语句导入依赖的其他包，然后是包一级的类型、变量、常量、函数的声明语句。</p>
+<p>Go语言主要有四种类型的声明语句:var、const、type和func，分别对应常量、变量、类型和函数的声明。</p>
+<h2 id="变量"><a href="#变量" class="headerlink" title="变量"></a>变量</h2><p>变量声明的一般语法如下:</p>
+<blockquote>
+<p>var 变量名字 类型 = 表达式</p>
+</blockquote>
+<p>其中”类型”或”=表达式”可以省略其中一个。如果省略类型信息，那么将根据表达式来推导;如果省略初始表达式，那么将用零值初始化。</p>
+<p>数值类型的零值为0，布尔类型的零值是false,字符串类型的零值是””,引用类型的零值是nil。零值机制使得Go中不存在未初始化的变量。</p>
+<p>可以使用 “名字 := 表达式”的简短形式声明变量，此时类型自动推导。仅适用于局部变量的声明。</p>
+<p>表达式new(T)创建一个T类型的匿名变量，返回变量地址，即*T。且每次都是返回一个新的变量地址，因此下面两个地址是不同的。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">p := new(int)</span><br><span class="line">q := new(int)</span><br><span class="line">fmt.Println(p == q)</span><br></pre></td></tr></table></figure></p>
+<p>包一级声明的变量，其生命周期和程序的运行周期的一致的。而局部变量在不再被引用之后，可能会被垃圾回收机制回收。</p>
+<p>编译器会自动选择在栈上还是在堆上分配局部变量的存储空间，而并非由声明方式决定。如下面的x变量必须分配到堆上，因为在函数外还是能通过包一级的global变量找到。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var global *int</span><br><span class="line">func f()&#123;</span><br><span class="line">    var x int = 1</span><br><span class="line">    global = &amp;x</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="包和文件"><a href="#包和文件" class="headerlink" title="包和文件"></a>包和文件</h2><p>每个包都对应一个独立的命令空间。如image包中的Decode函数和unicode/utf16包中的Decode函数是不同且隔离的。要在外部引用，必须显示使用image.Decode或utf16.Decode.</p>
+<p>包名一般是短小的名字,且和导入路径的最后一个字段相同。</p>
+<p>每个包在解决依赖的前提下，以导入声明的顺序初始化，每个包只会被初始化一次。因此如果一个p包导入了q包，那么在p包初始化的时候可以认为q包必然已经初始化过了。main包最后被初始化。</p>
+<p>每个文件可以通过init初始化函数来初始化工作，在程序开始时按照声明的顺序被自动调用。初始化函数不能被调用或引用。</p>
+<blockquote>
+<p>func init(){}</p>
+</blockquote>
+
+      
+
+      
+        <div class="page-reward">
+          <a href="javascript:;" class="page-reward-btn tooltip-top">
+            <div class="tooltip tooltip-east">
+            <span class="tooltip-item">
+              赏
+            </span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                <span class="tooltip-inner">
+                  <p class="reward-p"><i class="icon icon-quo-left"></i>谢谢你请我吃糖果<i class="icon icon-quo-right"></i></p>
+                  <div class="reward-box">
+                    
+                    
+                  </div>
+                </span>
+              </span>
+            </span>
+          </div>
+          </a>
+        </div>
+      
+    </div>
+    <div class="article-info article-info-index">
       
       
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2019" class="archive-year">2019</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/28/iOS底层/深入理解RunLoop/" class="archive-article-date">
-  	<time datetime="2019-05-28T06:12:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-28</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/28/iOS底层/深入理解RunLoop/">深入理解RunLoop</a>
-    </h1>
-  
+      
 
-        <div class="article-info info-on-right">
-          
-          
+      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://xuzhenhao.github.io/2019/07/10/golang/Go语言圣经02-程序结构/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/24/iOS底层/深入理解Runtime-KVC及KVO/" class="archive-article-date">
-  	<time datetime="2019-05-24T03:16:06.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-24</time>
-</a>
+<nav id="article-nav">
+  
+    <a href="/2019/07/11/golang/Go语言圣经03-数据类型/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          Go语言圣经03-数据类型
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/07/10/golang/Go语言圣经01-环境配置/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Go语言圣经01-环境配置</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
+        
+        
+    </div>
+</aside>
+
+
+
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/24/iOS底层/深入理解Runtime-KVC及KVO/">深入理解runtime-KVC及KVO</a>
-    </h1>
+  
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/24/iOS底层/深入理解Runtime-分类及关联对象/" class="archive-article-date">
-  	<time datetime="2019-05-24T03:12:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-24</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/24/iOS底层/深入理解Runtime-分类及关联对象/">深入理解runtime(三):分类及关联对象</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/20/iOS底层/深入理解Runtime-消息机制/" class="archive-article-date">
-  	<time datetime="2019-05-20T09:42:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-20</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/20/iOS底层/深入理解Runtime-消息机制/">深入理解runtime(二):消息机制</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/" class="archive-article-date">
-  	<time datetime="2019-05-16T09:58:33.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-16</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/">深入理解Runtime(一):对象的本质</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/15/iOS底层/深入理解编译过程/" class="archive-article-date">
-  	<time datetime="2019-05-15T08:05:25.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-15</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/15/iOS底层/深入理解编译过程/">深入理解编译过程</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/14/iOS底层/深入理解Block/" class="archive-article-date">
-  	<time datetime="2019-05-14T09:41:15.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-14</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/14/iOS底层/深入理解Block/">深入理解Block</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/09/iOS架构/关于Reactive-Programming的思考/" class="archive-article-date">
-  	<time datetime="2019-05-09T02:00:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-09</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/09/iOS架构/关于Reactive-Programming的思考/">关于Reactive Programming的思考</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
 
 
           </div>
@@ -404,8 +356,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,

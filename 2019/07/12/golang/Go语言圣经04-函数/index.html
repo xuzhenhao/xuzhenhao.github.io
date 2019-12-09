@@ -6,15 +6,19 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="dns-prefetch" href="https://xuzhenhao.github.io">
-  <title>Archives: 2019/5 | 欢迎来到Cloud的Blog</title>
+  <title>Go语言圣经04-函数 | 欢迎来到Cloud的Blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="欢迎来到Cloud的Blog">
-<meta property="og:url" content="https://xuzhenhao.github.io/archives/2019/05/index.html">
+  <meta name="description" content="Go语言的函数调用栈为可变栈，栈的大小按需增加。使得我们在使用递归等场景时不必考虑溢出和安全问题。 Go语言中函数是first-class,像其他值一样拥有类型，可以被赋值给其他变量，传递给函数，从函数返回。函数类型的零值是nil，调用nil的函数会引起panic错误。 defer语句经常被用于处理成对的操作，如打开、关闭、连接、断开连接、加锁、释放锁。通过defer机制，不论函数逻辑多复杂，都能">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go语言圣经04-函数">
+<meta property="og:url" content="https://xuzhenhao.github.io/2019/07/12/golang/Go语言圣经04-函数/index.html">
 <meta property="og:site_name" content="欢迎来到Cloud的Blog">
+<meta property="og:description" content="Go语言的函数调用栈为可变栈，栈的大小按需增加。使得我们在使用递归等场景时不必考虑溢出和安全问题。 Go语言中函数是first-class,像其他值一样拥有类型，可以被赋值给其他变量，传递给函数，从函数返回。函数类型的零值是nil，调用nil的函数会引起panic错误。 defer语句经常被用于处理成对的操作，如打开、关闭、连接、断开连接、加锁、释放锁。通过defer机制，不论函数逻辑多复杂，都能">
 <meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-07-15T11:22:42.321Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="欢迎来到Cloud的Blog">
+<meta name="twitter:title" content="Go语言圣经04-函数">
+<meta name="twitter:description" content="Go语言的函数调用栈为可变栈，栈的大小按需增加。使得我们在使用递归等场景时不必考虑溢出和安全问题。 Go语言中函数是first-class,像其他值一样拥有类型，可以被赋值给其他变量，传递给函数，从函数返回。函数类型的零值是nil，调用nil的函数会引起panic错误。 defer语句经常被用于处理成对的操作，如打开、关闭、连接、断开连接、加锁、释放锁。通过defer机制，不论函数逻辑多复杂，都能">
   
     <link rel="alternative" href="/atom.xml" title="欢迎来到Cloud的Blog" type="application/atom+xml">
   
@@ -150,238 +154,171 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-golang/Go语言圣经04-函数" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Go语言圣经04-函数
+    </h1>
+  
+
+        
+        <a href="/2019/07/12/golang/Go语言圣经04-函数/" class="archive-article-date">
+  	<time datetime="2019-07-12T11:17:17.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-07-12</time>
+</a>
+        
+      </header>
     
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Go语言的函数调用栈为可变栈，栈的大小按需增加。使得我们在使用递归等场景时不必考虑溢出和安全问题。</p>
+<p>Go语言中函数是first-class,像其他值一样拥有类型，可以被赋值给其他变量，传递给函数，从函数返回。函数类型的零值是nil，调用nil的函数会引起panic错误。</p>
+<p>defer语句经常被用于处理成对的操作，如打开、关闭、连接、断开连接、加锁、释放锁。通过defer机制，不论函数逻辑多复杂，都能保证在任何执行路径下，资源被释放。多条defer语句遵循先进后出的栈顺序执行。</p>
+<p>Go语言中可以给任意类型定义方法，因此我们可以方便的为一些简单的数值、字符串、切片等附加行为。</p>
+<p>在包外调用时，方法会比函数调用更简洁方便。函数调用必须写全包名，而方法可以通过实例变量直接调用。</p>
+<p>不管方法的接收者是指针类型还是非指针类型，都是可以通过指针/非指针类型进行调用的，编译器会帮你做类型转换。需要关注的是，如果声明为非指针变量，调用会产生一次拷贝;如果声明为指针类型,他指向的始终是一块内存地址，就算你对其进行了拷贝。</p>
+<p>接口类型是对其他类型行为的抽象和概括。也就是说当拿到接口类型时，不知道它是什么，唯一知道的就是可以通过它的方法来做什么。</p>
+
+      
+
+      
+        <div class="page-reward">
+          <a href="javascript:;" class="page-reward-btn tooltip-top">
+            <div class="tooltip tooltip-east">
+            <span class="tooltip-item">
+              赏
+            </span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                <span class="tooltip-inner">
+                  <p class="reward-p"><i class="icon icon-quo-left"></i>谢谢你请我吃糖果<i class="icon icon-quo-right"></i></p>
+                  <div class="reward-box">
+                    
+                    
+                  </div>
+                </span>
+              </span>
+            </span>
+          </div>
+          </a>
+        </div>
+      
+    </div>
+    <div class="article-info article-info-index">
       
       
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2019" class="archive-year">2019</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/28/iOS底层/深入理解RunLoop/" class="archive-article-date">
-  	<time datetime="2019-05-28T06:12:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-28</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/28/iOS底层/深入理解RunLoop/">深入理解RunLoop</a>
-    </h1>
-  
+      
 
-        <div class="article-info info-on-right">
-          
-          
+      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://xuzhenhao.github.io/2019/07/12/golang/Go语言圣经04-函数/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/24/iOS底层/深入理解Runtime-KVC及KVO/" class="archive-article-date">
-  	<time datetime="2019-05-24T03:16:06.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-24</time>
-</a>
+<nav id="article-nav">
+  
+    <a href="/2019/07/19/Flutter/Flutter系列-基础概念/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          Flutter系列-基础概念
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/07/11/golang/Go语言圣经03-数据类型/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Go语言圣经03-数据类型</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
+        
+        
+    </div>
+</aside>
+
+
+
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/24/iOS底层/深入理解Runtime-KVC及KVO/">深入理解runtime-KVC及KVO</a>
-    </h1>
+  
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/24/iOS底层/深入理解Runtime-分类及关联对象/" class="archive-article-date">
-  	<time datetime="2019-05-24T03:12:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-24</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/24/iOS底层/深入理解Runtime-分类及关联对象/">深入理解runtime(三):分类及关联对象</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/20/iOS底层/深入理解Runtime-消息机制/" class="archive-article-date">
-  	<time datetime="2019-05-20T09:42:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-20</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/20/iOS底层/深入理解Runtime-消息机制/">深入理解runtime(二):消息机制</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/" class="archive-article-date">
-  	<time datetime="2019-05-16T09:58:33.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-16</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/">深入理解Runtime(一):对象的本质</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/15/iOS底层/深入理解编译过程/" class="archive-article-date">
-  	<time datetime="2019-05-15T08:05:25.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-15</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/15/iOS底层/深入理解编译过程/">深入理解编译过程</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/14/iOS底层/深入理解Block/" class="archive-article-date">
-  	<time datetime="2019-05-14T09:41:15.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-14</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/14/iOS底层/深入理解Block/">深入理解Block</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/09/iOS架构/关于Reactive-Programming的思考/" class="archive-article-date">
-  	<time datetime="2019-05-09T02:00:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-09</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/09/iOS架构/关于Reactive-Programming的思考/">关于Reactive Programming的思考</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
 
 
           </div>
@@ -404,8 +341,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,

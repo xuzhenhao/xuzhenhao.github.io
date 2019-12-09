@@ -6,15 +6,19 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="dns-prefetch" href="https://xuzhenhao.github.io">
-  <title>Archives: 2019/5 | 欢迎来到Cloud的Blog</title>
+  <title>Go语言圣经01-环境配置 | 欢迎来到Cloud的Blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="欢迎来到Cloud的Blog">
-<meta property="og:url" content="https://xuzhenhao.github.io/archives/2019/05/index.html">
+  <meta name="description" content="安装 安装包下载地址:https://golang.org/dl/,可以直接下载pkg的安装包，双击安装 安装完毕后，在/usr/local/go 路径可以看到相关文件 将 /usr/local/go/bin 目录添加至PATH环境变量：export PATH=$PATH:/usr/local/go/bin 在终端输入go version ,检查环境是否配置成功 配置GOPATH: open ~/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go语言圣经01-环境配置">
+<meta property="og:url" content="https://xuzhenhao.github.io/2019/07/10/golang/Go语言圣经01-环境配置/index.html">
 <meta property="og:site_name" content="欢迎来到Cloud的Blog">
+<meta property="og:description" content="安装 安装包下载地址:https://golang.org/dl/,可以直接下载pkg的安装包，双击安装 安装完毕后，在/usr/local/go 路径可以看到相关文件 将 /usr/local/go/bin 目录添加至PATH环境变量：export PATH=$PATH:/usr/local/go/bin 在终端输入go version ,检查环境是否配置成功 配置GOPATH: open ~/">
 <meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-07-10T07:28:10.806Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="欢迎来到Cloud的Blog">
+<meta name="twitter:title" content="Go语言圣经01-环境配置">
+<meta name="twitter:description" content="安装 安装包下载地址:https://golang.org/dl/,可以直接下载pkg的安装包，双击安装 安装完毕后，在/usr/local/go 路径可以看到相关文件 将 /usr/local/go/bin 目录添加至PATH环境变量：export PATH=$PATH:/usr/local/go/bin 在终端输入go version ,检查环境是否配置成功 配置GOPATH: open ~/">
   
     <link rel="alternative" href="/atom.xml" title="欢迎来到Cloud的Blog" type="application/atom+xml">
   
@@ -150,238 +154,207 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-golang/Go语言圣经01-环境配置" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Go语言圣经01-环境配置
+    </h1>
+  
+
+        
+        <a href="/2019/07/10/golang/Go语言圣经01-环境配置/" class="archive-article-date">
+  	<time datetime="2019-07-10T02:54:59.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-07-10</time>
+</a>
+        
+      </header>
     
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><ol>
+<li>安装包下载地址:<a href="https://golang.org/dl/,可以直接下载pkg的安装包，双击安装" target="_blank" rel="noopener">https://golang.org/dl/,可以直接下载pkg的安装包，双击安装</a></li>
+<li>安装完毕后，在/usr/local/go 路径可以看到相关文件</li>
+<li>将 /usr/local/go/bin 目录添加至PATH环境变量：export PATH=$PATH:/usr/local/go/bin</li>
+<li>在终端输入go version ,检查环境是否配置成功</li>
+<li>配置GOPATH:<ul>
+<li>open ~/.bash_profile 打开配置文件</li>
+<li>在配置文件内添加 export GOPATH=$HOME/Code/GOPATH。$HOME后面的路径可以自由选择。</li>
+<li>终端输入 source ~/.bash_profile 使配置生效</li>
+</ul>
+</li>
+</ol>
+<h2 id="理解环境变量"><a href="#理解环境变量" class="headerlink" title="理解环境变量"></a>理解环境变量</h2><h3 id="GOROOT"><a href="#GOROOT" class="headerlink" title="GOROOT:"></a>GOROOT:</h3><p>是Go语言安装根目录的路径，也就是上文中的/usr/local/go。如果一台机器上有多个Go版本并存，就需要注意GOROOT的设置来切换Go版本。</p>
+<h3 id="GOPATH"><a href="#GOPATH" class="headerlink" title="GOPATH:"></a>GOPATH:</h3><p>是Go语言的工作目录,决定了使用Go命令如go install、go get 要把执行文件和源码放到哪个位置，决定项目中的Go依赖包是如何导入的。目录里分别有bin、pkg、src3个文件夹。</p>
+<p>bin内存放可执行文件,go install 命令会把可执行文件放入该目录。</p>
+<p>pkg存放编译打包后的lib，主要的*.a文件。</p>
+<p>src内存放项目源码文件，包括go get获取的第三方依赖包。需要注意的是，GOPATH是整个Go工作环境，不是单个项目的环境(当然你也可以通过设置一个项目一个GOPATH)。具体的目录结构如下所示:</p>
+<pre>
+$GOPATH
+    bin
+    pkg
+    src
+        github.com
+        项目A
+        项目B
+        ...
+</pre>
+
+
+<h2 id="Go-Module"><a href="#Go-Module" class="headerlink" title="Go Module"></a>Go Module</h2><p>在理解依赖管理前，先思考一下如下场景。A项目依赖一个日志包，log v1.0.0。B项目依赖同样的日志包，但是用的最新版，log v2.0.0。在基于GOPATH的管理模式下，要如何处理类似的包依赖管理问题呢？</p>
+<p>GOPATH没有依赖包的版本控制，之后社区出现了各种各样的依赖管理方案。而Go Module则是官方的依赖管理方式。</p>
+<h3 id="准备环境"><a href="#准备环境" class="headerlink" title="准备环境"></a>准备环境</h3><p>Go Module是在Go的1.11版本引入的,但是默认该选项是关闭的，可以通过环境变量GO111MODULE=on 开启 Go Module支持。</p>
+<h3 id="新增go-mod配置文件"><a href="#新增go-mod配置文件" class="headerlink" title="新增go.mod配置文件"></a>新增go.mod配置文件</h3><ol>
+<li>如果项目(foo)路径位于$GOPATH/src的目录下，进入/foo 路径，执行 go mod init 即可;</li>
+<li>如果项目(foo)路径在$GOPATH外,进入/foo 目录，执行 go mod init foo 即可;</li>
+</ol>
+<h3 id="简单实用"><a href="#简单实用" class="headerlink" title="简单实用"></a>简单实用</h3><p>在 foo的main中写入如下代码:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">	&quot;fmt&quot;</span><br><span class="line">	&quot;net/http&quot;</span><br><span class="line"></span><br><span class="line">	&quot;github.com/gin-gonic/gin&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line">	g := gin.New()</span><br><span class="line">	http.ListenAndServe(&quot;8081&quot;, g)</span><br><span class="line">	fmt.Println(&quot;启动成功&quot;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>执行 go run main.go 会看到如下提示:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">go: golang.org/x/sys@v0.0.0-20190222072716-a9d3bda3a223: unrecognized import path &quot;golang.org/x/sys&quot; (https fetch: Get https://golang.org/x/sys?go-get=1: dial tcp 216.239.37.1:443: i/o timeout)</span><br><span class="line">go: golang.org/x/net@v0.0.0-20190503192946-f4e77d36d62c: unrecognized import path &quot;golang.org/x/net&quot; (https fetch: Get https://golang.org/x/net?go-get=1: dial tcp 216.239.37.1:443: i/o timeout)</span><br><span class="line">go: error loading module requirements</span><br></pre></td></tr></table></figure></p>
+<p>即使在$GoPATH/src/ 下之前已经下过对应的包，在使用Go module后会发现会自动去拉一份。因为环境变量$GOPATH/src下的包不再用于解析imports包路径，下载的包将存放于$GOPATH/pkg/mod路径。而又由于墙的问题，导致拉取失败。</p>
+<p>在开启Go moduel功能后，官方还提供了环境变量GOPROXY用于设置包镜像服务。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">export GOPROXY=https://goproxy.io</span><br></pre></td></tr></table></figure></p>
+<p>再次执行 go run main.go，在拉取一系列包后，程序成功运行。</p>
+<p>此时来到$GOPATH/pkg 目录下,发现多出了一个mod文件夹，里面存放了我们刚才拉的依赖包。</p>
+<p>打开go.mod文件，发现多了一行,表明该模块依赖于1.4.0版本的gin.<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">require github.com/gin-gonic/gin v1.4.0</span><br></pre></td></tr></table></figure></p>
+
+      
+
+      
+        <div class="page-reward">
+          <a href="javascript:;" class="page-reward-btn tooltip-top">
+            <div class="tooltip tooltip-east">
+            <span class="tooltip-item">
+              赏
+            </span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                <span class="tooltip-inner">
+                  <p class="reward-p"><i class="icon icon-quo-left"></i>谢谢你请我吃糖果<i class="icon icon-quo-right"></i></p>
+                  <div class="reward-box">
+                    
+                    
+                  </div>
+                </span>
+              </span>
+            </span>
+          </div>
+          </a>
+        </div>
+      
+    </div>
+    <div class="article-info article-info-index">
       
       
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2019" class="archive-year">2019</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/28/iOS底层/深入理解RunLoop/" class="archive-article-date">
-  	<time datetime="2019-05-28T06:12:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-28</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/28/iOS底层/深入理解RunLoop/">深入理解RunLoop</a>
-    </h1>
-  
+      
 
-        <div class="article-info info-on-right">
-          
-          
+      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://xuzhenhao.github.io/2019/07/10/golang/Go语言圣经01-环境配置/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/24/iOS底层/深入理解Runtime-KVC及KVO/" class="archive-article-date">
-  	<time datetime="2019-05-24T03:16:06.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-24</time>
-</a>
+<nav id="article-nav">
+  
+    <a href="/2019/07/10/golang/Go语言圣经02-程序结构/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          Go语言圣经02-程序结构
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/07/01/数据库/mysql/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">mysql</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
+        
+        
+    </div>
+</aside>
+
+
+
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/24/iOS底层/深入理解Runtime-KVC及KVO/">深入理解runtime-KVC及KVO</a>
-    </h1>
+  
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/24/iOS底层/深入理解Runtime-分类及关联对象/" class="archive-article-date">
-  	<time datetime="2019-05-24T03:12:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-24</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/24/iOS底层/深入理解Runtime-分类及关联对象/">深入理解runtime(三):分类及关联对象</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/20/iOS底层/深入理解Runtime-消息机制/" class="archive-article-date">
-  	<time datetime="2019-05-20T09:42:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-20</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/20/iOS底层/深入理解Runtime-消息机制/">深入理解runtime(二):消息机制</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/" class="archive-article-date">
-  	<time datetime="2019-05-16T09:58:33.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-16</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/">深入理解Runtime(一):对象的本质</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/15/iOS底层/深入理解编译过程/" class="archive-article-date">
-  	<time datetime="2019-05-15T08:05:25.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-15</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/15/iOS底层/深入理解编译过程/">深入理解编译过程</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/14/iOS底层/深入理解Block/" class="archive-article-date">
-  	<time datetime="2019-05-14T09:41:15.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-14</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/14/iOS底层/深入理解Block/">深入理解Block</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/09/iOS架构/关于Reactive-Programming的思考/" class="archive-article-date">
-  	<time datetime="2019-05-09T02:00:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-09</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/09/iOS架构/关于Reactive-Programming的思考/">关于Reactive Programming的思考</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
 
 
           </div>
@@ -404,8 +377,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,

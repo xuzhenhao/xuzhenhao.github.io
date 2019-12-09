@@ -15,12 +15,12 @@
 <meta property="og:site_name" content="欢迎来到Cloud的Blog">
 <meta property="og:description" content="编译器把一种编程语言(原始语言)转换为另一种编程语言(目标语言)的程序叫做编译器。 编译器一般由前端和后端两部分组成，前端负责词法分析、语法分析，生成中间代码。后端以中间代码作为输入，进行架构无关的优化，接着针对不同的架构生成不同的机器码。  前后端分离及通过中间代码(IR)协作的设计，使得前后端可以独立变化。新增一门语言只需要修改前端，而新增一个CPU架构只需要修改后端即可。  LLVM什么是L">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/15/iOS底层/深入理解编译过程/编译流程.png">
+<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/15/iOS底层/深入理解编译过程/深入理解编译过程/编译流程.png">
 <meta property="og:updated_time" content="2019-05-23T02:32:15.955Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入理解编译过程">
 <meta name="twitter:description" content="编译器把一种编程语言(原始语言)转换为另一种编程语言(目标语言)的程序叫做编译器。 编译器一般由前端和后端两部分组成，前端负责词法分析、语法分析，生成中间代码。后端以中间代码作为输入，进行架构无关的优化，接着针对不同的架构生成不同的机器码。  前后端分离及通过中间代码(IR)协作的设计，使得前后端可以独立变化。新增一门语言只需要修改前端，而新增一个CPU架构只需要修改后端即可。  LLVM什么是L">
-<meta name="twitter:image" content="https://xuzhenhao.github.io/2019/05/15/iOS底层/深入理解编译过程/编译流程.png">
+<meta name="twitter:image" content="https://xuzhenhao.github.io/2019/05/15/iOS底层/深入理解编译过程/深入理解编译过程/编译流程.png">
   
     <link rel="alternative" href="/atom.xml" title="欢迎来到Cloud的Blog" type="application/atom+xml">
   
@@ -189,7 +189,7 @@
 <p>LLVM引发一些人来为许多语言开发新的编译器，其中一个最引发注意的就是Clang，它是一个新的编译器，同时支持C、Objective-C以及C++.</p>
 </blockquote>
 <p>这里引出了我们的主角Clang。Object-c/c/c++编译器的前端就是Clang。以下是编译器编译的大致流程。</p>
-<p><img src="/2019/05/15/iOS底层/深入理解编译过程/编译流程.png" alt="编译流程"></p>
+<p><img src="深入理解编译过程/编译流程.png" alt="编译流程"></p>
 <h2 id="m文件编译流程"><a href="#m文件编译流程" class="headerlink" title=".m文件编译流程"></a>.m文件编译流程</h2><p>本节将从代码层面跟踪一个文件的编译过程，文件名为main.c。代码如下:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#define IPhoneXBarHeight 88</span><br><span class="line">#define DEBUG 1</span><br><span class="line"></span><br><span class="line">int main() &#123;</span><br><span class="line">    //屏幕宽度</span><br><span class="line">    int barHeight = IPhoneXBarHeight;</span><br><span class="line">#ifdef DEBUG</span><br><span class="line">    printf(&quot;hello debug\n&quot;);</span><br><span class="line">#else</span><br><span class="line">    printf(&quot;hello world\n&quot;);</span><br><span class="line">#endif</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h3 id="预处理"><a href="#预处理" class="headerlink" title="预处理"></a>预处理</h3><p>预处理阶段会进行头文件引入替换、宏替换、注释处理、条件编译等操作。</p>

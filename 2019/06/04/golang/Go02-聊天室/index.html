@@ -6,15 +6,19 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="dns-prefetch" href="https://xuzhenhao.github.io">
-  <title>Archives: 2019/5 | 欢迎来到Cloud的Blog</title>
+  <title>Go02-聊天室 | 欢迎来到Cloud的Blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="欢迎来到Cloud的Blog">
-<meta property="og:url" content="https://xuzhenhao.github.io/archives/2019/05/index.html">
+  <meta name="description" content="简介搭建完环境后,最快的学习方式莫过于应用go进行开发，边开发边学习。本篇展示了一个简单的终端聊天室demo,覆盖了go中绝大多数是语法特性。过程中建议配合Go语言教程食用。 聊天室功能展示:  新建一个终端，作为server端。运行 go run chat.go 来启动服务 另开一个终端a,作为其中一个client端。 通过 nc 127.0.0.1 8000 来连接到服务端，成功后会看到类似">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go02-聊天室">
+<meta property="og:url" content="https://xuzhenhao.github.io/2019/06/04/golang/Go02-聊天室/index.html">
 <meta property="og:site_name" content="欢迎来到Cloud的Blog">
+<meta property="og:description" content="简介搭建完环境后,最快的学习方式莫过于应用go进行开发，边开发边学习。本篇展示了一个简单的终端聊天室demo,覆盖了go中绝大多数是语法特性。过程中建议配合Go语言教程食用。 聊天室功能展示:  新建一个终端，作为server端。运行 go run chat.go 来启动服务 另开一个终端a,作为其中一个client端。 通过 nc 127.0.0.1 8000 来连接到服务端，成功后会看到类似">
 <meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-06-05T07:12:41.397Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="欢迎来到Cloud的Blog">
+<meta name="twitter:title" content="Go02-聊天室">
+<meta name="twitter:description" content="简介搭建完环境后,最快的学习方式莫过于应用go进行开发，边开发边学习。本篇展示了一个简单的终端聊天室demo,覆盖了go中绝大多数是语法特性。过程中建议配合Go语言教程食用。 聊天室功能展示:  新建一个终端，作为server端。运行 go run chat.go 来启动服务 另开一个终端a,作为其中一个client端。 通过 nc 127.0.0.1 8000 来连接到服务端，成功后会看到类似">
   
     <link rel="alternative" href="/atom.xml" title="欢迎来到Cloud的Blog" type="application/atom+xml">
   
@@ -150,238 +154,186 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-golang/Go02-聊天室" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Go02-聊天室
+    </h1>
+  
+
+        
+        <a href="/2019/06/04/golang/Go02-聊天室/" class="archive-article-date">
+  	<time datetime="2019-06-04T09:38:36.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-06-04</time>
+</a>
+        
+      </header>
     
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>搭建完环境后,最快的学习方式莫过于应用go进行开发，边开发边学习。本篇展示了一个简单的终端聊天室demo,覆盖了go中绝大多数是语法特性。过程中建议配合<a href="https://www.runoob.com/go/go-tutorial.html" target="_blank" rel="noopener">Go语言教程</a>食用。</p>
+<p>聊天室功能展示:</p>
+<ol>
+<li>新建一个终端，作为server端。运行 go run chat.go 来启动服务</li>
+<li>另开一个终端a,作为其中一个client端。 通过 nc 127.0.0.1 8000 来连接到服务端，成功后会看到类似 127.0.0.1:54071:login 的提示，证明登录成功。</li>
+<li>再另开一个终端b,作为另一个client。操作同2。b登录成功后，a的界面会收到b的登录信息。</li>
+<li>登录后，a、b可以在各自终端任意输入，另一端能收到并显示对方消息。</li>
+</ol>
+<h2 id="完整代码"><a href="#完整代码" class="headerlink" title="完整代码"></a>完整代码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br></pre></td><td class="code"><pre><span class="line">//①</span><br><span class="line">package main</span><br><span class="line"></span><br><span class="line">//②</span><br><span class="line">import (</span><br><span class="line">	&quot;fmt&quot;</span><br><span class="line">	&quot;net&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">// Client 用户结构体类型 ③</span><br><span class="line">type Client struct &#123;</span><br><span class="line">	C    chan string // 消息通道</span><br><span class="line">	Name string      //用户名</span><br><span class="line">	Addr string      //地址,ip+host</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 在线用户全局map,key为Client.Addr，value为Client  ④</span><br><span class="line">var onlineMap map[string]Client</span><br><span class="line"></span><br><span class="line">// 全局消息channel ⑤</span><br><span class="line">var message = make(chan string)</span><br><span class="line"></span><br><span class="line">// 入口函数 ⑥</span><br><span class="line">func main() &#123;</span><br><span class="line">	//创建Socket</span><br><span class="line">	listener, err := net.Listen(&quot;tcp&quot;, &quot;127.0.0.1:8000&quot;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		fmt.Println(err)</span><br><span class="line">		return</span><br><span class="line">	&#125;</span><br><span class="line">	defer listener.Close()</span><br><span class="line">	go Manager()</span><br><span class="line"></span><br><span class="line">	//循环监听客户端连接请求</span><br><span class="line">	for &#123;</span><br><span class="line">		conn, err := listener.Accept()</span><br><span class="line">		if err != nil &#123;</span><br><span class="line">			fmt.Println(&quot;Accept err&quot;, err)</span><br><span class="line">			return</span><br><span class="line">		&#125;</span><br><span class="line">		//启动 go程处理客户端数据请求</span><br><span class="line">		go HandlerConnect(conn)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Manager 监听全局消息通道中是否有数据，有就发给所有在线用户 ⑦</span><br><span class="line">func Manager() &#123;</span><br><span class="line">	//初始化 OnlineMap</span><br><span class="line">	onlineMap = make(map[string]Client)</span><br><span class="line"></span><br><span class="line">	//监听全局channel中是否有数据，有数据存储至msg，无数据阻塞</span><br><span class="line">	for &#123;</span><br><span class="line">		msg := &lt;-message</span><br><span class="line"></span><br><span class="line">		//循环发送消息给所有在线用户</span><br><span class="line">		for _, clnt := range onlineMap &#123;</span><br><span class="line">			clnt.C &lt;- msg</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// HandlerConnect 处理具体某个用户的连接 ⑧</span><br><span class="line">func HandlerConnect(conn net.Conn) &#123;</span><br><span class="line">	defer conn.Close()</span><br><span class="line"></span><br><span class="line">	//获取用户网络地址,ip+port</span><br><span class="line">	netAddr := conn.RemoteAddr().String()</span><br><span class="line">	//创建新连接用户的结构体</span><br><span class="line">	clinet := Client&#123;make(chan string), netAddr, netAddr&#125;</span><br><span class="line">	// 将新连接用户，添加到在线用户map中，key:ip+port,vale:client</span><br><span class="line">	onlineMap[netAddr] = clinet</span><br><span class="line"></span><br><span class="line">	//创建专门用来给当前用户发送消息的 go 程</span><br><span class="line">	go WriteMsgToClient(clinet, conn)</span><br><span class="line">	//发送 用户上线消息 到全局消息channel中</span><br><span class="line">	message &lt;- MakeMessage(clinet, &quot;login&quot;)</span><br><span class="line"></span><br><span class="line">	//创建一个匿名go程，专门处理用户发送的消息</span><br><span class="line">	go func() &#123;</span><br><span class="line">		buf := make([]byte, 4096)</span><br><span class="line">		for &#123;</span><br><span class="line">			n, err := conn.Read(buf)</span><br><span class="line">			if n == 0 &#123;</span><br><span class="line">				fmt.Println(&quot;检测到客户端退出&quot;)</span><br><span class="line">				return</span><br><span class="line">			&#125;</span><br><span class="line">			if err != nil &#123;</span><br><span class="line">				fmt.Println(err)</span><br><span class="line">				return</span><br><span class="line">			&#125;</span><br><span class="line">			//将读到的用户消息广播给所有在线用户</span><br><span class="line">			message &lt;- MakeMessage(clinet, string(buf[:n]))</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;()</span><br><span class="line">	for &#123;</span><br><span class="line">		//防止线程死掉</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// WriteMsgToClient 监听用户自身的消息channel,将消息显示到控制台(客户端)上 ⑨</span><br><span class="line">func WriteMsgToClient(clnt Client, conn net.Conn) &#123;</span><br><span class="line">	//监听用户 自身Channel上是否有消息</span><br><span class="line">	for msg := range clnt.C &#123;</span><br><span class="line">		conn.Write([]byte(msg + &quot;\n&quot;))</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// MakeMessage 制作消息，传入对应参数拼成一条完整的消息 </span><br><span class="line">func MakeMessage(clnt Client, msg string) string &#123;</span><br><span class="line">	buf := &quot;[&quot; + clnt.Addr + &quot;]&quot; + clnt.Name + &quot;:&quot; + msg</span><br><span class="line"></span><br><span class="line">	return buf</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="代码分析"><a href="#代码分析" class="headerlink" title="代码分析"></a>代码分析</h2><ol>
+<li>package main 指明这个文件属于main包。每个源文件都必须指明这个文件属于哪个包。go中不像其他语言直接导入具体文件的头文件，而是以包的形式导入复用的，因此，包名是基础。</li>
+<li>②中通过包名导入了2个系统包。fmt包中包含格式化IO的函数。net包中包含网络相关的函数。</li>
+<li>③定义了名为Client的结构体,用来表示聊天室中的用户。C是通道(channel)类型的成员变量，通道中传递的数据类型是string.channel是可以让一个goroutine发送特定的值到另外一个goroutine的通信机制。server端收到消息后，Manager goroutine 会把消息下发到用户各自的channel中。</li>
+<li>④定义了一个全局的map，用来存储当前连接上聊天室的用户列表。key为用户的ip+port,value为Client实体。当server端收到某个用户的发的消息后，需要通过这张表来进行消息广播。</li>
+<li>⑤定义了一个全局的通道，所有待广播的消息都会先写入这个channel,之后分发到用户各自的消息通道中。</li>
+<li><p>main函数是整个程序的执行入口。main里面创建了Socket后就一直循环监听用户的连接和通信。核心是Manager 和 HandlerConnect 2个goroutine 来并发处理消息的接收和广播。</p>
+</li>
+<li><p>Manager 监听全局消息通道中是否有数据，有就发到所有在线用户各自的消息通道中。同时会触发⑨的逻辑，从而显示具体的消息在终端上。</p>
+</li>
+<li><p>HandlerConnect中核心的对象是net.Conn对象，通过连接获取到用户的端口信息及读取用户在终端的输入。</p>
+</li>
+</ol>
+
+      
+
+      
+        <div class="page-reward">
+          <a href="javascript:;" class="page-reward-btn tooltip-top">
+            <div class="tooltip tooltip-east">
+            <span class="tooltip-item">
+              赏
+            </span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                <span class="tooltip-inner">
+                  <p class="reward-p"><i class="icon icon-quo-left"></i>谢谢你请我吃糖果<i class="icon icon-quo-right"></i></p>
+                  <div class="reward-box">
+                    
+                    
+                  </div>
+                </span>
+              </span>
+            </span>
+          </div>
+          </a>
+        </div>
+      
+    </div>
+    <div class="article-info article-info-index">
       
       
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2019" class="archive-year">2019</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/28/iOS底层/深入理解RunLoop/" class="archive-article-date">
-  	<time datetime="2019-05-28T06:12:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-28</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/28/iOS底层/深入理解RunLoop/">深入理解RunLoop</a>
-    </h1>
-  
+      
 
-        <div class="article-info info-on-right">
-          
-          
+      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://xuzhenhao.github.io/2019/06/04/golang/Go02-聊天室/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/24/iOS底层/深入理解Runtime-KVC及KVO/" class="archive-article-date">
-  	<time datetime="2019-05-24T03:16:06.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-24</time>
-</a>
+<nav id="article-nav">
+  
+    <a href="/2019/06/11/golang/Docker/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          Docker
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/05/28/iOS底层/深入理解RunLoop/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">深入理解RunLoop</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
+        
+        
+    </div>
+</aside>
+
+
+
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/24/iOS底层/深入理解Runtime-KVC及KVO/">深入理解runtime-KVC及KVO</a>
-    </h1>
+  
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/24/iOS底层/深入理解Runtime-分类及关联对象/" class="archive-article-date">
-  	<time datetime="2019-05-24T03:12:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-24</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/24/iOS底层/深入理解Runtime-分类及关联对象/">深入理解runtime(三):分类及关联对象</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/20/iOS底层/深入理解Runtime-消息机制/" class="archive-article-date">
-  	<time datetime="2019-05-20T09:42:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-20</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/20/iOS底层/深入理解Runtime-消息机制/">深入理解runtime(二):消息机制</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/" class="archive-article-date">
-  	<time datetime="2019-05-16T09:58:33.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-16</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/">深入理解Runtime(一):对象的本质</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/15/iOS底层/深入理解编译过程/" class="archive-article-date">
-  	<time datetime="2019-05-15T08:05:25.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-15</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/15/iOS底层/深入理解编译过程/">深入理解编译过程</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/14/iOS底层/深入理解Block/" class="archive-article-date">
-  	<time datetime="2019-05-14T09:41:15.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-14</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/14/iOS底层/深入理解Block/">深入理解Block</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/09/iOS架构/关于Reactive-Programming的思考/" class="archive-article-date">
-  	<time datetime="2019-05-09T02:00:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-09</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/09/iOS架构/关于Reactive-Programming的思考/">关于Reactive Programming的思考</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
 
 
           </div>
@@ -404,8 +356,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,

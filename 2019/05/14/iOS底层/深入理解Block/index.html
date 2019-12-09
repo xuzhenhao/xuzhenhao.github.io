@@ -15,14 +15,14 @@
 <meta property="og:site_name" content="欢迎来到Cloud的Blog">
 <meta property="og:description" content="Block的本质还是使用重写为C语言的方法，来探索底层实现。 源代码:12345678int main(int argc, char * argv[]) &amp;#123;        int age = 18;    void (^ageBlock)(void) = ^&amp;#123;        NSLog(@&amp;quot;年龄是%d岁&amp;quot;,age);    &amp;#125;;    ageBlo">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/14/iOS底层/深入理解Block/block类型.png">
-<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/14/iOS底层/深入理解Block/stackBlock.png">
-<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/14/iOS底层/深入理解Block/block内存管理.jpg">
+<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/14/iOS底层/深入理解Block/深入理解Block/block类型.png">
+<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/14/iOS底层/深入理解Block/深入理解Block/stackBlock.png">
+<meta property="og:image" content="https://xuzhenhao.github.io/2019/05/14/iOS底层/深入理解Block/深入理解Block/block内存管理.jpg">
 <meta property="og:updated_time" content="2019-05-16T06:24:18.802Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入理解Block">
 <meta name="twitter:description" content="Block的本质还是使用重写为C语言的方法，来探索底层实现。 源代码:12345678int main(int argc, char * argv[]) &amp;#123;        int age = 18;    void (^ageBlock)(void) = ^&amp;#123;        NSLog(@&amp;quot;年龄是%d岁&amp;quot;,age);    &amp;#125;;    ageBlo">
-<meta name="twitter:image" content="https://xuzhenhao.github.io/2019/05/14/iOS底层/深入理解Block/block类型.png">
+<meta name="twitter:image" content="https://xuzhenhao.github.io/2019/05/14/iOS底层/深入理解Block/深入理解Block/block类型.png">
   
     <link rel="alternative" href="/atom.xml" title="欢迎来到Cloud的Blog" type="application/atom+xml">
   
@@ -195,9 +195,9 @@
 </ol>
 <h2 id="Block的类型"><a href="#Block的类型" class="headerlink" title="Block的类型"></a>Block的类型</h2><p>在上文中我们会看到类似 impl.isa = &amp;_NSConcreteStackBlock; 的代码，Block既然是对象，我们就可以通过 [NSObject class] 或 object_getClass方法查看对应的类。</p>
 <p>Block分为 NSGlobalBlock、NSStackBlock、NSMallocBlock3种类型，分别对应的内存地址为data区、栈区和堆区。</p>
-<p>Block类型归纳如下:<br><img src="/2019/05/14/iOS底层/深入理解Block/block类型.png" alt="block类型"></p>
+<p>Block类型归纳如下:<br><img src="深入理解Block/block类型.png" alt="block类型"></p>
 <p>在定义block类型属性时，我们往往使用copy关键字来修饰。在此处我们就能理解真正的用意。栈区变量的内存在离开作用域后就会被回收，为了不让block在使用前被回收，就需要将其从栈区拷贝到堆区内存。</p>
-<p>例如如下代码:(MRC环境下)<br><img src="/2019/05/14/iOS底层/深入理解Block/stackBlock.png" alt="stackBlock"></p>
+<p>例如如下代码:(MRC环境下)<br><img src="深入理解Block/stackBlock.png" alt="stackBlock"></p>
 <p>加了copy后，block才能正常返回。在ARC下，编译器会帮我们自动处理。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">typedef void(^block_t)(void);</span><br><span class="line">block_t getBlock()&#123;</span><br><span class="line">    int age = 10;</span><br><span class="line">    return [^&#123;</span><br><span class="line">        NSLog(@&quot;age is %d&quot;,age);</span><br><span class="line">    &#125; copy];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>而如果我们block内不访问auto变量age,此时是GlobalBlock，位于data内存区，也是可以正常使用的。</p>
 <h2 id="Block的变量捕获"><a href="#Block的变量捕获" class="headerlink" title="Block的变量捕获"></a>Block的变量捕获</h2><p>在第一节，我们分析重写后的c代码时，发现<strong>main_block_impl_0结构体中有变量age的定义，而且在</strong>main_block_impl_0的构造函数中会把外部的age通过值传递的方式给结构体的age赋值。</p>
@@ -212,7 +212,7 @@
 <p>当block在栈上时，并不会对age变量产生强引用。</p>
 <p>当block被copy到堆时，会调用内部的copy函数对__block变量产生强引用。</p>
 <p>当block从堆中移除时，会调用内部的dispose函数，释放引用的变量。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">static void __main_block_func_0(struct __main_block_impl_0 *__cself) &#123;</span><br><span class="line">  __Block_byref_age_0 *age = __cself-&gt;age; // bound by ref</span><br><span class="line"></span><br><span class="line">        (age-&gt;__forwarding-&gt;age)++;</span><br><span class="line">        NSLog((NSString *)&amp;__NSConstantStringImpl__var_,(age-&gt;__forwarding-&gt;age));</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
-<p>在源码中，我们看到无论是读取age还是修改age，都是先通过自身的forwarding指针来访问和修改的，这是为什么呢？请看下图。<br><img src="/2019/05/14/iOS底层/深入理解Block/block内存管理.jpg" alt="stackBlock"></p>
+<p>在源码中，我们看到无论是读取age还是修改age，都是先通过自身的forwarding指针来访问和修改的，这是为什么呢？请看下图。<br><img src="深入理解Block/block内存管理.jpg" alt="stackBlock"></p>
 <p>当一个<strong>block变量从栈上被复制到堆上时，栈上的结构体中的</strong>forwarding指针也会指向堆上的结构体。所以通过forwarding修改可以保证修改的都是堆上的结构体，main函数释放的时候，只是释放了栈上的东西。而所有的对局部变量的修改都早已经转移到堆上了。</p>
 
       
@@ -317,8 +317,8 @@
     </a>
   
   
-    <a href="/2019/05/10/Flutter/Flutter系列一-基本配置/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">Flutter系列一:基本配置</div>
+    <a href="/2019/05/09/iOS架构/关于Reactive-Programming的思考/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">关于Reactive Programming的思考</div>
       <i class="icon-circle-right"></i>
     </a>
   

@@ -159,20 +159,57 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2018/03/09/NSObject/">对象的本质</a>
+      <a class="article-title" href="/2018/03/19/NSObject/">NSObject-对象的本质</a>
     </h1>
   
 
         
-        <a href="/2018/03/09/NSObject/" class="archive-article-date">
-  	<time datetime="2018-03-09T08:06:17.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-03-09</time>
+        <a href="/2018/03/19/NSObject/" class="archive-article-date">
+  	<time datetime="2018-03-19T08:06:17.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-03-19</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>test</p>
+        <p>runtime不只是一些C语言的API，还包括一套面向对象的数据结构。研究runtime，首先需要研究对象模型。</p>
+<h2 id="NSObject的底层实现"><a href="#NSObject的底层实现" class="headerlink" title="NSObject的底层实现"></a>NSObject的底层实现</h2><h3 id="重写为c-c"><a href="#重写为c-c" class="headerlink" title="重写为c/c++"></a>重写为c/c++</h3><p>借助LLVM,我们可以将oc的代码重写为对应的c代码。<br>待转化的oc代码，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">#import &lt;Foundation/Foundation.h&gt;</span><br><span class="line"></span><br><span class="line">@interface ZHAnimal : NSObject</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      age;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHAnimal</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@interface ZHCat : ZHAnimal</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      legs;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHCat</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>准备的事例代码使用了oc的类声明、属性及继承特性，以便我们探索这些特性的底层实现。</p>
+<p>之后，我们使用Clang将main.m文件重写输出为mainarm64.cpp文件，指定的架构参数是arm64<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc main.m -o mainarm64.cpp</span><br></pre></td></tr></table></figure></p>
+<p>在mainarm64.cpp文件中，我们首先搜索”ZHCat_IMPL {“,可以找到如下代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct ZHCat_IMPL &#123;</span><br><span class="line">	struct ZHAnimal_IMPL ZHAnimal_IVARS;</span><br><span class="line">	NSInteger _legs;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>除了自身的成员变量_legs,还能看到名为 ZHAnimal_IVARS 类型为 ZHAnimal_IMPL 的结构体变量声明。</p>
+<p>我们接着搜索”ZHAnimal_IMPL {“,可以找到如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct ZHAnimal_IMPL &#123;</span><br><span class="line">	struct NSObject_IMPL NSObject_IVARS;</span><br><span class="line">	NSInteger _age;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>这段代码逻辑和上面的一样。那么接着看NSObject。可以找到如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">struct objc_selector; struct objc_class;</span><br><span class="line"></span><br><span class="line">typedef struct objc_class *Class;</span><br><span class="line"></span><br><span class="line">struct NSObject_IMPL &#123;</span><br><span class="line">    Class isa;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>到此为止，简单小结一下：</p>
+<ol>
+<li>对象底层是基于struct数据结构实现的。</li>
+<li>NSObject里面包含一个objc_class类型的结构体指针isa.</li>
+<li>子类的结构体中会包含父类的结构体声明，以此来实现继承关系。</li>
+</ol>
+<h3 id="探寻objc-class"><a href="#探寻objc-class" class="headerlink" title="探寻objc_class"></a>探寻objc_class</h3><p>在<a href="https://opensource.apple.com/tarballs/objc4/" target="_blank" rel="noopener">objc4源码</a>可以下载到开源代码，注意下载序号大的新版本。</p>
+<p>在objc-runtime-new文件中，我们终于看到了objc_class的实现。代码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">struct objc_class : objc_object &#123;</span><br><span class="line">    // Class ISA;</span><br><span class="line">    Class superclass;</span><br><span class="line">    cache_t cache;             // formerly cache pointer and vtable</span><br><span class="line">    class_data_bits_t bits;    // class_rw_t * plus custom rr/alloc flags</span><br><span class="line"></span><br><span class="line">    class_rw_t *data() &#123; </span><br><span class="line">        return bits.data();</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">struct objc_object &#123;</span><br><span class="line">private:</span><br><span class="line">    isa_t isa;</span><br><span class="line"></span><br><span class="line">public:</span><br><span class="line"></span><br><span class="line">    // ISA() assumes this is NOT a tagged pointer object</span><br><span class="line">    Class ISA();</span><br><span class="line"></span><br><span class="line">    // getIsa() allows this to be a tagged pointer object</span><br><span class="line">    Class getIsa();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">typedef struct objc_object *id;</span><br></pre></td></tr></table></figure></p>
+<p>追踪到最后的数据结构是objc_object，里面有一个isa_t类型的isa成员。</p>
+<ol>
+<li><strong>oc中所有的对象都会包含一个isa_t类型的成员变量</strong>。objc_class,类也是对象，通过继承于objc_object拿到了的isa_t结构类型的isa成员。</li>
+<li>对象或者说实例对象，只有isa，用来找到对应的类对象。类对象才有superclass(父类指针)、cache(方法缓存)和bits(类数据信息)。（bits里包含了ivars成员变量列表、methods方法列表、protocals协议列表和properties属性列表等类信息）</li>
+</ol>
+<p><img src="/images/objc_object.png" alt="objc对象本质"></p>
+<h2 id="Class中的数据结构"><a href="#Class中的数据结构" class="headerlink" title="Class中的数据结构"></a>Class中的数据结构</h2><h3 id="isa-t"><a href="#isa-t" class="headerlink" title="isa_t"></a>isa_t</h3><p>isa数据结构的定义，摘录于objc4-750.1</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">union isa_t &#123;</span><br><span class="line">    isa_t() &#123; &#125;</span><br><span class="line">    isa_t(uintptr_t value) : bits(value) &#123; &#125; </span><br><span class="line"></span><br><span class="line">    Class cls;</span><br><span class="line">    uintptr_t bits;</span><br><span class="line">#if defined(ISA_BITFIELD)</span><br><span class="line">    struct &#123;</span><br><span class="line">        ISA_BITFIELD;  // defined in isa.h</span><br><span class="line">    &#125;;</span><br><span class="line">#endif</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">#   define ISA_BITFIELD                                                        \</span><br><span class="line">      uintptr_t nonpointer        : 1;                                         \</span><br><span class="line">      uintptr_t has_assoc         : 1;                                         \</span><br><span class="line">      uintptr_t has_cxx_dtor      : 1;                                         \</span><br><span class="line">      uintptr_t shiftcls          : 44; /*MACH_VM_MAX_ADDRESS 0x7fffffe00000*/ \</span><br><span class="line">      uintptr_t magic             : 6;                                         \</span><br><span class="line">      uintptr_t weakly_referenced : 1;                                         \</span><br><span class="line">      uintptr_t deallocating      : 1;                                         \</span><br><span class="line">      uintptr_t has_sidetable_rc  : 1;                                         \</span><br><span class="line">      uintptr_t extra_rc          : 8</span><br></pre></td></tr></table></figure>
+<p>在arm64架构之前，isa就是一个普通的指针，存储着Class、Meta-Class对象地址</p>
+<p>从arm64架构开始，isa成了一个union结构的共同体，并使用位域来存储更多的信息。</p>
+<p>其含义如图所示:可以看到大多与内存管理相关</p>
+<p><img src="/images/class-union.jpg" alt="weiyu"></p>
+<h3 id="class-data-bits-t"><a href="#class-data-bits-t" class="headerlink" title="class_data_bits_t"></a>class_data_bits_t</h3><p><img src="/images/class_rw_t.png" alt="class_rw_t"></p>
+<p>class_ro_t存储着类的原始信息，在运行时根据class_ro_t生成class_rw_t，并通过ro指针指回了class_ro_t.</p>
+<p>以方法列表为例，假如Animal类有run方法，同时通过分类扩展了eat方法。那么，run方法首先位于class_ro_t中的baseMethodList中，在运行时，会加载所有分类，把分类中的方法和baseMethodList合并成methods，且分类中的方法在前。</p>
+<p>class_rw_t中没有定义ivars的字段，在访问成员变量时，直接通过isa_t找到对应的objc_class,并通过class_ro_t的ivarlist做地址偏移，查找对应的对象内存。因此，内存布局在编译时就已经确定，runtime不能动态修改ivars，会破坏已有的内存布局。只能通过类似关联对象的方式重新开辟一块专门的内存空间。</p>
+<h3 id="method-t"><a href="#method-t" class="headerlink" title="method_t"></a>method_t</h3><p>method_list_t数组中存储着method_t，method_t是对方法的封装。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">struct method_t &#123;</span><br><span class="line">    SEL name;//方法名</span><br><span class="line">    const char *types;//编码，内含返回值类型、参数类型等信息</span><br><span class="line">    IMP imp; //本质为函数指针，存储函数实现的地址</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<h3 id="cache-t"><a href="#cache-t" class="headerlink" title="cache_t"></a>cache_t</h3><p>方法调用是在methods中通过receiver和SEL查找定位IMP的过程。如果一个方法被多次调用，通过缓存技术就能提高效率。</p>
+<p>cache_t就是这样一个缓存，他通过散列表来缓存曾经调用过的方法，用以提高方法的查找速度。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">struct cache_t &#123;</span><br><span class="line">    struct bucket_t *_buckets;//散列表</span><br><span class="line">    mask_t _mask;//散列表的长度 - 1</span><br><span class="line">    mask_t _occupied;//已经缓存的方法数量</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">struct bucket_t &#123;</span><br><span class="line">    IMP _imp;</span><br><span class="line">    cache_key_t _key;//SEL为key</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Class points to cache. SEL is key. Cache buckets store SEL+IMP.</span><br><span class="line">// Caches are never built in the dyld shared cache.</span><br><span class="line">static inline mask_t cache_hash(cache_key_t key, mask_t mask) </span><br><span class="line">&#123;</span><br><span class="line">    return (mask_t)(key &amp; mask);</span><br><span class="line">&#125;</span><br><span class="line">//objc-cache.mm</span><br></pre></td></tr></table></figure>
+<p>通过源码可以看到散列表的实现机制是：将SEL和长度进行&amp;操作(类似取余)，得到的结果作为_buckets的下标。存取_buckets都可以通过下标直接查找。这种机制是非依次存放的，是一种空间换时间的思路。而当空间不够存放时，会进行扩容。此时因为key已经改变，会清空已缓存的数据，重新建索引。</p>
 
       
 
@@ -186,7 +223,7 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime 底层原理</a>
         		</li>
       		
 		</ul>
@@ -196,7 +233,145 @@
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2018/03/09/NSObject/">展开全文 >></a>
+          <a class="article-more-a" href="/2018/03/19/NSObject/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-compile" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/03/08/compile/">深入理解编译过程</a>
+    </h1>
+  
+
+        
+        <a href="/2018/03/08/compile/" class="archive-article-date">
+  	<time datetime="2018-03-08T08:05:25.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-03-08</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="编译器"><a href="#编译器" class="headerlink" title="编译器"></a>编译器</h2><p>把一种编程语言(原始语言)转换为另一种编程语言(目标语言)的程序叫做编译器。</p>
+<p>编译器一般由前端和后端两部分组成，前端负责词法分析、语法分析，生成中间代码。后端以中间代码作为输入，进行架构无关的优化，接着针对不同的架构生成不同的机器码。</p>
+<blockquote>
+<p>前后端分离及通过中间代码(IR)协作的设计，使得前后端可以独立变化。新增一门语言只需要修改前端，而新增一个CPU架构只需要修改后端即可。</p>
+</blockquote>
+<h2 id="LLVM"><a href="#LLVM" class="headerlink" title="LLVM"></a>LLVM</h2><p>什么是LLVM,他是一系列编译器组件和工具链的集合。引用维基百科的解释</p>
+<blockquote>
+<p>LLVM包含一系列模块化的编译器组件和工具链，用来开发编译器前端和后端。现今LLVM已单纯成为一个品牌，适用于LLVM下的所有项目，包含LLVM中介码（LLVM IR）、LLVM调试工具、LLVM C++标准库等。</p>
+</blockquote>
+<blockquote>
+<p>LLVM引发一些人来为许多语言开发新的编译器，其中一个最引发注意的就是Clang，它是一个新的编译器，同时支持C、Objective-C以及C++.</p>
+</blockquote>
+<p>这里引出了我们的主角Clang。Object-c/c/c++编译器的前端就是Clang。以下是编译器编译的大致流程。</p>
+<p><img src="/images/compile-progress.png" alt="编译流程"></p>
+<h2 id="文件编译流程"><a href="#文件编译流程" class="headerlink" title="文件编译流程"></a>文件编译流程</h2><p>本节将从代码层面跟踪一个文件的编译过程，文件名为main.c。代码如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#define IPhoneXBarHeight 88</span><br><span class="line">#define DEBUG 1</span><br><span class="line"></span><br><span class="line">int main() &#123;</span><br><span class="line">    //屏幕宽度</span><br><span class="line">    int barHeight = IPhoneXBarHeight;</span><br><span class="line">#ifdef DEBUG</span><br><span class="line">    printf(&quot;hello debug\n&quot;);</span><br><span class="line">#else</span><br><span class="line">    printf(&quot;hello world\n&quot;);</span><br><span class="line">#endif</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="预处理"><a href="#预处理" class="headerlink" title="预处理"></a>预处理</h3><p>预处理阶段会进行头文件引入替换、宏替换、注释处理、条件编译等操作。</p>
+<p>用clang进行预处理</p>
+<blockquote>
+<p>xcrun clang -E main.c</p>
+</blockquote>
+<p>处理后结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">int main() &#123;</span><br><span class="line">    int barHeight = 88;</span><br><span class="line">    printf(&quot;hello debug\n&quot;);</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>include &lt;stdio.h&gt;在预处理阶段会被替换成stido.h中的内容，这个过程是递归的，因为stdio.h也有可能引用了其他头文件。</p>
+<p>在省略了几百行stdio.h的内容后，在末尾看到main函数预处理后只有3行。</p>
+<p>IPhoneXBarHeight这个宏被替换成了具体的数字。</p>
+<p>条件编译后，只留下了符合条件的printf(“hello debug\n”);</p>
+<h3 id="词法分析"><a href="#词法分析" class="headerlink" title="词法分析"></a>词法分析</h3><p>词法分析器读入预处理后的字符流，将他们组织成有意义的词素(最小的意义单位)序列。对于每个词素，词法分析器产生词法单元(token)作为输出。</p>
+<blockquote>
+<p> xcrun clang -fmodules -fsyntax-only -Xclang -dump-tokens main.c</p>
+</blockquote>
+<p>结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">annot_module_include &apos;#include &lt;s&apos;		Loc=&lt;main.c:1:1&gt;</span><br><span class="line">int &apos;int&apos;	 [StartOfLine]	Loc=&lt;main.c:5:1&gt;</span><br><span class="line">identifier &apos;main&apos;	 [LeadingSpace]	Loc=&lt;main.c:5:5&gt;</span><br><span class="line">l_paren &apos;(&apos;		Loc=&lt;main.c:5:9&gt;</span><br><span class="line">r_paren &apos;)&apos;		Loc=&lt;main.c:5:10&gt;</span><br><span class="line">l_brace &apos;&#123;&apos;	 [LeadingSpace]	Loc=&lt;main.c:5:12&gt;</span><br><span class="line">int &apos;int&apos;	 [StartOfLine] [LeadingSpace]	Loc=&lt;main.c:7:5&gt;</span><br><span class="line">identifier &apos;barHeight&apos;	 [LeadingSpace]	Loc=&lt;main.c:7:9&gt;</span><br><span class="line">...</span><br></pre></td></tr></table></figure></p>
+<p>identifier ‘barHeight’     [LeadingSpace]    Loc=<a href="main.c:7:9" target="_blank" rel="noopener">main.c:7:9</a>表示 barHeight 这个变量名位于 main.c 第7行，左起第9个字符开始。这里的位置是基于原始代码的位置，而不是预处理后的。保存token在源文件中的位置方便后续clang分析的时候能够找出出错的原始位置。</p>
+<h3 id="语法分析"><a href="#语法分析" class="headerlink" title="语法分析"></a>语法分析</h3><p>词法分析的Token流会被解析成一颗抽象语法树(AST).</p>
+<blockquote>
+<p>xcrun clang -fsyntax-only -Xclang -ast-dump main.c | open -f</p>
+</blockquote>
+<p>部分结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[0;34m`-[0m[0;1;32mFunctionDecl[0m[0;33m 0x7fbdbe8b5630[0m &lt;[0;33mmain.c:5:1[0m, [0;33mline:14:1[0m&gt; [0;33mline:5:5[0m[0;1;36m main[0m [0;32m&apos;int ()&apos;[0m</span><br><span class="line">[0;34m  `-[0m[0;1;35mCompoundStmt[0m[0;33m 0x7fbdbe8b58f8[0m &lt;[0;33mcol:12[0m, [0;33mline:14:1[0m&gt;</span><br><span class="line">[0;34m    |-[0m[0;1;35mDeclStmt[0m[0;33m 0x7fbdbe8b5768[0m &lt;[0;33mline:7:5[0m, [0;33mcol:37[0m&gt;</span><br><span class="line">[0;34m    | `-[0m[0;1;32mVarDecl[0m[0;33m 0x7fbdbe8b56e8[0m &lt;[0;33mcol:5[0m, [0;33mline:2:26[0m&gt; [0;33mline:7:9[0m[0;1;36m barHeight[0m [0;32m&apos;int&apos;[0m cinit</span><br><span class="line">[0;34m    |   `-[0m[0;1;35mIntegerLiteral[0m[0;33m 0x7fbdbe8b5748[0m &lt;[0;33mline:2:26[0m&gt; [0;32m&apos;int&apos;[0m[0;36m[0m[0;36m[0m[0;1;36m 88[0m</span><br></pre></td></tr></table></figure></p>
+<p>有了抽象语法树，clang就可以对这个树进行分析，找出代码中的错误，如类型不匹配，调用了未声明的方法等。</p>
+<h3 id="CodeGen"><a href="#CodeGen" class="headerlink" title="CodeGen"></a>CodeGen</h3><p>CodeGen遍历语法树，生成LLVM IR代码。IR是前端的输出，后端的输入。</p>
+<blockquote>
+<p>xcrun clang -S -emit-llvm main.c -o main.ll</p>
+</blockquote>
+<p>部分结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">@.str = private unnamed_addr constant [13 x i8] c&quot;hello debug\0A\00&quot;, align 1</span><br><span class="line"></span><br><span class="line">; Function Attrs: noinline nounwind optnone ssp uwtable</span><br><span class="line">define i32 @main() #0 &#123;</span><br><span class="line">  %1 = alloca i32, align 4</span><br><span class="line">  %2 = alloca i32, align 4</span><br><span class="line">  store i32 0, i32* %1, align 4</span><br><span class="line">  store i32 88, i32* %2, align 4</span><br><span class="line">  %3 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @.str, i32 0, i32 0))</span><br><span class="line">  ret i32 0</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Objective-c代码会在这一步进行runtime的桥接:property合成，ARC处理等。</p>
+<h3 id="LLVM-Optimizer"><a href="#LLVM-Optimizer" class="headerlink" title="LLVM Optimizer"></a>LLVM Optimizer</h3><p>LLVM对IR进行优化后，会针对不同架构生成不同的目标代码，最后以汇编代码的格式输出。</p>
+<blockquote>
+<p>xcrun clang -S main.c -o main.s</p>
+</blockquote>
+<p>部分代码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">_main:                                  ## @main</span><br><span class="line">	.cfi_startproc</span><br><span class="line">## %bb.0:</span><br><span class="line">	pushq	%rbp</span><br><span class="line">	.cfi_def_cfa_offset 16</span><br><span class="line">	.cfi_offset %rbp, -16</span><br><span class="line">	movq	%rsp, %rbp</span><br><span class="line">	.cfi_def_cfa_register %rbp</span><br><span class="line">	subq	$16, %rsp</span><br><span class="line">	movl	$0, -4(%rbp)</span><br><span class="line">	movl	$88, -8(%rbp)</span><br><span class="line">	leaq	L_.str(%rip), %rdi</span><br><span class="line">	movb	$0, %al</span><br><span class="line">	callq	_printf</span><br></pre></td></tr></table></figure></p>
+<h3 id="汇编器"><a href="#汇编器" class="headerlink" title="汇编器"></a>汇编器</h3><p>汇编器以汇编代码作为输入，将汇编代码转换为机器代码，最后输出.o目标文件 。</p>
+<blockquote>
+<p>xcrun clang -fmodules -c main.c -o main.o</p>
+</blockquote>
+<p>生成了main.o文件后，我们可以通过如下命令查看其中的符号。</p>
+<blockquote>
+<p>xcrun nm -nm main.o</p>
+</blockquote>
+<p>结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">                 (undefined) external _printf</span><br><span class="line">0000000000000000 (__TEXT,__text) external _main</span><br></pre></td></tr></table></figure></p>
+<p>注意printf前的修饰。undefined表示在当前文件找不到符号。external表示这个符号是外部可以访问的。</p>
+<h3 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h3><p>链接器把编译产生的.o文件和(dylib、a、tbd)文件一起生成mach-o可执行文件，之后会把多个Mach-O文件合并成一个，并在合并过程中创建一个全局符号表，记录所有已定义的和未定义的符号。链接时如果出现相同符号的情况，就会出现”ld:dumplicate symbols”的错误信息;如果在其他目标文件里没有找到符号，就会提示”Undefined symbols”的错误信息。总的来说，链接就是把符号绑定到地址上。</p>
+<blockquote>
+<p>xcrun clang main.o -o main</p>
+</blockquote>
+<p>执行后可以看到控制器会输出 “hello debug”<br>此时再查看可执行文件的符号表，<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">                 (undefined) external _printf (from libSystem)</span><br><span class="line">                 (undefined) external dyld_stub_binder (from libSystem)</span><br><span class="line">0000000100000000 (__TEXT,__text) [referenced dynamically] external __mh_execute_header</span><br><span class="line">0000000100000f50 (__TEXT,__text) external _main</span><br></pre></td></tr></table></figure></p>
+<p>from libSystem表示这个符号来自于libSystem，会在运行时动态绑定。链接器会尝试解析所有的undefined符号，加载对应的动态库。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/03/08/compile/">展开全文 >></a>
         </p>
       
 
@@ -319,7 +494,11 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">runtime</a>
+                <a href="javascript:void(0)" class="js-tag color5">底层原理</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">runtime 底层原理</a>
               </li>
             
             <div class="clearfix"></div>

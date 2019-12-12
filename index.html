@@ -136,6 +136,115 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-category" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/03/24/category/">深入理解runtime:分类及关联对象</a>
+    </h1>
+  
+
+        
+        <a href="/2018/03/24/category/" class="archive-article-date">
+  	<time datetime="2018-03-24T03:12:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-03-24</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="Category简介"><a href="#Category简介" class="headerlink" title="Category简介"></a>Category简介</h2><p>Category主要为已经存在的类添加方法。此外，还可以把类的实现分开在不同的文件里，这样可以减少单个文件的体积，把不同的功能组织到不同的category里。</p>
+<h2 id="Category数据结构"><a href="#Category数据结构" class="headerlink" title="Category数据结构"></a>Category数据结构</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">struct category_t &#123;</span><br><span class="line">    const char *name;</span><br><span class="line">    classref_t cls;</span><br><span class="line">    struct method_list_t *instanceMethods;</span><br><span class="line">    struct method_list_t *classMethods;</span><br><span class="line">    struct protocol_list_t *protocols;</span><br><span class="line">    struct property_list_t *instanceProperties;</span><br><span class="line">    // Fields below this point are not always present on disk.</span><br><span class="line">    struct property_list_t *_classProperties;</span><br><span class="line">    ...</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>在objc-runtime-new.h中可以找到分类底层数据结构的定义。从数据结构上可以清楚的看到分类能干什么，不能干什么。它能存储实例方法、类方法、协议和属性，但没有对应的存储ivars的成员变量，故分类中不能添加成员变量。</p>
+<h2 id="Category的加载过程"><a href="#Category的加载过程" class="headerlink" title="Category的加载过程"></a>Category的加载过程</h2><p>Category和Extensiton很类似，两者的区别在于，Extensition在编译期就直接和原类编译在一起，Category是在运行时动态添加到原类中的。</p>
+<p>应用程序启动流程如下:</p>
+<ol>
+<li>应用程序启动后，系统读取可执行文件(Mach-O文件),从里面获取dyld的路径并加载dyld(动态链接器);</li>
+<li>由dyld加载依赖库,生成对应的image对象，对这些image进行链接,并调用回调函数;</li>
+<li>runtime接收dyld的函数回调，执行map_images、load_images等操作,初始化依赖库里的类结构，调用里面所有的load方法;</li>
+<li>dyld返回main函数地址,main函数被调用</li>
+</ol>
+<p>在编译阶段，每个Category文件都是独立的，为category_t结构。在程序启动后的map_images阶段，会遍历category_t的二维数组，把所有独立的Category中对应的方法合并到对应的类和元类中。合并过程如下:</p>
+<ol>
+<li>遍历某个类的所有分类，取出分类中的方法列表、属性列表等，合并成addedLists。并且最后参与编译的分类，最先加入;</li>
+<li>原先的methodlists中的方法列表根据addedLists数量进行内存扩容;</li>
+<li>methodslists位置往后挪到addedListsCount个位置，前面的位置由addedLists填充，合并完毕;</li>
+</ol>
+<p>需要注意的是第3步的挪动操作，因为方法查找是在方法列表中从前往后找的，找到即结束。这样的设计让分类中的方法总是比原类中的方法优先调用，也就是表现为分类中的同名方法会覆盖类中的原方法，但其实原方法还是在methodlist中的。</p>
+<h2 id="load和initialize方法"><a href="#load和initialize方法" class="headerlink" title="load和initialize方法"></a>load和initialize方法</h2><p>load方法调用在load_images阶段，main函数之前。load方法是拿到函数地址直接调用的，并没有走objc_msgSend方法，因此不会像分类一样存在方法覆盖的问题。此外，会优先调用类的load方法，并保证父类优先调用，之后调用分类的load方法，调用顺序为编译时的顺序。</p>
+<p>initialize在类第一次接收到消息时调用。在lookup函数查找方法时，会判断是否需要初始化，如果需要，通过objcMsgSend调用initialize方法。由于走的是消息机制，会被分类覆盖。</p>
+<p>为了提高app启动速度，我们尽量少在load方法里做事情，推迟到initialize里懒加载。</p>
+<h2 id="关联对象"><a href="#关联对象" class="headerlink" title="关联对象"></a>关联对象</h2><p>在运行期，对象的内存布局已经确定，如果动态添加成员变量会破坏已有的内存布局。在实际项目中，我们可以通过关联对象技术实现分类添加成员变量的效果。</p>
+<p>在objc-references.mm文件中，我们可以看到关联对象的底层数据结构。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">class AssociationsManager &#123;</span><br><span class="line">    // associative references: object pointer -&gt; PtrPtrHashMap.</span><br><span class="line">    static AssociationsHashMap *_map;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">class AssociationsHashMap : public unordered_map&lt;disguised_ptr_t, ObjectAssociationMap *, DisguisedPointerHash, DisguisedPointerEqual, AssociationsHashMapAllocator&gt; &#123;</span><br><span class="line">    </span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">class ObjectAssociationMap : public std::map&lt;void *, ObjcAssociation, ObjectPointerLess, ObjectAssociationMapAllocator&gt; &#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">class ObjcAssociation &#123;</span><br><span class="line">        uintptr_t _policy;</span><br><span class="line">        id _value;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><img src="/images/category-association.png" alt></p>
+<p>当我们使用objc_setAssociatedObject设置关联对象时，究竟发现了什么呢？</p>
+<ol>
+<li>所有的关联对象都被被存在一个全局的hashMap中，由AssociationManager进行管理。hashMap的key是实例对象的内存地址，value是一个ObjectAssociationMap对象，保存了与这个实例对象关联的信息。</li>
+<li>ObjectAssociationMap的key是关联时指定的属性的key，即传入的第二个参数。value是ObjcAssociation对象，存储关联时指定的value和policy.</li>
+</ol>
+<p>在这种设计下，可以通过实例对象的内存地址和关联属性名作为key，高效的存储和查找。</p>
+<p>在对象销毁时，会根据对象isa中的has_assoc判断是否有管理对象，如果有，会做关联对象的清理工作。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/03/24/category/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-NSObject" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -143,7 +252,7 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2018/03/19/NSObject/">NSObject-对象的本质</a>
+      <a class="article-title" href="/2018/03/19/NSObject/">深入理解runtime:对象的本质</a>
     </h1>
   
 

@@ -136,6 +136,103 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-kvc_kvo" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/04/19/kvc_kvo/">深入理解runtime-KVC和KVO</a>
+    </h1>
+  
+
+        
+        <a href="/2018/04/19/kvc_kvo/" class="archive-article-date">
+  	<time datetime="2018-04-19T03:16:06.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-04-19</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>KVC和KVO的底层实现机制都是isa-swizzing。通过runtime替换实例对象的isa指针为动态创建的派生类,在派生类中重写setter方法来达到目的。</p>
+<h2 id="KVO"><a href="#KVO" class="headerlink" title="KVO"></a>KVO</h2><p>KVO全称是Key-Value Observing，键值监听，可以用于监听某个对象属性值的改变，对应于观察者模式。</p>
+<p>KVO实现机制:</p>
+<ol>
+<li>使用runtime动态生成子类，并将实例对象的isa指针指向子类;</li>
+<li>子类重写set方法，当值被改变时，依次调用willChangeValueForKey:、[super set]、didChangeValueForKey:</li>
+<li>didChangeValueForKey内部会调用obser的observerValueForKeyPath方法，让观察者收到改变的通知。</li>
+</ol>
+<p>在某些场景下，如果我们有手动触发KVO的需求，比如用KVO监听数组，可以按第2步的调用顺序来模仿系统调用实现KVO的效果。</p>
+<h2 id="KVC"><a href="#KVC" class="headerlink" title="KVC"></a>KVC</h2><p>KVC全称Key-Value Coding,键值编码,可以用于通过key名直接访问或修改对象的属性值，而不需要调用明确的存取方法。</p>
+<p>setValue:forKey执行逻辑:</p>
+<ol>
+<li>按照setKey:、_setKey:的顺序查找方法，如果找到、传值调用;</li>
+<li>查看accessInstanceVariablesDirectly方法的返回值。如果返回NO,调用setValue:forUnderfinedKey并抛出异常。如果返回Yes,按照_key,_isKey,key,isKey顺序查找成员变量，如找到，直接赋值。如果没找到，同样调用setValue:forUnderfinedKey并抛出异常。</li>
+</ol>
+<p>valueForKey:执行逻辑:</p>
+<ol>
+<li>按照getKey、key、isKey、_key顺序查找方法，如果找到，直接调用。</li>
+<li>查看accessInstanceVariablesDirectly方法的返回值，如果返回Yes,按照_key,_isKey,key,isKey顺序查找成员变量，如果找到，直接取值。否则，调用valueForUnderfinedKye:并抛出异常。</li>
+</ol>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/04/19/kvc_kvo/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-objc_message" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -190,6 +287,21 @@
     <div class="article-info article-info-index">
       
       
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
       
 
       
@@ -289,11 +401,11 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
         		</li>
       		
 		</ul>
@@ -404,11 +516,11 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
         		</li>
       		
 		</ul>
@@ -679,11 +791,11 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">runtime</a>
+                <a href="javascript:void(0)" class="js-tag color5">底层原理</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">底层原理</a>
+                <a href="javascript:void(0)" class="js-tag color3">runtime</a>
               </li>
             
             <div class="clearfix"></div>

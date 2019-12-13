@@ -179,10 +179,8 @@
 </ol>
 <h3 id="消息转发"><a href="#消息转发" class="headerlink" title="消息转发"></a>消息转发</h3><ol>
 <li>调用- (id)forwardingTargetForSelector:(SEL)aSelector方法来尝试确定能处理方法的其他对象。如果返回值不为空，效果类似于objc_msgSend(返回值,SEL)。若为空，进入下一环节。</li>
-<li><p>调用- (NSMethodSignature *)methodSignatureForSelector:方法来确定SEL的方法签名。官方文档对此有如下描述: This method is used in situations where an NSInvocation object must be created, such as during message forwarding.可见主要是为了将消息调用封装成NSInvocation对象搜集方法签名信息。如果有返回值，进入下一环节，否则就会抛出UnRecognize selector的错误。</p>
-</li>
-<li><p>调用-/+ (void)forwardInvocation方法。NSInvocation对象包括了消息的所有元素：调用者、选择器、参数和返回值。因此拿到NSInvocation后可以自定义处理逻辑。至此，方法调用完毕。</p>
-</li>
+<li>调用- (NSMethodSignature *)methodSignatureForSelector:方法来确定SEL的方法签名。官方文档对此有如下描述: This method is used in situations where an NSInvocation object must be created, such as during message forwarding.可见主要是为了将消息调用封装成NSInvocation对象搜集方法签名信息。如果有返回值，进入下一环节，否则就会抛出UnRecognize selector的错误。</li>
+<li>调用-/+ (void)forwardInvocation方法。NSInvocation对象包括了消息的所有元素：调用者、选择器、参数和返回值。因此拿到NSInvocation后可以自定义处理逻辑。至此，方法调用完毕。</li>
 </ol>
 
       
@@ -291,11 +289,11 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
         		</li>
       		
 		</ul>
@@ -406,11 +404,11 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
         		</li>
       		
 		</ul>
@@ -681,11 +679,11 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">底层原理</a>
+                <a href="javascript:void(0)" class="js-tag color3">runtime</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">runtime</a>
+                <a href="javascript:void(0)" class="js-tag color5">底层原理</a>
               </li>
             
             <div class="clearfix"></div>

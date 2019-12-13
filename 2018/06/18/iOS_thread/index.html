@@ -8,18 +8,18 @@
   <link rel="dns-prefetch" href="https://xuzhenhao.github.io">
   <title>深入理解多线程 | cloud的博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="多线程GCD队列同步执行:只能在当前线程执行任务,下一步的代码需要等待完成后才能执行。不具备开启新线程的能力。 异步执行:可以在新的线程执行任务，下一步的代码无需等待。具备开启新线程的能力。 串行队列:队列中的任务只能一个一个按顺序执行。 并行队列:队列中的任务可以同时并发执行。并发执行需要开启多个线程，因此只有在异步执行时才有效。在同步执行时，和串行队列效果一致。 往当前的串行队列中添加同步任务">
+  <meta name="description" content="GCD队列同步执行:只能在当前线程执行任务,下一步的代码需要等待完成后才能执行。不具备开启新线程的能力。 异步执行:可以在新的线程执行任务，下一步的代码无需等待。具备开启新线程的能力。 串行队列:队列中的任务只能一个一个按顺序执行。 并行队列:队列中的任务可以同时并发执行。并发执行需要开启多个线程，因此只有在异步执行时才有效。在同步执行时，和串行队列效果一致。 往当前的串行队列中添加同步任务时，下">
 <meta name="keywords" content="底层原理">
 <meta property="og:type" content="article">
 <meta property="og:title" content="深入理解多线程">
 <meta property="og:url" content="https://xuzhenhao.github.io/2018/06/18/iOS_thread/index.html">
 <meta property="og:site_name" content="cloud的博客">
-<meta property="og:description" content="多线程GCD队列同步执行:只能在当前线程执行任务,下一步的代码需要等待完成后才能执行。不具备开启新线程的能力。 异步执行:可以在新的线程执行任务，下一步的代码无需等待。具备开启新线程的能力。 串行队列:队列中的任务只能一个一个按顺序执行。 并行队列:队列中的任务可以同时并发执行。并发执行需要开启多个线程，因此只有在异步执行时才有效。在同步执行时，和串行队列效果一致。 往当前的串行队列中添加同步任务">
+<meta property="og:description" content="GCD队列同步执行:只能在当前线程执行任务,下一步的代码需要等待完成后才能执行。不具备开启新线程的能力。 异步执行:可以在新的线程执行任务，下一步的代码无需等待。具备开启新线程的能力。 串行队列:队列中的任务只能一个一个按顺序执行。 并行队列:队列中的任务可以同时并发执行。并发执行需要开启多个线程，因此只有在异步执行时才有效。在同步执行时，和串行队列效果一致。 往当前的串行队列中添加同步任务时，下">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2019-12-13T08:32:17.187Z">
+<meta property="og:updated_time" content="2019-12-13T08:35:10.406Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入理解多线程">
-<meta name="twitter:description" content="多线程GCD队列同步执行:只能在当前线程执行任务,下一步的代码需要等待完成后才能执行。不具备开启新线程的能力。 异步执行:可以在新的线程执行任务，下一步的代码无需等待。具备开启新线程的能力。 串行队列:队列中的任务只能一个一个按顺序执行。 并行队列:队列中的任务可以同时并发执行。并发执行需要开启多个线程，因此只有在异步执行时才有效。在同步执行时，和串行队列效果一致。 往当前的串行队列中添加同步任务">
+<meta name="twitter:description" content="GCD队列同步执行:只能在当前线程执行任务,下一步的代码需要等待完成后才能执行。不具备开启新线程的能力。 异步执行:可以在新的线程执行任务，下一步的代码无需等待。具备开启新线程的能力。 串行队列:队列中的任务只能一个一个按顺序执行。 并行队列:队列中的任务可以同时并发执行。并发执行需要开启多个线程，因此只有在异步执行时才有效。在同步执行时，和串行队列效果一致。 往当前的串行队列中添加同步任务时，下">
   
     <link rel="alternative" href="/atom.xml" title="cloud的博客" type="application/atom+xml">
   
@@ -159,7 +159,7 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="多线程"><a href="#多线程" class="headerlink" title="多线程"></a>多线程</h1><h2 id="GCD队列"><a href="#GCD队列" class="headerlink" title="GCD队列"></a>GCD队列</h2><p>同步执行:只能在当前线程执行任务,下一步的代码需要等待完成后才能执行。不具备开启新线程的能力。</p>
+        <h2 id="GCD队列"><a href="#GCD队列" class="headerlink" title="GCD队列"></a>GCD队列</h2><p>同步执行:只能在当前线程执行任务,下一步的代码需要等待完成后才能执行。不具备开启新线程的能力。</p>
 <p>异步执行:可以在新的线程执行任务，下一步的代码无需等待。具备开启新线程的能力。</p>
 <p>串行队列:队列中的任务只能一个一个按顺序执行。</p>
 <p>并行队列:队列中的任务可以同时并发执行。并发执行需要开启多个线程，因此只有在异步执行时才有效。在同步执行时，和串行队列效果一致。</p>

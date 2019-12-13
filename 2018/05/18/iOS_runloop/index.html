@@ -6,24 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="dns-prefetch" href="https://xuzhenhao.github.io">
-  <title>深入理解runtime:对象的本质 | cloud的博客</title>
+  <title>深入理解RunLoop | cloud的博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="runtime不只是一些C语言的API，还包括一套面向对象的数据结构。研究runtime，首先需要研究对象模型。 NSObject的底层实现重写为c/c++借助LLVM,我们可以将oc的代码重写为对应的c代码。待转化的oc代码，如下所示：123456789101112131415161718192021222324252627#import &amp;lt;Foundation/Foundation.h&amp;">
-<meta name="keywords" content="底层原理,runtime">
+  <meta name="description" content="runLoop概念runLoop简单来说就是一个do-while循环,内部一直处于”接受消息-&amp;gt;处理事件-&amp;gt;休眠等待”的循环中。如果是我们自己写的do-while循环，哪怕不处理事件，也会持续占用cpu资源。runLoop在休眠时几乎不会占用系统资源，在有消息到来时立刻被唤醒。 runLoop与线程通常来说,一个线程一次只能执行一个任务,在执行完对应任务后就会退出，  每条线程都有唯一">
+<meta name="keywords" content="底层原理">
 <meta property="og:type" content="article">
-<meta property="og:title" content="深入理解runtime:对象的本质">
-<meta property="og:url" content="https://xuzhenhao.github.io/2018/03/19/objc_object/index.html">
+<meta property="og:title" content="深入理解RunLoop">
+<meta property="og:url" content="https://xuzhenhao.github.io/2018/05/18/iOS_runloop/index.html">
 <meta property="og:site_name" content="cloud的博客">
-<meta property="og:description" content="runtime不只是一些C语言的API，还包括一套面向对象的数据结构。研究runtime，首先需要研究对象模型。 NSObject的底层实现重写为c/c++借助LLVM,我们可以将oc的代码重写为对应的c代码。待转化的oc代码，如下所示：123456789101112131415161718192021222324252627#import &amp;lt;Foundation/Foundation.h&amp;">
+<meta property="og:description" content="runLoop概念runLoop简单来说就是一个do-while循环,内部一直处于”接受消息-&amp;gt;处理事件-&amp;gt;休眠等待”的循环中。如果是我们自己写的do-while循环，哪怕不处理事件，也会持续占用cpu资源。runLoop在休眠时几乎不会占用系统资源，在有消息到来时立刻被唤醒。 runLoop与线程通常来说,一个线程一次只能执行一个任务,在执行完对应任务后就会退出，  每条线程都有唯一">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="https://xuzhenhao.github.io/images/objc_object.png">
-<meta property="og:image" content="https://xuzhenhao.github.io/images/class-union.jpg">
-<meta property="og:image" content="https://xuzhenhao.github.io/images/class_rw_t.png">
-<meta property="og:updated_time" content="2019-12-11T08:01:57.133Z">
+<meta property="og:updated_time" content="2019-12-13T08:31:52.817Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="深入理解runtime:对象的本质">
-<meta name="twitter:description" content="runtime不只是一些C语言的API，还包括一套面向对象的数据结构。研究runtime，首先需要研究对象模型。 NSObject的底层实现重写为c/c++借助LLVM,我们可以将oc的代码重写为对应的c代码。待转化的oc代码，如下所示：123456789101112131415161718192021222324252627#import &amp;lt;Foundation/Foundation.h&amp;">
-<meta name="twitter:image" content="https://xuzhenhao.github.io/images/objc_object.png">
+<meta name="twitter:title" content="深入理解RunLoop">
+<meta name="twitter:description" content="runLoop概念runLoop简单来说就是一个do-while循环,内部一直处于”接受消息-&amp;gt;处理事件-&amp;gt;休眠等待”的循环中。如果是我们自己写的do-while循环，哪怕不处理事件，也会持续占用cpu资源。runLoop在休眠时几乎不会占用系统资源，在有消息到来时立刻被唤醒。 runLoop与线程通常来说,一个线程一次只能执行一个任务,在执行完对应任务后就会退出，  每条线程都有唯一">
   
     <link rel="alternative" href="/atom.xml" title="cloud的博客" type="application/atom+xml">
   
@@ -143,64 +139,45 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-objc_object" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-iOS_runloop" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      深入理解runtime:对象的本质
+      深入理解RunLoop
     </h1>
   
 
         
-        <a href="/2018/03/19/objc_object/" class="archive-article-date">
-  	<time datetime="2018-03-19T08:06:17.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-03-19</time>
+        <a href="/2018/05/18/iOS_runloop/" class="archive-article-date">
+  	<time datetime="2018-05-18T06:12:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-05-18</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>runtime不只是一些C语言的API，还包括一套面向对象的数据结构。研究runtime，首先需要研究对象模型。</p>
-<h2 id="NSObject的底层实现"><a href="#NSObject的底层实现" class="headerlink" title="NSObject的底层实现"></a>NSObject的底层实现</h2><h3 id="重写为c-c"><a href="#重写为c-c" class="headerlink" title="重写为c/c++"></a>重写为c/c++</h3><p>借助LLVM,我们可以将oc的代码重写为对应的c代码。<br>待转化的oc代码，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">#import &lt;Foundation/Foundation.h&gt;</span><br><span class="line"></span><br><span class="line">@interface ZHAnimal : NSObject</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      age;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHAnimal</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@interface ZHCat : ZHAnimal</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      legs;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHCat</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>准备的事例代码使用了oc的类声明、属性及继承特性，以便我们探索这些特性的底层实现。</p>
-<p>之后，我们使用Clang将main.m文件重写输出为mainarm64.cpp文件，指定的架构参数是arm64<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc main.m -o mainarm64.cpp</span><br></pre></td></tr></table></figure></p>
-<p>在mainarm64.cpp文件中，我们首先搜索”ZHCat_IMPL {“,可以找到如下代码：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct ZHCat_IMPL &#123;</span><br><span class="line">	struct ZHAnimal_IMPL ZHAnimal_IVARS;</span><br><span class="line">	NSInteger _legs;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>除了自身的成员变量_legs,还能看到名为 ZHAnimal_IVARS 类型为 ZHAnimal_IMPL 的结构体变量声明。</p>
-<p>我们接着搜索”ZHAnimal_IMPL {“,可以找到如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct ZHAnimal_IMPL &#123;</span><br><span class="line">	struct NSObject_IMPL NSObject_IVARS;</span><br><span class="line">	NSInteger _age;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
-<p>这段代码逻辑和上面的一样。那么接着看NSObject。可以找到如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">struct objc_selector; struct objc_class;</span><br><span class="line"></span><br><span class="line">typedef struct objc_class *Class;</span><br><span class="line"></span><br><span class="line">struct NSObject_IMPL &#123;</span><br><span class="line">    Class isa;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
-<p>到此为止，简单小结一下：</p>
+        <h2 id="runLoop概念"><a href="#runLoop概念" class="headerlink" title="runLoop概念"></a>runLoop概念</h2><p>runLoop简单来说就是一个do-while循环,内部一直处于”接受消息-&gt;处理事件-&gt;休眠等待”的循环中。如果是我们自己写的do-while循环，哪怕不处理事件，也会持续占用cpu资源。runLoop在休眠时几乎不会占用系统资源，在有消息到来时立刻被唤醒。</p>
+<h2 id="runLoop与线程"><a href="#runLoop与线程" class="headerlink" title="runLoop与线程"></a>runLoop与线程</h2><p>通常来说,一个线程一次只能执行一个任务,在执行完对应任务后就会退出，</p>
 <ol>
-<li>对象底层是基于struct数据结构实现的。</li>
-<li>NSObject里面包含一个objc_class类型的结构体指针isa.</li>
-<li>子类的结构体中会包含父类的结构体声明，以此来实现继承关系。</li>
+<li>每条线程都有唯一一个与之对应的RunLoop对象;</li>
+<li>RunLoop保存在一个全局的字典里，线程作为key，RunLoop作为value;</li>
+<li>线程刚创建时并没有RunLoop对象，RunLoop会在第一次获取时创建，并保存在全局字典中。</li>
 </ol>
-<h3 id="探寻objc-class"><a href="#探寻objc-class" class="headerlink" title="探寻objc_class"></a>探寻objc_class</h3><p>在<a href="https://opensource.apple.com/tarballs/objc4/" target="_blank" rel="noopener">objc4源码</a>可以下载到开源代码，注意下载序号大的新版本。</p>
-<p>在objc-runtime-new文件中，我们终于看到了objc_class的实现。代码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">struct objc_class : objc_object &#123;</span><br><span class="line">    // Class ISA;</span><br><span class="line">    Class superclass;</span><br><span class="line">    cache_t cache;             // formerly cache pointer and vtable</span><br><span class="line">    class_data_bits_t bits;    // class_rw_t * plus custom rr/alloc flags</span><br><span class="line"></span><br><span class="line">    class_rw_t *data() &#123; </span><br><span class="line">        return bits.data();</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">struct objc_object &#123;</span><br><span class="line">private:</span><br><span class="line">    isa_t isa;</span><br><span class="line"></span><br><span class="line">public:</span><br><span class="line"></span><br><span class="line">    // ISA() assumes this is NOT a tagged pointer object</span><br><span class="line">    Class ISA();</span><br><span class="line"></span><br><span class="line">    // getIsa() allows this to be a tagged pointer object</span><br><span class="line">    Class getIsa();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">typedef struct objc_object *id;</span><br></pre></td></tr></table></figure></p>
-<p>追踪到最后的数据结构是objc_object，里面有一个isa_t类型的isa成员。</p>
-<ol>
-<li><strong>oc中所有的对象都会包含一个isa_t类型的成员变量</strong>。objc_class,类也是对象，通过继承于objc_object拿到了的isa_t结构类型的isa成员。</li>
-<li>对象或者说实例对象，只有isa，用来找到对应的类对象。类对象才有superclass(父类指针)、cache(方法缓存)和bits(类数据信息)。（bits里包含了ivars成员变量列表、methods方法列表、protocals协议列表和properties属性列表等类信息）</li>
+<h2 id="runLoop数据结构"><a href="#runLoop数据结构" class="headerlink" title="runLoop数据结构"></a>runLoop数据结构</h2><h2 id="runLoop运行逻辑"><a href="#runLoop运行逻辑" class="headerlink" title="runLoop运行逻辑"></a>runLoop运行逻辑</h2><ol>
+<li>通知observer,进入Loop;</li>
+<li>如果有timers事件,通知Observer,即将处理timers;</li>
+<li>如果有sources要处理的话，通过observer,即将处理sources</li>
+<li>处理source0</li>
+<li>如果当前是主线程的runloop,并且主线程有事，跳转到第9步;</li>
+<li>通知observer,runloop即将进入休眠状态;</li>
+<li>进入休眠状态，等待唤醒;</li>
+<li>通知observer,runloop被唤醒</li>
+<li>处理唤醒时收到的消息(处理timer、处理dispatchport、处理source1)。继续循环，跳回2;</li>
+<li>通知observer，runloop即将退出;</li>
 </ol>
-<p><img src="/images/objc_object.png" alt="objc对象本质"></p>
-<h2 id="Class中的数据结构"><a href="#Class中的数据结构" class="headerlink" title="Class中的数据结构"></a>Class中的数据结构</h2><h3 id="isa-t"><a href="#isa-t" class="headerlink" title="isa_t"></a>isa_t</h3><p>isa数据结构的定义，摘录于objc4-750.1</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">union isa_t &#123;</span><br><span class="line">    isa_t() &#123; &#125;</span><br><span class="line">    isa_t(uintptr_t value) : bits(value) &#123; &#125; </span><br><span class="line"></span><br><span class="line">    Class cls;</span><br><span class="line">    uintptr_t bits;</span><br><span class="line">#if defined(ISA_BITFIELD)</span><br><span class="line">    struct &#123;</span><br><span class="line">        ISA_BITFIELD;  // defined in isa.h</span><br><span class="line">    &#125;;</span><br><span class="line">#endif</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">#   define ISA_BITFIELD                                                        \</span><br><span class="line">      uintptr_t nonpointer        : 1;                                         \</span><br><span class="line">      uintptr_t has_assoc         : 1;                                         \</span><br><span class="line">      uintptr_t has_cxx_dtor      : 1;                                         \</span><br><span class="line">      uintptr_t shiftcls          : 44; /*MACH_VM_MAX_ADDRESS 0x7fffffe00000*/ \</span><br><span class="line">      uintptr_t magic             : 6;                                         \</span><br><span class="line">      uintptr_t weakly_referenced : 1;                                         \</span><br><span class="line">      uintptr_t deallocating      : 1;                                         \</span><br><span class="line">      uintptr_t has_sidetable_rc  : 1;                                         \</span><br><span class="line">      uintptr_t extra_rc          : 8</span><br></pre></td></tr></table></figure>
-<p>在arm64架构之前，isa就是一个普通的指针，存储着Class、Meta-Class对象地址</p>
-<p>从arm64架构开始，isa成了一个union结构的共同体，并使用位域来存储更多的信息。</p>
-<p>其含义如图所示:可以看到大多与内存管理相关</p>
-<p><img src="/images/class-union.jpg" alt="weiyu"></p>
-<h3 id="class-data-bits-t"><a href="#class-data-bits-t" class="headerlink" title="class_data_bits_t"></a>class_data_bits_t</h3><p><img src="/images/class_rw_t.png" alt="class_rw_t"></p>
-<p>class_ro_t存储着类的原始信息，在运行时根据class_ro_t生成class_rw_t，并通过ro指针指回了class_ro_t.</p>
-<p>以方法列表为例，假如Animal类有run方法，同时通过分类扩展了eat方法。那么，run方法首先位于class_ro_t中的baseMethodList中，在运行时，会加载所有分类，把分类中的方法和baseMethodList合并成methods，且分类中的方法在前。</p>
-<p>class_rw_t中没有定义ivars的字段，在访问成员变量时，直接通过isa_t找到对应的objc_class,并通过class_ro_t的ivarlist做地址偏移，查找对应的对象内存。因此，内存布局在编译时就已经确定，runtime不能动态修改ivars，会破坏已有的内存布局。只能通过类似关联对象的方式重新开辟一块专门的内存空间。</p>
-<h3 id="method-t"><a href="#method-t" class="headerlink" title="method_t"></a>method_t</h3><p>method_list_t数组中存储着method_t，method_t是对方法的封装。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">struct method_t &#123;</span><br><span class="line">    SEL name;//方法名</span><br><span class="line">    const char *types;//编码，内含返回值类型、参数类型等信息</span><br><span class="line">    IMP imp; //本质为函数指针，存储函数实现的地址</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
-<h3 id="cache-t"><a href="#cache-t" class="headerlink" title="cache_t"></a>cache_t</h3><p>方法调用是在methods中通过receiver和SEL查找定位IMP的过程。如果一个方法被多次调用，通过缓存技术就能提高效率。</p>
-<p>cache_t就是这样一个缓存，他通过散列表来缓存曾经调用过的方法，用以提高方法的查找速度。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">struct cache_t &#123;</span><br><span class="line">    struct bucket_t *_buckets;//散列表</span><br><span class="line">    mask_t _mask;//散列表的长度 - 1</span><br><span class="line">    mask_t _occupied;//已经缓存的方法数量</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">struct bucket_t &#123;</span><br><span class="line">    IMP _imp;</span><br><span class="line">    cache_key_t _key;//SEL为key</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Class points to cache. SEL is key. Cache buckets store SEL+IMP.</span><br><span class="line">// Caches are never built in the dyld shared cache.</span><br><span class="line">static inline mask_t cache_hash(cache_key_t key, mask_t mask) </span><br><span class="line">&#123;</span><br><span class="line">    return (mask_t)(key &amp; mask);</span><br><span class="line">&#125;</span><br><span class="line">//objc-cache.mm</span><br></pre></td></tr></table></figure>
-<p>通过源码可以看到散列表的实现机制是：将SEL和长度进行&amp;操作(类似取余)，得到的结果作为_buckets的下标。存取_buckets都可以通过下标直接查找。这种机制是非依次存放的，是一种空间换时间的思路。而当空间不够存放时，会进行扩容。此时因为key已经改变，会清空已缓存的数据，重新建索引。</p>
 
       
 
@@ -236,10 +213,6 @@
 			 
         		<li class="article-tag-list-item">
         			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
         		</li>
       		
 		</ul>
@@ -295,7 +268,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://xuzhenhao.github.io/2018/03/19/objc_object/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=https://xuzhenhao.github.io/2018/05/18/iOS_runloop/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -309,18 +282,18 @@
   
 <nav id="article-nav">
   
-    <a href="/2018/03/24/objc_category/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/2018/05/28/iOS_memory/" id="article-nav-newer" class="article-nav-link-wrap">
       <i class="icon-circle-left"></i>
       <div class="article-nav-title">
         
-          深入理解runtime:分类及关联对象
+          深入理解内存管理
         
       </div>
     </a>
   
   
-    <a href="/2018/03/08/compile/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">深入理解编译过程</div>
+    <a href="/2018/04/28/objc_block/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">深入理解Block</div>
       <i class="icon-circle-right"></i>
     </a>
   

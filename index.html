@@ -136,20 +136,205 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-runloop" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-iOS_thread" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2018/05/28/runloop/">深入理解RunLoop</a>
+      <a class="article-title" href="/2018/06/18/iOS_thread/">深入理解多线程</a>
     </h1>
   
 
         
-        <a href="/2018/05/28/runloop/" class="archive-article-date">
-  	<time datetime="2018-05-28T06:12:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-05-28</time>
+        <a href="/2018/06/18/iOS_thread/" class="archive-article-date">
+  	<time datetime="2018-06-18T09:41:15.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-06-18</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="多线程"><a href="#多线程" class="headerlink" title="多线程"></a>多线程</h1><h2 id="GCD队列"><a href="#GCD队列" class="headerlink" title="GCD队列"></a>GCD队列</h2><p>同步执行:只能在当前线程执行任务,下一步的代码需要等待完成后才能执行。不具备开启新线程的能力。</p>
+<p>异步执行:可以在新的线程执行任务，下一步的代码无需等待。具备开启新线程的能力。</p>
+<p>串行队列:队列中的任务只能一个一个按顺序执行。</p>
+<p>并行队列:队列中的任务可以同时并发执行。并发执行需要开启多个线程，因此只有在异步执行时才有效。在同步执行时，和串行队列效果一致。</p>
+<p>往当前的串行队列中添加同步任务时，下一步的代码等待同步任务完成，串行队列的特性又要求当前任务完成后才会执行同步任务，互相等待导致死锁。</p>
+<h2 id="队列组"><a href="#队列组" class="headerlink" title="队列组"></a>队列组</h2><p>队列组(DispatchGroup)用来管理一组并发任务的执行。假设有如下需求:异步同时下载分片1和分片2，等同时下载完后进行解压，等解压完后进行完整，之后通知任务已执行完毕。队列组实现如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">func groupTask() -&gt; Void &#123;</span><br><span class="line">       let concurrentQueue = DispatchQueue.init(label: &quot;concurrent&quot;, qos: .default, attributes: .concurrent, autoreleaseFrequency: .inherit, target: nil)</span><br><span class="line">       let group = DispatchGroup.init()</span><br><span class="line">       concurrentQueue.async(group: group, qos: .default, flags: .detached) &#123;</span><br><span class="line">           sleep(2)</span><br><span class="line">           print(&quot;下载片段1&quot;)</span><br><span class="line">       &#125;</span><br><span class="line">       concurrentQueue.async(group: group, qos: .default, flags: .detached) &#123;</span><br><span class="line">           print(&quot;下载片段2&quot;)</span><br><span class="line">       &#125;</span><br><span class="line">       concurrentQueue.async(group: group, qos: .default, flags: .barrier) &#123;</span><br><span class="line">           //barrier意味着拦截，只有在前面的任务都执行完后，才会执行。barrier后的任务在barrier任务完成后才会执行。</span><br><span class="line">           print(&quot;解压&quot;)</span><br><span class="line">       &#125;</span><br><span class="line">       concurrentQueue.async(group: group, qos: .default, flags: .detached) &#123;</span><br><span class="line">           print(&quot;安装&quot;)</span><br><span class="line">       &#125;</span><br><span class="line">       group.notify(queue: concurrentQueue) &#123;</span><br><span class="line">           // 队列中的任务都执行完毕后，触发notify</span><br><span class="line">           print(&quot;任务执行完毕&quot;)</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="线程同步-安全方案-加锁"><a href="#线程同步-安全方案-加锁" class="headerlink" title="线程同步/安全方案(加锁)"></a>线程同步/安全方案(加锁)</h2><p>从大类上可以分为互斥锁、自旋锁、递归锁、条件锁和信号量。</p>
+<p>互斥锁:线程会休眠，适用于预计等待锁的时间较长的场合。如NSLock。AFN框架有使用过NSLock加锁，来进行多线程下的可变字典操作。如@synchronized使用方便，但性能最低</p>
+<p>自旋锁:线程会保存运行，处于忙等待状态，一直占用cpu。适用于预计等待锁较短的场合。如OSSpinLock，性能较高，但OSSpinLock由于存在优先级翻转的问题，已被弃用。</p>
+<p>递归锁:同一个线程可以对同一把锁进行多次加锁。</p>
+<p>信号量:给定信号量值，执行临界区代码时，值减1，完成后，值加1.当值&lt;1时，进入等待状态。性能高，推荐使用。YYThreadSafeArray使用信号量实现。</p>
+<h2 id="atomic"><a href="#atomic" class="headerlink" title="atomic"></a>atomic</h2><p>开发中几乎不会使用atomic属性，因为atomic属性只能保证getter和setter是线程安全的，不能保证使用是线程安全的，比较鸡肋。比如一个可变数组，赋值给另一个变量名时是线程安全的，而使用它进行addObject等操作时，不是线程安全的。</p>
+<h2 id="练习"><a href="#练习" class="headerlink" title="练习"></a>练习</h2><p>以下代码的执行结果是什么?为什么?<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">- (void)printTask &#123;</span><br><span class="line">    NSLog(@&quot;2&quot;);</span><br><span class="line">&#125;</span><br><span class="line">- (void)threadTask &#123;</span><br><span class="line">    dispatch_async(dispatch_get_global_queue(0, 0), ^&#123;</span><br><span class="line">        NSLog(@&quot;1&quot;);</span><br><span class="line">        [self performSelector:@selector(printTask) withObject:nil afterDelay:0];</span><br><span class="line">        NSLog(@&quot;3&quot;);</span><br><span class="line">        // [[NSRunLoop currentRunLoop] runUntilDate:[NSDate distantFuture]];</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>答:结果为1 3。performSelector:afterDelay:方法本质是往runloop中添加timer来实现延迟执行。而子线程的runloop默认是不开启的，因此不会执行。如加上注释的代码，开启runloop后，则能正常执行。</p>
+<p>如何实现多线程安全的可变数组，要求多读单写。<br>答:1.使用pthread_rwlock读写锁,进入读临界区时进行读加锁，进入写临界区时进行写加锁。 2.使用并发队列+barrier实现。并发队列可以实现并行读取，而将写任务设为barrier，可以保证在写任务完成时，才执行后续的读任务。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/06/18/iOS_thread/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-iOS_memory" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/05/28/iOS_memory/">深入理解内存管理</a>
+    </h1>
+  
+
+        
+        <a href="/2018/05/28/iOS_memory/" class="archive-article-date">
+  	<time datetime="2018-05-28T09:41:15.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-05-28</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="内存管理"><a href="#内存管理" class="headerlink" title="内存管理"></a>内存管理</h1><h2 id="定时器"><a href="#定时器" class="headerlink" title="定时器"></a>定时器</h2><h3 id="NSTimer-amp-CADisplayLink"><a href="#NSTimer-amp-CADisplayLink" class="headerlink" title="NSTimer&amp;CADisplayLink"></a>NSTimer&amp;CADisplayLink</h3><p>NSTimer和CADisplayLink会对target进行强引用，而target一般又会持有timer，循环引用，造成无法释放内存的问题。</p>
+<p>解决方案:引入中间代理proxy,timer对proxy强引用,proxy对target弱引用。timer触发方法调用时，通过消息机制，转发给target处理。<br>这个proxy可以是NSProxy也可以是NSObject,区别在于NSProxy代理效率更高，会直接进入转发，而不会像NSObject一样向上查找方法的过程。</p>
+<h2 id="内存布局"><a href="#内存布局" class="headerlink" title="内存布局"></a>内存布局</h2><p>代码段:存放编译之后的代码<br>数据段:存放字符串常量、全局变量、静态变量等<br>栈区:函数调用开销，出栈后内存自动释放<br>堆区:通过alloc、malloc等动态分配的空间，地址不是连续的</p>
+<h2 id="TaggedPointed技术"><a href="#TaggedPointed技术" class="headerlink" title="TaggedPointed技术"></a>TaggedPointed技术</h2><p>TaggedPoint技术用于优化NSNumber、NSDate、NSString等小对象的存储。指针里面直接包含了数据对应的值，只有当指针不够存储数据时，才会使用动态分配内存的方式来存储数据。</p>
+<h2 id="引用计数"><a href="#引用计数" class="headerlink" title="引用计数"></a>引用计数</h2><p>使用引用计数来管理对象的内存。新建对象的引用计数默认是1。调用retain会让引用计数+1，调用release会让引用计数减1.当引用计数减为0，对象销毁，内存回收。</p>
+<p>内存管理原则:对象赋值时，先release旧值，再retain新值。有alloc，就有release(一般使用autorelease)。</p>
+<p>属性关键字中的strong、weak、copy、assign就对应内存管理策略。</p>
+<p>引用计数首先会存在isa中的extra_rc中，如果不够存储，会存到sideTable结构体中。</p>
+<h2 id="拷贝-copy"><a href="#拷贝-copy" class="headerlink" title="拷贝(copy)"></a>拷贝(copy)</h2><p>copy的目的:产生一个副本对象，跟源对象互不干扰。修改源对象，不影响副本对象;修改副本对象，不影响源对象。</p>
+<p>不可变拷贝:copy方法产生不可变对象。如果源对象本身为不可变对象，则本次拷贝为浅拷贝，只是指针赋值;如果源对象为可变对象，则本次拷贝为深拷贝，生成了新的对象。<br>可变拷贝:mutablecopy方法产生可变对象。可变拷贝均为深拷贝。</p>
+<p>NSString等有可变子类的，用copy属性关键字修饰，可以保证自身为不可变对象，内容不受源对象修改而影响。而NSMutableString类型属性不能用copy修饰，否则赋值后经过copy实际指向的是不可变对象，容易运行时报错。</p>
+<p>自定义拷贝:自定义对象要实现自定义拷贝，首先遵守NSCopying协议，再实现copyWithZone方法即可。</p>
+<h2 id="弱引用-weak"><a href="#弱引用-weak" class="headerlink" title="弱引用(weak)"></a>弱引用(weak)</h2><p>weak的好处，对象释放后会自动置为nil,避免野指针错误。</p>
+<p>实现原理:<br>runtime维护了一个weak表，用于存储指向某个对象的所有weak指针。weak表是一个hash表，key是所指对象的地址,value是weak指针的地址数组。</p>
+<p>为什么对象释放后，会自动置为nil?<br>在对象的dealloc方法中，以对象的地址为key在weak表中查找对应的指针列表，然后将weak指针逐个置为nil.</p>
+<h2 id="autorelease"><a href="#autorelease" class="headerlink" title="autorelease"></a>autorelease</h2><p>@autoreleasepool{}底层会转成{AtAutoreleasePool autoreleasepool}。AtAutoreleasePool是结构体,初始化时会调用构造函数objc_autoreleasepoolpush,将pool_boundary入栈，并且返回其存放的内存地址。当作用域结束，会调用结构体的析构函数objc_autoreleasepoolpop,并传入boundary的地址。从最后一个入栈的对象开始发送release消息，直到boundary的地址为止。</p>
+<p>具体存放入池对象地址的是AutoreleasePoolPage，每个page占用4096个字节，以双向链表的结构连接在一起。</p>
+<p>autorelease对象的释放时机:</p>
+<ol>
+<li>如果是局部有明确的@auotreleasepool包裹的，出了作用域后销毁</li>
+<li>如果是没有明确的@auotreleasepool包裹的，由runloop的生命周期决定。主线程在runloop注册了2个observer，监听runloop的进入、休眠和退出。进入时会调用poolpush，在休眠时会调用poolpop后再调用poolpush。在退出时，调用poolpop。</li>
+</ol>
+<h2 id="练习"><a href="#练习" class="headerlink" title="练习"></a>练习</h2><p>Person释放后会打印dealloc。以下代码的可能输出结果是什么?为什么?<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">- (void)viewDidLoad &#123;</span><br><span class="line">    [super viewDidLoad];</span><br><span class="line">    Person *person = [[Person new] autorelease];</span><br><span class="line">&#125;</span><br><span class="line">- (void)viewWillAppear:(BOOL)animated&#123;</span><br><span class="line">    NSLog(@&quot;viewWillAppear&quot;);</span><br><span class="line">    [super viewWillAppear:animated];</span><br><span class="line">&#125;</span><br><span class="line">- (void)viewDidAppear:(BOOL)animated&#123;</span><br><span class="line">    [super viewDidAppear:animated];</span><br><span class="line">    NSLog(@&quot;viewDidAppear&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>答:结果是viewWillAppear、dealloc、viewDidAppear。因为自动释放池的释放时机是随runloop生命周期控制的，在runloop进入休眠时，会进行一次释放。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/05/28/iOS_memory/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-iOS_runloop" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/05/18/iOS_runloop/">深入理解RunLoop</a>
+    </h1>
+  
+
+        
+        <a href="/2018/05/18/iOS_runloop/" class="archive-article-date">
+  	<time datetime="2018-05-18T06:12:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-05-18</time>
 </a>
         
       </header>
@@ -183,11 +368,22 @@
     <div class="article-info article-info-index">
       
       
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
       
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2018/05/28/runloop/">展开全文 >></a>
+          <a class="article-more-a" href="/2018/05/18/iOS_runloop/">展开全文 >></a>
         </p>
       
 
@@ -217,19 +413,19 @@
 
 
   
-    <article id="post-block" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-objc_block" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2018/04/28/block/">深入理解Block</a>
+      <a class="article-title" href="/2018/04/28/objc_block/">深入理解Block</a>
     </h1>
   
 
         
-        <a href="/2018/04/28/block/" class="archive-article-date">
+        <a href="/2018/04/28/objc_block/" class="archive-article-date">
   	<time datetime="2018-04-28T09:41:15.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-04-28</time>
 </a>
         
@@ -296,7 +492,7 @@
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2018/04/28/block/">展开全文 >></a>
+          <a class="article-more-a" href="/2018/04/28/objc_block/">展开全文 >></a>
         </p>
       
 
@@ -379,11 +575,11 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
         		</li>
       		
 		</ul>
@@ -482,11 +678,11 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
         		</li>
       		
 		</ul>
@@ -591,11 +787,11 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
         		</li>
       		
 		</ul>
@@ -706,11 +902,11 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
         		</li>
       		
 		</ul>
@@ -981,11 +1177,11 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">runtime</a>
+                <a href="javascript:void(0)" class="js-tag color5">底层原理</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">底层原理</a>
+                <a href="javascript:void(0)" class="js-tag color3">runtime</a>
               </li>
             
             <div class="clearfix"></div>

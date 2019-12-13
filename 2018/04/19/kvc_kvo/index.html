@@ -9,7 +9,7 @@
   <title>深入理解runtime-KVC和KVO | cloud的博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="KVC和KVO的底层实现机制都是isa-swizzing。通过runtime替换实例对象的isa指针为动态创建的派生类,在派生类中重写setter方法来达到目的。 KVOKVO全称是Key-Value Observing，键值监听，可以用于监听某个对象属性值的改变，对应于观察者模式。 KVO实现机制:  使用runtime动态生成子类，并将实例对象的isa指针指向子类; 子类重写set方法，当值被">
-<meta name="keywords" content="runtime,底层原理">
+<meta name="keywords" content="底层原理,runtime">
 <meta property="og:type" content="article">
 <meta property="og:title" content="深入理解runtime-KVC和KVO">
 <meta property="og:url" content="https://xuzhenhao.github.io/2018/04/19/kvc_kvo/index.html">
@@ -213,11 +213,11 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
         		</li>
       		
 		</ul>
@@ -287,7 +287,7 @@
   
 <nav id="article-nav">
   
-    <a href="/2018/04/28/block/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/2018/04/28/objc_block/" id="article-nav-newer" class="article-nav-link-wrap">
       <i class="icon-circle-left"></i>
       <div class="article-nav-title">
         
@@ -424,11 +424,11 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">runtime</a>
+                <a href="javascript:void(0)" class="js-tag color5">底层原理</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">底层原理</a>
+                <a href="javascript:void(0)" class="js-tag color3">runtime</a>
               </li>
             
             <div class="clearfix"></div>

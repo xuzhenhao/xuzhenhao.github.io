@@ -8,18 +8,18 @@
   <link rel="dns-prefetch" href="https://xuzhenhao.github.io">
   <title>深入理解runtime-KVC和KVO | cloud的博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="KVC和KVO的底层实现机制都是isa-swizzing。通过runtime替换实例对象的isa指针为动态创建的派生类,在派生类中重写setter方法来达到目的。 KVOKVO全称是Key-Value Observing，键值监听，可以用于监听某个对象属性值的改变，对应于观察者模式。 KVO实现机制:  使用runtime动态生成子类，并将实例对象的isa指针指向子类; 子类重写set方法，当值被">
+  <meta name="description" content="KVOKVO全称是Key-Value Observing，键值监听，可以用于监听某个对象属性值的改变，对应于观察者模式。 KVO是通过isa-swizzing来实现的,通过runtime替换实例对象的isa指针为动态创建的派生类,在派生类中重写setter方法。  动态生成子类，并将实例对象的isa指针指向子类; 子类重写set方法，当值将被改变时，调用willChangeValueForKey:">
 <meta name="keywords" content="底层原理,runtime">
 <meta property="og:type" content="article">
 <meta property="og:title" content="深入理解runtime-KVC和KVO">
 <meta property="og:url" content="https://xuzhenhao.github.io/2018/04/19/kvc_kvo/index.html">
 <meta property="og:site_name" content="cloud的博客">
-<meta property="og:description" content="KVC和KVO的底层实现机制都是isa-swizzing。通过runtime替换实例对象的isa指针为动态创建的派生类,在派生类中重写setter方法来达到目的。 KVOKVO全称是Key-Value Observing，键值监听，可以用于监听某个对象属性值的改变，对应于观察者模式。 KVO实现机制:  使用runtime动态生成子类，并将实例对象的isa指针指向子类; 子类重写set方法，当值被">
+<meta property="og:description" content="KVOKVO全称是Key-Value Observing，键值监听，可以用于监听某个对象属性值的改变，对应于观察者模式。 KVO是通过isa-swizzing来实现的,通过runtime替换实例对象的isa指针为动态创建的派生类,在派生类中重写setter方法。  动态生成子类，并将实例对象的isa指针指向子类; 子类重写set方法，当值将被改变时，调用willChangeValueForKey:">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2019-12-13T08:10:09.233Z">
+<meta property="og:updated_time" content="2019-12-16T07:42:29.850Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入理解runtime-KVC和KVO">
-<meta name="twitter:description" content="KVC和KVO的底层实现机制都是isa-swizzing。通过runtime替换实例对象的isa指针为动态创建的派生类,在派生类中重写setter方法来达到目的。 KVOKVO全称是Key-Value Observing，键值监听，可以用于监听某个对象属性值的改变，对应于观察者模式。 KVO实现机制:  使用runtime动态生成子类，并将实例对象的isa指针指向子类; 子类重写set方法，当值被">
+<meta name="twitter:description" content="KVOKVO全称是Key-Value Observing，键值监听，可以用于监听某个对象属性值的改变，对应于观察者模式。 KVO是通过isa-swizzing来实现的,通过runtime替换实例对象的isa指针为动态创建的派生类,在派生类中重写setter方法。  动态生成子类，并将实例对象的isa指针指向子类; 子类重写set方法，当值将被改变时，调用willChangeValueForKey:">
   
     <link rel="alternative" href="/atom.xml" title="cloud的博客" type="application/atom+xml">
   
@@ -159,15 +159,18 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>KVC和KVO的底层实现机制都是isa-swizzing。通过runtime替换实例对象的isa指针为动态创建的派生类,在派生类中重写setter方法来达到目的。</p>
-<h2 id="KVO"><a href="#KVO" class="headerlink" title="KVO"></a>KVO</h2><p>KVO全称是Key-Value Observing，键值监听，可以用于监听某个对象属性值的改变，对应于观察者模式。</p>
-<p>KVO实现机制:</p>
+        <h2 id="KVO"><a href="#KVO" class="headerlink" title="KVO"></a>KVO</h2><p>KVO全称是Key-Value Observing，键值监听，可以用于监听某个对象属性值的改变，对应于观察者模式。</p>
+<p>KVO是通过isa-swizzing来实现的,通过runtime替换实例对象的isa指针为动态创建的派生类,在派生类中重写setter方法。</p>
 <ol>
-<li>使用runtime动态生成子类，并将实例对象的isa指针指向子类;</li>
-<li>子类重写set方法，当值被改变时，依次调用willChangeValueForKey:、[super set]、didChangeValueForKey:</li>
+<li>动态生成子类，并将实例对象的isa指针指向子类;</li>
+<li>子类重写set方法，当值将被改变时，调用willChangeValueForKey:。调用父类的set方法执行改变。调用didChangeValueForKey:通知值已经变更。</li>
 <li>didChangeValueForKey内部会调用obser的observerValueForKeyPath方法，让观察者收到改变的通知。</li>
 </ol>
-<p>在某些场景下，如果我们有手动触发KVO的需求，比如用KVO监听数组，可以按第2步的调用顺序来模仿系统调用实现KVO的效果。</p>
+<h3 id="手动触发KVO"><a href="#手动触发KVO" class="headerlink" title="手动触发KVO"></a>手动触发KVO</h3><p>如果需要精确的控制KVO的触发时机,可以通过手动触发KVO。</p>
+<ol>
+<li>实现automaticallyNotifiesObserversOf<key>方法，关闭对应属性的自动触发</key></li>
+<li>在属性的set方法里，依次执行willChangeValueForKey:,变量赋值,didChangeValueForKey:。</li>
+</ol>
 <h2 id="KVC"><a href="#KVC" class="headerlink" title="KVC"></a>KVC</h2><p>KVC全称Key-Value Coding,键值编码,可以用于通过key名直接访问或修改对象的属性值，而不需要调用明确的存取方法。</p>
 <p>setValue:forKey执行逻辑:</p>
 <ol>

@@ -6,22 +6,22 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="dns-prefetch" href="https://xuzhenhao.github.io">
-  <title>深入理解runtime:消息机制 | cloud的博客</title>
+  <title>深入理解Widget | cloud的博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="方法调用12345678910//oc代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = [ZHAnimal new];    [animal run];&amp;#125;//重写后的c++代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = objc">
-<meta name="keywords" content="底层原理,runtime">
+  <meta name="description" content="Widget渲染过程Widget在Android和iOS中,是命令式编程,我们拿到对应的视图进行直接操作更新,如label.text = “someText”。强调精确控制过程细节。在Flutter中,是声明式编程,核心思想是数据和视图分离。只需要维护数据,对应绑定的UI就会自动更新。如setState(() {labelText = “someText”;}); Widget是不可变的,更新意味">
+<meta name="keywords" content="Flutter">
 <meta property="og:type" content="article">
-<meta property="og:title" content="深入理解runtime:消息机制">
-<meta property="og:url" content="https://xuzhenhao.github.io/2018/04/07/objc_message/index.html">
+<meta property="og:title" content="深入理解Widget">
+<meta property="og:url" content="https://xuzhenhao.github.io/2019/12/09/flutter-widget/index.html">
 <meta property="og:site_name" content="cloud的博客">
-<meta property="og:description" content="方法调用12345678910//oc代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = [ZHAnimal new];    [animal run];&amp;#125;//重写后的c++代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = objc">
+<meta property="og:description" content="Widget渲染过程Widget在Android和iOS中,是命令式编程,我们拿到对应的视图进行直接操作更新,如label.text = “someText”。强调精确控制过程细节。在Flutter中,是声明式编程,核心思想是数据和视图分离。只需要维护数据,对应绑定的UI就会自动更新。如setState(() {labelText = “someText”;}); Widget是不可变的,更新意味">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="https://xuzhenhao.github.io/images/objc_classrelation.png">
-<meta property="og:updated_time" content="2019-12-13T07:30:29.545Z">
+<meta property="og:image" content="https://xuzhenhao.github.io/images/flutter_state_lifecycle.png">
+<meta property="og:updated_time" content="2020-01-06T07:22:34.298Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="深入理解runtime:消息机制">
-<meta name="twitter:description" content="方法调用12345678910//oc代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = [ZHAnimal new];    [animal run];&amp;#125;//重写后的c++代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = objc">
-<meta name="twitter:image" content="https://xuzhenhao.github.io/images/objc_classrelation.png">
+<meta name="twitter:title" content="深入理解Widget">
+<meta name="twitter:description" content="Widget渲染过程Widget在Android和iOS中,是命令式编程,我们拿到对应的视图进行直接操作更新,如label.text = “someText”。强调精确控制过程细节。在Flutter中,是声明式编程,核心思想是数据和视图分离。只需要维护数据,对应绑定的UI就会自动更新。如setState(() {labelText = “someText”;}); Widget是不可变的,更新意味">
+<meta name="twitter:image" content="https://xuzhenhao.github.io/images/flutter_state_lifecycle.png">
   
     <link rel="alternative" href="/atom.xml" title="cloud的博客" type="application/atom+xml">
   
@@ -141,52 +141,66 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-objc_message" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-flutter-widget" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      深入理解runtime:消息机制
+      深入理解Widget
     </h1>
   
 
         
-        <a href="/2018/04/07/objc_message/" class="archive-article-date">
-  	<time datetime="2018-04-07T09:42:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-04-07</time>
+        <a href="/2019/12/09/flutter-widget/" class="archive-article-date">
+  	<time datetime="2019-12-09T09:22:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-12-09</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="方法调用"><a href="#方法调用" class="headerlink" title="方法调用"></a>方法调用</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">//oc代码</span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    ZHAnimal *animal = [ZHAnimal new];</span><br><span class="line">    [animal run];</span><br><span class="line">&#125;</span><br><span class="line">//重写后的c++代码</span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    ZHAnimal *animal = objc_msgSend(objc_getClass(&quot;ZHAnimal&quot;), sel_registerName(&quot;new&quot;));</span><br><span class="line">    objc_msgSend(animal, sel_registerName(&quot;run&quot;));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>经过Clang重写后,可以看到oc的方法调用，本质是调用objc_msgSend函数，并且默认传入2个参数，消息接收者和方法选择器。这也是为什么我们在oc方法内可以直接使用self和_cmd这两个变量名的原因。</p>
-<p>oc的方法调用，一般称为发送消息。相比于其他语言的方法调用，如c++,函数名就是函数的入口地址，方法调用时直接调用方法实现，在编译期确定方法实现。oc的函数名，可以称为消息名，经过消息机制后才会确定对应的方法实现，在运行期确定方法实现。</p>
-<p>需要注意的是，如果我们创建不同的类，定义相同的方法，通过@selector()打印时会发现地址是相同的，不同类的相同SEL是同一个对象。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">objc_msgSend(void /* id self, SEL op, ... */ )</span><br><span class="line"></span><br><span class="line">objc_msgSendSuper(void /* struct objc_super *super, SEL op, ... */ )</span><br><span class="line"></span><br><span class="line">struct objc_super2 &#123;</span><br><span class="line">    id receiver;</span><br><span class="line">    Class current_class;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>需要注意的是，当我们调用[super method]方法时,底层会转换为objc_msgSendSuper2函数的调用，接收struct objc_super2和SEL两个参数，在内部调用objc_msgSend。其中receiver的值还是self，也就说，super调用的本质还是给self发送消息，只是在方法查找时会跳过self的Class而优先从superClass的方法列表中查找。当前对象无论调用什么方法,receiver都是当前对象。</p>
-<h2 id="消息发送流程"><a href="#消息发送流程" class="headerlink" title="消息发送流程"></a>消息发送流程</h2><p>对象通过isa指针访问类对象，通过类对象可以访问所有继承者链中的类。<br><img src="/images/objc_classrelation.png" alt></p>
-<p>objc_msgSend的执行流程可分为消息发送、动态方法解析和消息转发3个阶段:</p>
-<h3 id="消息发送"><a href="#消息发送" class="headerlink" title="消息发送"></a>消息发送</h3><ol>
-<li>判断receiver是否为空，若为空则直接返回;</li>
-<li>根据receiver的isa找到receiverClass并在其缓存中查找方法,若找到，调用方法，结束查找。</li>
-<li>从receierClass的class_rw_t中查找方法，若找到，调用方法，结束查找并将方法缓存到receiverClass的cache中。(即使调用的是父类的方法，也会缓存到receiverClass中)</li>
-<li>根据reciverClass的super指针往上遍历，重复2，3查找流程。</li>
-<li>还没找到，进入动态方法解析阶段。</li>
-</ol>
-<h3 id="动态方法解析"><a href="#动态方法解析" class="headerlink" title="动态方法解析"></a>动态方法解析</h3><ol>
-<li>判断是否已经进行过动态解析，如果是，进入消息转发阶段。</li>
-<li>调用 + (BOOL)resolveInstanceMethod:(SEL)sel 或 + (BOOL)resolveClassMethod:(SEL)sel。开发者可以在此动态添加方法实现</li>
-<li>标记为已经进行过动态解析。</li>
-<li>重新走消息发送流程。如果确实动态添加了方法实现，此时消息发送流程中能找到方法并缓存，如果没有添加，进入消息转发阶段。</li>
-</ol>
-<h3 id="消息转发"><a href="#消息转发" class="headerlink" title="消息转发"></a>消息转发</h3><ol>
-<li>调用- (id)forwardingTargetForSelector:(SEL)aSelector方法来尝试确定能处理方法的其他对象。如果返回值不为空，效果类似于objc_msgSend(返回值,SEL)。若为空，进入下一环节。</li>
-<li>调用- (NSMethodSignature *)methodSignatureForSelector:方法来确定SEL的方法签名。官方文档对此有如下描述: This method is used in situations where an NSInvocation object must be created, such as during message forwarding.可见主要是为了将消息调用封装成NSInvocation对象搜集方法签名信息。如果有返回值，进入下一环节，否则就会抛出UnRecognize selector的错误。</li>
-<li>调用-/+ (void)forwardInvocation方法。NSInvocation对象包括了消息的所有元素：调用者、选择器、参数和返回值。因此拿到NSInvocation后可以自定义处理逻辑。至此，方法调用完毕。</li>
-</ol>
+        <h1 id="Widget渲染过程"><a href="#Widget渲染过程" class="headerlink" title="Widget渲染过程"></a>Widget渲染过程</h1><h2 id="Widget"><a href="#Widget" class="headerlink" title="Widget"></a>Widget</h2><p>在Android和iOS中,是命令式编程,我们拿到对应的视图进行直接操作更新,如label.text = “someText”。强调精确控制过程细节。<br>在Flutter中,是声明式编程,核心思想是数据和视图分离。只需要维护数据,对应绑定的UI就会自动更新。如setState(() {labelText = “someText”;});</p>
+<p>Widget是不可变的,更新意味着销毁+重建(build),包括StatefulWidget,它的所谓更新其实是通过State代理重建了一个基于新数据的新Widget。</p>
+<p>Widget本身不是视图，不直接绘制任何东西。就像接口以JSON格式返回数据描述,客户端解析后执行渲染等等操作。Widget类似JSON,是一个描述UI的配置数据,RenderObject根据配置进行布局及绘制。因而Widget是轻量级的，重新构建的代价很小。而RenderObject是重量级的，重新构建开销较大，只在必要时重建。</p>
+<p>Flutter中一切皆Widget,包括前端框架中的View、ViewController、Activity、Application、Layout等等,都是Widget。</p>
+<h2 id="Element"><a href="#Element" class="headerlink" title="Element"></a>Element</h2><p>Element是Widget的一个实例化对象,是连接Widget和RenderObject的纽带:首先根据Widget生成Element,然后创建相应的RenderObject并关联到Element.renderObject属性上,最后再通过RenderObject来完成布局和绘制。</p>
+<p>大多数情况下,开发者只需要关注Widget树即可，因为内部已经将对Widget树的操作映射到了Element树上。而在某些情况下,我们会直接操作Element对象。</p>
+<p>查看BuildContext的源码,从注释上可以看到,Element对象其实一直出现在我们的代码中,只不过换了个名字,叫BuildContext。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">/// [BuildContext] objects are actually [Element] objects. The [BuildContext]</span><br><span class="line">/// interface is used to discourage direct manipulation of [Element] objects.</span><br><span class="line">abstract class BuildContext &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>进一步查看Element的源码,发现它确实实现了BuildContext。以及在调用build方法时,将自己(this)作为参数传入。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">abstract class Element extends DiagnosticableTree implements BuildContext&#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class StatelessElement extends ComponentElement &#123;</span><br><span class="line">  @override</span><br><span class="line">  Widget build() =&gt; widget.build(this);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>至此,我们弄清楚了context的实质。Widget屏蔽了绝大部分UI内部操作的细节，让我们专注于Widget层，同时，又将Element在build方法中以参数的形式返回，让我们在必要时可以直接操作Element。比如,我们可以通过Theme.of(context)的方法来获取主题数据，内部正是调用了Element的inheritFromWidgetOfExactType()方法。</p>
+<h2 id="RenderObject"><a href="#RenderObject" class="headerlink" title="RenderObject"></a>RenderObject</h2><p>RenderObject最主要的职责就是布局和绘制。</p>
+<h2 id="布局"><a href="#布局" class="headerlink" title="布局"></a>布局</h2><p>在布局阶段,父节点会调用子节点的layout()方法,大致实现如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">void layout(Constraints constraints, &#123; bool parentUsesSize = false &#125;) &#123;</span><br><span class="line">   ...</span><br><span class="line">   RenderObject relayoutBoundary; </span><br><span class="line">    if (!parentUsesSize || sizedByParent || constraints.isTight </span><br><span class="line">        || parent is! RenderObject) &#123;</span><br><span class="line">      relayoutBoundary = this;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      final RenderObject parent = this.parent;</span><br><span class="line">      relayoutBoundary = parent._relayoutBoundary;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">    if (sizedByParent) &#123;</span><br><span class="line">        performResize();</span><br><span class="line">    &#125;</span><br><span class="line">    performLayout();</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>layout方法接收两个参数,第一个为constraints,即父节点对子节点大小的限制。第二个是parentUsesSize,表示子节点布局变化是否会影响父节点。</p>
+<p>当sizedByParent为true时,意味着它的大小仅通过parent传的constraints就可以确定了,此时调用performResize确定大小。</p>
+<p>performLayout方法中除了完成自身布局,也必须完成子节点的布局。最终的调用栈为:layout()&gt;performResize()/performLayout&gt;child.layout()&gt;… 如此递归完成整个UI布局。</p>
+<h2 id="绘制"><a href="#绘制" class="headerlink" title="绘制"></a>绘制</h2><p>RenderObject通过paint()方法完成具体绘制逻辑,子类可以实现该方法完成自身的绘制逻辑。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">void paint(PaintingContext context, Offset offset) &#123; &#125;</span><br></pre></td></tr></table></figure></p>
+<p>通过context.canvas可以获取canvas对象,之后调动canvas Api实现绘制。</p>
+<h1 id="Widget生命周期"><a href="#Widget生命周期" class="headerlink" title="Widget生命周期"></a>Widget生命周期</h1><p>StatelessWidget通过父Widget在初始化时传入的静态配置就能完全控制其静态展示。StatefullWidget还需要借助于State,在特定的阶段来处理用户的交互,这些特定的阶段,就涵盖了一个组件从加载到卸载的全过程,即生命周期。</p>
+<h2 id="State生命周期"><a href="#State生命周期" class="headerlink" title="State生命周期"></a>State生命周期</h2><p>State的生命周期,值在用户参与的情况下,关联的Widget从创建显示到更新直至销毁的各个过程阶段。如果所示:<br><img src="/images/flutter_state_lifecycle.png" alt="生命周期"></p>
+<p>创建:<br>State初始化时会依次执行:构造方法-&gt;initState-&gt;didChangeDependencies-&gt;build,随后完成页面渲染。</p>
+<ul>
+<li>构造方法是生命周期的起点,通过StatefulWidget.createState()来创建一个State</li>
+<li>initState,在State对象被插入视图树的时候调用。在生命周期中只会被调用一次,因此可以在这里做一些初始化工作。</li>
+<li>didChangeDependencies在initState之后被调用,专门处理对象依赖关系变化。</li>
+<li>build阶段构建Widget并返回</li>
+</ul>
+<p>更新:<br>Widget的状态更新,主要由3个方法触发:setState、didChangeDependencies与didUpdateWidget。</p>
+<ul>
+<li>setState,将element标记为dirty,并把它添加到全局的dirty链表里,以便在下一帧更新信号时更新.</li>
+<li>didChangeDependencies:当系统语言或应用主题改变时,系统会通知State执行该方法,触发组件构建。</li>
+<li>didUpdateWidget:组件状态改变时调用,如父Widget的状态发生变化</li>
+</ul>
+<p>销毁:</p>
+<ul>
+<li>deactivate:当组件的可见状态发生变化时,会被调用。如当前页push下一页.</li>
+<li>dispose:当组件被销毁时,会被调用,如当前页执行pop。可以在此进行资源的释放、移除监听等。</li>
+</ul>
+<h2 id="App生命周期"><a href="#App生命周期" class="headerlink" title="App生命周期"></a>App生命周期</h2><p>我们可以通过WidgetsBindingObserver类来监听App中的相关生命周期。具体有:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">abstract class WidgetsBindingObserver &#123;</span><br><span class="line">  //页面pop</span><br><span class="line">  Future&lt;bool&gt; didPopRoute() =&gt; Future&lt;bool&gt;.value(false);</span><br><span class="line">  //页面push</span><br><span class="line">  Future&lt;bool&gt; didPushRoute(String route) =&gt; Future&lt;bool&gt;.value(false);</span><br><span class="line">  //系统窗口相关改变回调，如旋转</span><br><span class="line">  void didChangeMetrics() &#123; &#125;</span><br><span class="line">  //文本缩放系数变化</span><br><span class="line">  void didChangeTextScaleFactor() &#123; &#125;</span><br><span class="line">  //系统亮度变化</span><br><span class="line">  void didChangePlatformBrightness() &#123; &#125;</span><br><span class="line">  //本地化语言变化</span><br><span class="line">  void didChangeLocales(List&lt;Locale&gt; locale) &#123; &#125;</span><br><span class="line">  //App生命周期变化</span><br><span class="line">  void didChangeAppLifecycleState(AppLifecycleState state) &#123; &#125;</span><br><span class="line">  //内存警告回调</span><br><span class="line">  void didHaveMemoryPressure() &#123; &#125;</span><br><span class="line">  //Accessibility相关特性回调</span><br><span class="line">  void didChangeAccessibilityFeatures() &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>如下监听了App当前状态,进入前后台时会触发回调。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">class _MyHomePageState extends State&lt;MyHomePage&gt; with WidgetsBindingObserver &#123;</span><br><span class="line"></span><br><span class="line">  void initState () &#123;</span><br><span class="line">    super.initState();</span><br><span class="line">    WidgetsBinding.instance.addObserver(this);//注册监听</span><br><span class="line">  &#125;</span><br><span class="line">  void dispose () &#123;</span><br><span class="line">    super.dispose();</span><br><span class="line">    WidgetsBinding.instance.removeObserver(this);//移除监听</span><br><span class="line">  &#125;</span><br><span class="line">  @override</span><br><span class="line">  void didChangeAppLifecycleState(AppLifecycleState state) &#123;</span><br><span class="line">    super.didChangeAppLifecycleState(state);</span><br><span class="line">    print(&quot;$state&quot;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 
       
 
@@ -221,11 +235,7 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">Flutter</a>
         		</li>
       		
 		</ul>
@@ -281,7 +291,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://xuzhenhao.github.io/2018/04/07/objc_message/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=https://xuzhenhao.github.io/2019/12/09/flutter-widget/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -295,18 +305,18 @@
   
 <nav id="article-nav">
   
-    <a href="/2018/04/19/kvc_kvo/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/2019/12/14/flutter-stateManagement/" id="article-nav-newer" class="article-nav-link-wrap">
       <i class="icon-circle-left"></i>
       <div class="article-nav-title">
         
-          深入理解runtime-KVC和KVO
+          Flutter状态管理
         
       </div>
     </a>
   
   
-    <a href="/2018/03/24/objc_category/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">深入理解runtime:分类及关联对象</div>
+    <a href="/2019/12/04/flutter-dart/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Dart语法精粹</div>
       <i class="icon-circle-right"></i>
     </a>
   

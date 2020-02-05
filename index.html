@@ -136,6 +136,703 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-flutter-thread" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/12/27/flutter-thread/">Flutter线程</a>
+    </h1>
+  
+
+        
+        <a href="/2019/12/27/flutter-thread/" class="archive-article-date">
+  	<time datetime="2019-12-27T06:16:24.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-12-27</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="单线程模型与事件循环"><a href="#单线程模型与事件循环" class="headerlink" title="单线程模型与事件循环"></a>单线程模型与事件循环</h2><p><img src="/images/flutter_thread_loop.png" alt></p>
+<p>Dart是单线程模型，没有子线程。这意味着代码是有序的,按照在main函数出现的次序一个接一个执行到函数结算,不会被其他代码中断。也不存在多线程中的资源竞争问题。</p>
+<p>需要注意的是,Dart支持异步,单线程和异步并不冲突。Dart的异步是基于事件的异步模型,等待过程不是阻塞的,在等待异步任务的结果时,会继续执行事件队列中的其他任务。给人的感觉像是同时做多件事情,但始终只有一个线程在处理。</p>
+<p>如上图所示,Dart也是Event-Looper以及Event-Queue的模型，所有的事件都通过事件循环依次执行。其中存在两个任务队列:Event Queue和microtask Queue。在每一次事件循环中,总是优先执行完Microtask Queue中的Event后才会执行Event Queue中的Event。</p>
+<p>Microtask queue(微任务队列)优先级是最高的,只要队列中还有任务,就可以一直占有事件循环。如果微任务太多,执行时间总和就越久,其他事件任务的延迟也就越久,对应于UI层的表现就是卡顿。使用scheduleMicrotask函数，可以创建一个微任务,但需谨慎使用。Flutter内部也仅仅是在手势识别、文本输入、滚动视图等需要高优先执行的场景使用。</p>
+<p>我们平常使用最多的是Event Queue(事件队列),如I/O、绘制、定时器等都在事件队列中处理。经常使用的Future,也是event任务的封装。当代码执行到Future时,会将任务加入到Event Queue的队尾,然后继续执行后面的代码。</p>
+<p>来看一个代码示例:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Future(() =&gt; print(&quot;running in future 1&quot;));</span><br><span class="line">Future(() =&gt; print(&quot;running in future 2&quot;))</span><br><span class="line">    .then((_) =&gt; print(&quot;then 1&quot;))</span><br><span class="line">    .then((_) =&gt; print(&quot;then 2&quot;));</span><br><span class="line">print(&quot;end&quot;);</span><br><span class="line"></span><br><span class="line">/*</span><br><span class="line">输出结果:</span><br><span class="line">end</span><br><span class="line">running in future 1</span><br><span class="line">running in future 2</span><br><span class="line">then 1</span><br><span class="line">then 2</span><br><span class="line">*/</span><br></pre></td></tr></table></figure></p>
+<p>当我们声明一个Future时,它被放入事件队列,然后立即返回,后面的代码继续同步执行,输出end。在后面的事件循环中,future1和future2被依次取出,同步执行Future的函数体以及后续的then。这意味着,then和Future函数体共用一个事件循环。如果Future有多个then,在一个事件循环里,他们会按照链式调用的先后顺序同步执行。</p>
+<p>再来看另一段代码:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">Future(() =&gt; print(&quot;running in future 1&quot;))</span><br><span class="line">      .then((_) =&gt; taskPrint())</span><br><span class="line">      .then((_) =&gt; print(&quot;then 2&quot;));</span><br><span class="line">Future(() =&gt; print(&quot;running in future 2&quot;));</span><br><span class="line">print(&quot;end&quot;);</span><br><span class="line"></span><br><span class="line">void taskPrint() async &#123;</span><br><span class="line">  print(&quot;will start  print task&quot;);</span><br><span class="line">  await Future(() =&gt; print(&quot;exec print task&quot;));</span><br><span class="line">  print(&quot;print task end&quot;);</span><br><span class="line">&#125;</span><br><span class="line">/*</span><br><span class="line">输出结果:</span><br><span class="line">end</span><br><span class="line">running in future 1</span><br><span class="line">will start  print task</span><br><span class="line">running in future 2</span><br><span class="line">exec print task</span><br><span class="line">print task end</span><br><span class="line">then 2</span><br><span class="line">*/</span><br></pre></td></tr></table></figure></p>
+<p>咋一看可能不是很理解taskPrint中的输出,但只要牢牢把握住,dart是基于事件的异步模型,不会真的阻塞等待。因此执行到await时,后续的任务被放入事件队列,继续从队列中取出其他任务执行,所以先输出了”running in future 2”。在下一个事件循环中,后面两句以及then2被同步执行。</p>
+<h2 id="isolate"><a href="#isolate" class="headerlink" title="isolate"></a>isolate</h2><p>基于事件的异步模型，只适合I/O密集型的耗时操作，因为I/O耗时操作，往往是把时间浪费在等待对方传送数据或者返回结果。而如果是计算密集型的操作，则应当尽可能利用处理器的多核，实现并行计算。</p>
+<p>Isolate是分离的运行线程，并且不和主线程的内存堆共享内存。这意味着不能访问主线程中的变量或者使用setState来更新UI。同时也不存在锁竞争的问题。每个Isolate都有自己的事件循环,isolate之间只能通过发送消息通信。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">Flutter</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2019/12/27/flutter-thread/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-flutter_hybrid" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/12/15/flutter_hybrid/">Flutter系列-原生项目集成flutter混合开发</a>
+    </h1>
+  
+
+        
+        <a href="/2019/12/15/flutter_hybrid/" class="archive-article-date">
+  	<time datetime="2019-12-15T07:01:31.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-12-15</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="1-Native工程集成flutter"><a href="#1-Native工程集成flutter" class="headerlink" title="1.Native工程集成flutter"></a>1.Native工程集成flutter</h1><p>基于flutter1.12<br><a href="https://flutter.dev/docs/development/add-to-app" target="_blank" rel="noopener">官方教程地址</a></p>
+<p>假定已经有原生App,位于/PATH/native-iOS(native-android)。<br>执行如下命令,以module的形式创建flutter,建议存放目录与native项目同级。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">flutter create --template module my_flutter</span><br></pre></td></tr></table></figure>
+<p>module形态的flutter工程目录如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">some/path/ </span><br><span class="line">  my_flutter/</span><br><span class="line">    lib/main.dart </span><br><span class="line">    .ios/ </span><br><span class="line">    .android/</span><br></pre></td></tr></table></figure></p>
+<p>lib是存放dart源码的目录,.ios和.android是在flutter工程目录下运行时的宿主工程。</p>
+<h2 id="1-1-iOS项目集成flutter"><a href="#1-1-iOS项目集成flutter" class="headerlink" title="1.1 iOS项目集成flutter"></a>1.1 iOS项目集成flutter</h2><p>在iOS中主要通过cocoapods以第三方框架的方式导入flutter的构建产物。<br>在podfile文件中添加如下两行:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">//指定flutter的本地路径。与native同级可以确保团队开发时路径一致。</span><br><span class="line">flutter_application_path = &apos;../my_flutter&apos;</span><br><span class="line">//</span><br><span class="line">load File.join(flutter_application_path, &apos;.ios&apos;, &apos;Flutter&apos;, &apos;podhelper.rb&apos;)</span><br><span class="line">// 如果有多个target,每个target都要加下面这行</span><br><span class="line">install_all_flutter_pods(flutter_application_path)</span><br></pre></td></tr></table></figure></p>
+<p>在podfile中添加的podhelper.rb ruby脚本会在pod install/update时执行,脚本主要做以下事情:</p>
+<ol>
+<li>解析’Generated.xcconfig’文件,获取Flutter工程配置信息，文件在’.ios/Flutter/‘目录下,文件中包含了Flutter SDK路径、Flutter工程路径、Flutter工程入口、编译目录等信息。</li>
+<li>将Flutter SDK中的Flutter.framework通过pod 添加到Native工程。</li>
+<li>将Flutter工程依赖的插件通过pod添加到Native工程，因为有些插件有Native部分代码.</li>
+</ol>
+<p>Generated.xcconfig信息如下所示,在多人合作开发时，会出现FLUTTER_ROOT和FLUTTER_APPLICATION_PATH团队间不一致的问题。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">FLUTTER_ROOT=/Users/zhenhaoxu/Code/flutter</span><br><span class="line">FLUTTER_APPLICATION_PATH=/Users/zhenhaoxu/Code/FlutterProj/flutter-hybrid/flutter_module</span><br><span class="line">FLUTTER_TARGET=lib/main.dart</span><br><span class="line">FLUTTER_BUILD_DIR=build</span><br><span class="line">SYMROOT=$&#123;SOURCE_ROOT&#125;/../build/ios</span><br><span class="line">FLUTTER_BUILD_NAME=1.0.0</span><br><span class="line">FLUTTER_BUILD_NUMBER=1</span><br></pre></td></tr></table></figure></p>
+<h2 id="1-2-Android项目集成flutter"><a href="#1-2-Android项目集成flutter" class="headerlink" title="1.2. Android项目集成flutter"></a>1.2. Android项目集成flutter</h2><ol>
+<li><p>指定jdk版本为1.8<br>Android目录/app/build.gradle,找到android标签</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">android &#123;</span><br><span class="line">  //...</span><br><span class="line">  compileOptions &#123;</span><br><span class="line">    sourceCompatibility 1.8</span><br><span class="line">    targetCompatibility 1.8</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将flutter module作为子项目<br>在根目录的settings.gradle中添加如下配置:</p>
+</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">setBinding(new Binding([gradle: this]))                                 </span><br><span class="line">evaluate(new File(                                                      </span><br><span class="line">  settingsDir.parentFile,                                               </span><br><span class="line">  &apos;my_flutter/.android/include_flutter.groovy&apos;                          </span><br><span class="line">))</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>添加flutter库的依赖<br>Android目录/app/build.gradle添加如下配置:<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dependencies &#123;</span><br><span class="line">  implementation project(&apos;:flutter&apos;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h2 id="1-3-原生项目与Flutter联合调试"><a href="#1-3-原生项目与Flutter联合调试" class="headerlink" title="1.3. 原生项目与Flutter联合调试"></a>1.3. 原生项目与Flutter联合调试</h2><p>以iOS为例。</p>
+<ol>
+<li>先用Xcode运行起原生项目,此时可以调试原生界面;</li>
+<li>如果安装了Android Studio,在Run菜单可以点击flutter attach。此时可以在Android Studio上断点调试Dart代码。</li>
+<li>也可以打开终端，进入到flutter_module目录，执行flutter attach命令,终端会显示输入r刷新;用编辑器修改flutter源码,在终端输入r,会发现界面hot reload了;</li>
+</ol>
+<h1 id="2-Native与Flutter通信"><a href="#2-Native与Flutter通信" class="headerlink" title="2. Native与Flutter通信"></a>2. Native与Flutter通信</h1><h2 id="2-1-概述"><a href="#2-1-概述" class="headerlink" title="2.1. 概述"></a>2.1. 概述</h2><p>阅读前建议先跟着<a href="https://flutter.dev/docs/development/platform-integration/platform-channels" target="_blank" rel="noopener">官方教程</a>过一遍demo，以获得基本概念。</p>
+<p><img src="Flutter系列-混合开发/message.png" alt="通信过程"></p>
+<p>如图所示,当在Native端初始化一个Channel并注册处理消息的Handler时，会同步生成一个与之对应的BinaryMessageHandler。BinaryMessageHandler以channel name 为key注册到BinaryMessenger中。</p>
+<p>当Flutter端发送消息到BinaryMessenger时，它以入参channel找到对应的BinaryMessageHandler，交由其处理。Channel从BinaryMessageHandler接收到二进制消息后，通过Codec解码后传递给Handler处理。</p>
+<p>Handler处理完毕后，回调result。并将result通过Codex编码为二进制数据格式，通过BinaryMessenger发送回Flutter端。</p>
+<h2 id="2-2-概念详解"><a href="#2-2-概念详解" class="headerlink" title="2.2. 概念详解"></a>2.2. 概念详解</h2><h3 id="2-2-1-Channel概述"><a href="#2-2-1-Channel概述" class="headerlink" title="2.2.1 Channel概述"></a>2.2.1 Channel概述</h3><p>Flutter共定义了3种不同类型的Channel，分别是</p>
+<ul>
+<li>BasicMessageChannel:用于传递字符串和半结构化的信息,持续通信,收到消息后可以回复此次消息。比如Flutter将从服务端陆续获取到的信息交给Native加工,Native处理完返回等。</li>
+<li>MethodChannel: 用于传递方法调用(method invocation)。一次性通信,如Flutter调用Native拍照;</li>
+<li>EventChannel: 用于数据流(event streams)的通信。持续通信,收到消息后无法回复此次消息,通常用于Native向Dart的通信,如:网络连接变化、传感器等;</li>
+</ul>
+<p>每种Channel均有三个重要成员变量:</p>
+<ul>
+<li>name:String 类型,代表Channel的名字，也是其唯一标识符;</li>
+<li>binaryMessenger:BinaryMessenger类型,代表消息信使,是消息的发送与接收的工具;</li>
+<li>codec:MessageCodec或MethodCodec类型，代表消息的编解码器;</li>
+</ul>
+<h3 id="2-2-2-channel-name"><a href="#2-2-2-channel-name" class="headerlink" title="2.2.2 channel name"></a>2.2.2 channel name</h3><p>一个Flutter应用中可能存在多个Channel,每个Channel在创建时必须指定一个独一无二的name,Channel之间使用name来区分彼此。当有消息从Flutter端发送到Native端时,会根据其传递过来的channel name 找到该channel对应的Handler。</p>
+<h3 id="2-2-3-消息信使-BinaryMessenger类型"><a href="#2-2-3-消息信使-BinaryMessenger类型" class="headerlink" title="2.2.3 消息信使:BinaryMessenger类型"></a>2.2.3 消息信使:BinaryMessenger类型</h3><p>BinaryMessenger是Native端与Flutter端通信的工具,其通信使用的消息格式为二进制格式数据。当我们向channel注册处理消息的Handler时，会以channelName为key,存储在BinaryMessenger中。</p>
+<p>当Flutter端发送消息到BinaryMessenger时，会根据name找到对应的Handler来处理。</p>
+<p>从源码中可以看到,接收到的是被编码的二进制数据,需要通过codec解码后，才能作为handler的入参。当handler处理完毕后,codec又会重新编码为二进制数据返回。</p>
+<p>BinaryMessenger在Android端是一个接口，其具体实现为FlutterNativeView。在iOS端是一个协议,名为FlutterBinaryMessenger,FlutterViewController遵守该协议。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">//platform_channel.dart 源码</span><br><span class="line">void setMessageHandler(Future&lt;T&gt; handler(T message)) &#123;</span><br><span class="line">    if (handler == null) &#123;</span><br><span class="line">      binaryMessenger.setMessageHandler(name, null);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      binaryMessenger.setMessageHandler(name, (ByteData message) async &#123;</span><br><span class="line">        return codec.encodeMessage(await handler(codec.decodeMessage(message)));</span><br><span class="line">      &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-4-消息编解码器-Codec"><a href="#2-2-4-消息编解码器-Codec" class="headerlink" title="2.2.4 消息编解码器 Codec"></a>2.2.4 消息编解码器 Codec</h3><p>Codec用于将二进制格式的数据转化为Handler能够识别的数据,Flutter定义了两种Codec:</p>
+<ul>
+<li>MessageCodec:二进制数据与基础数据之间的编解码。BasicMessageChannel所用。</li>
+<li>MethodCodec:二进制数据与MethodCall对象和返回结果之间的编解码。MethodChannel和EventChannel所用。</li>
+</ul>
+<p>MessageCodec有以下实现:</p>
+<ul>
+<li><p>BinaryCodec</p>
+<p>此种方式没有做任何操作，只是将二进制数据消息返回。</p>
+</li>
+<li><p>StringCodec</p>
+<p>此种方式用于字符串与二进制数据之间的编解码，格式为UTF-8</p>
+</li>
+<li><p>JSONMessageCodec</p>
+<p>此种方式用于基础数据与二进制之间的编解码，支持基础数据、列表、字典。</p>
+</li>
+<li><p>StandardMessageCodec</p>
+<p>此种方式是BasicMessageChannel的默认编解码器，支持基础数据、字典和列表。</p>
+</li>
+</ul>
+<p>MethodCodec有以下实现:</p>
+<ul>
+<li><p>JSONMethodCodec</p>
+<p>此种方式的编解码依赖于JSONMessageCodec,当在编码MethodCall时,会先将MethodCall转化为字典{“method”:method,”args”:args}。当在编码调用结果时,会将其转化为一个数组,调用成功为[result],调用失败为[code,message,detail]。再使用JSONMessageCodec将字典或数组转化为二进制数据。</p>
+</li>
+<li><p>StandardMethodCodec</p>
+<p>MethodCodec的默认实现，同上,依赖于StandardMethodCodec.</p>
+</li>
+</ul>
+<h1 id="3-详解消息传递过程"><a href="#3-详解消息传递过程" class="headerlink" title="3. 详解消息传递过程"></a>3. 详解消息传递过程</h1><p>接下来将以官方获取电量demo中,以一次MethodChannel的调用为例,详细解析消息的传递过程。</p>
+<h2 id="3-1-消息传递"><a href="#3-1-消息传递" class="headerlink" title="3.1 消息传递"></a>3.1 消息传递</h2><h3 id="3-1-1-Dart层"><a href="#3-1-1-Dart层" class="headerlink" title="3.1.1 Dart层"></a>3.1.1 Dart层</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">static const platform = const MethodChannel(&apos;samples.flutter.io/battery&apos;);</span><br><span class="line"></span><br><span class="line">Future&lt;void&gt; _getBatteryLevel() async &#123;</span><br><span class="line">  String batteryLevel;</span><br><span class="line">  try &#123;</span><br><span class="line">    final int result = await platform.invokeMethod(&apos;getBatteryLevel&apos;);</span><br><span class="line">    batteryLevel = &apos;Battery level at $result %.&apos;;</span><br><span class="line">  &#125; on PlatformException catch (e)&#123;</span><br><span class="line">    batteryLevel = &quot;failed to get battery level:$&#123;e.message&#125;&quot;;</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先,dart中会先创建一个MethodChannel对象,并用”samples.flutter.io/battery”的名字唯一标识这个通道。之后通过异步方式调用invokeMethod方法传入方法名来获取电量信息。</p>
+<p>invokeMethod源码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Future&lt;T&gt; invokeMethod&lt;T&gt;(String method, [ dynamic arguments ]) async &#123;</span><br><span class="line">    assert(method != null);</span><br><span class="line">    final ByteData result = await binaryMessenger.send(</span><br><span class="line">      name,</span><br><span class="line">      codec.encodeMethodCall(MethodCall(method, arguments)),</span><br><span class="line">    );</span><br><span class="line">    if (result == null) &#123;</span><br><span class="line">      throw MissingPluginException(&apos;No implementation found for method $method on channel $name&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">    final T typedResult = codec.decodeEnvelope(result);</span><br><span class="line">    return typedResult;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到,是通过上文提到的消息信息,binaryMessenger.send()方法来发送调用消息。send方法有两个参数,第一个是channel name,第二个是通过对MethodCall对象进行编码得到的二进制数据,ByteData对象。<br>send方法的源码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Future&lt;ByteData&gt; send(String channel, ByteData message) &#123;</span><br><span class="line">    final MessageHandler handler = _mockHandlers[channel];</span><br><span class="line">    if (handler != null)</span><br><span class="line">      return handler(message);</span><br><span class="line">    return _sendPlatformMessage(channel, message);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>会先从_mockHandlers中查找是否有缓存的MessageHandler对象，如果没有则通过_sendPlatformMessage方法发送消息,在方法中传入了一个callback,在数据返回后被回调。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">Future&lt;ByteData&gt; _sendPlatformMessage(String channel, ByteData message) &#123;</span><br><span class="line">    final Completer&lt;ByteData&gt; completer = Completer&lt;ByteData&gt;();</span><br><span class="line">    ui.window.sendPlatformMessage(channel, message, (ByteData reply) &#123;</span><br><span class="line">      try &#123;</span><br><span class="line">        completer.complete(reply);</span><br><span class="line">      &#125; catch (exception, stack) &#123;</span><br><span class="line">        ...</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    return completer.future;</span><br><span class="line">&#125;</span><br><span class="line">void sendPlatformMessage(String name,</span><br><span class="line">                           ByteData data,</span><br><span class="line">                           PlatformMessageResponseCallback callback) &#123;</span><br><span class="line">    final String error =</span><br><span class="line">        _sendPlatformMessage(name, _zonedPlatformMessageResponseCallback(callback), data);</span><br><span class="line">    if (error != null)</span><br><span class="line">      throw Exception(error);</span><br><span class="line">&#125;</span><br><span class="line">String _sendPlatformMessage(String name,</span><br><span class="line">                              PlatformMessageResponseCallback callback,</span><br><span class="line">                              ByteData data) native &apos;Window_sendPlatformMessage&apos;;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到，最终调用的是_sendPlatformMessage,而它是engine注册的名叫”Window_sendPlatformMessage”的本地方法。</p>
+<h3 id="3-1-2-Native层"><a href="#3-1-2-Native层" class="headerlink" title="3.1.2 Native层"></a>3.1.2 Native层</h3><h2 id="3-2-消息处理"><a href="#3-2-消息处理" class="headerlink" title="3.2 消息处理"></a>3.2 消息处理</h2><h1 id="4-混合栈方案"><a href="#4-混合栈方案" class="headerlink" title="4. 混合栈方案"></a>4. 混合栈方案</h1><p><a href="https://github.com/alibaba/flutter_boost" target="_blank" rel="noopener">https://github.com/alibaba/flutter_boost</a></p>
+<h1 id="5-参考资料"><a href="#5-参考资料" class="headerlink" title="5. 参考资料"></a>5. 参考资料</h1><p><a href="https://juejin.im/post/5b84ff6a6fb9a019f47d1cc9" target="_blank" rel="noopener">深入理解Flutter Platform Channel</a></p>
+<p><a href="https://mp.weixin.qq.com/s/-vyU1JQzdGLUmLGHRImIvg" target="_blank" rel="noopener">让Flutter真正支持View级别的混合开发</a></p>
+<p><a href="https://juejin.im/post/5c95de85518825638621b2d7" target="_blank" rel="noopener">全面解析Flutter Platform Channel原理</a></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2019/12/15/flutter_hybrid/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-flutter-stateManagement" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/12/14/flutter-stateManagement/">Flutter状态管理</a>
+    </h1>
+  
+
+        
+        <a href="/2019/12/14/flutter-stateManagement/" class="archive-article-date">
+  	<time datetime="2019-12-14T08:17:54.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-12-14</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="从StatefulWidget说起"><a href="#从StatefulWidget说起" class="headerlink" title="从StatefulWidget说起"></a>从StatefulWidget说起</h2><p>StateFulWidget,顾名思义,有状态的Widget,是官方为我们提供的一种状态管理方式。当我们遇到状态共享的需求,需要跨组件传递数据时,它的局限性就出来了。State属于一个特定的Widget,在多个Widget间需要同步状态数据时就显得繁琐且难以维护,如微博详情页点赞,回到列表页同步点赞数;个人中心获取登录时的头像和用户名等等。</p>
+<h2 id="InheritedWidget"><a href="#InheritedWidget" class="headerlink" title="InheritedWidget"></a>InheritedWidget</h2><p>InheritedWidget用于在Widget树之间共享状态,它本身不参与视图绘制,通过共享widget内保存的值来达到共享状态的目的。先看一个使用的例子。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">class FrogColor extends InheritedWidget &#123;</span><br><span class="line">  const FrogColor(&#123;</span><br><span class="line">    Key key,</span><br><span class="line">    @required this.color,</span><br><span class="line">    @required Widget child,</span><br><span class="line">  &#125;) : assert(color != null),</span><br><span class="line">       assert(child != null),</span><br><span class="line">       super(key: key, child: child);</span><br><span class="line">       </span><br><span class="line">  final Color color;</span><br><span class="line">  </span><br><span class="line">  static FrogColor of(BuildContext context) &#123;</span><br><span class="line">    return context.inheritFromWidgetOfExactType(FrogColor);</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  @override</span><br><span class="line">  bool updateShouldNotify(FrogColor old) =&gt; color != old.color;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到,InheritedWidget的使用主要有3步:</p>
+<ul>
+<li>继承自InheritedWidget</li>
+<li>存放需要传递的数据,并提供of方法方便子Widget在Widget树中找到它</li>
+<li>重写updateShouldNotify方法,提供InheritedWidget需要重建的条件,从而在重建时通知下层观察者组件刷新。</li>
+</ul>
+<h3 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">abstract class InheritedWidget extends ProxyWidget &#123;</span><br><span class="line">  const InheritedWidget(&#123; Key key, Widget child &#125;)</span><br><span class="line">    : super(key: key, child: child);</span><br><span class="line"></span><br><span class="line">  @override</span><br><span class="line">  InheritedElement createElement() =&gt; InheritedElement(this);</span><br><span class="line"></span><br><span class="line">  @protected</span><br><span class="line">  bool updateShouldNotify(covariant InheritedWidget oldWidget);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>InheritedWidget抽象类定义了updateShouldNotify接口,主要实现位于InheritedElement中。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">class InheritedElement extends ProxyElement &#123;</span><br><span class="line">  InheritedElement(InheritedWidget widget) : super(widget);</span><br><span class="line"></span><br><span class="line">  // 这个Map记录了所有依赖的Element</span><br><span class="line">  final Map&lt;Element, Object&gt; _dependents = HashMap&lt;Element, Object&gt;();</span><br><span class="line"></span><br><span class="line">  // _inheritedWidgets为基类Element中的成员，用于提高Widget查找父节点中的InheritedWidget的效率.它使用HashMap缓存了该节点的父节点中所有相关的InheritedElement，查找的时间复杂度为O(1)</span><br><span class="line">  @override</span><br><span class="line">  void _updateInheritance() &#123;</span><br><span class="line">    assert(_active);</span><br><span class="line">    final Map&lt;Type, InheritedElement&gt; incomingWidgets = _parent?._inheritedWidgets;</span><br><span class="line">    if (incomingWidgets != null)</span><br><span class="line">      _inheritedWidgets = HashMap&lt;Type, InheritedElement&gt;.from(incomingWidgets);</span><br><span class="line">    else</span><br><span class="line">      _inheritedWidgets = HashMap&lt;Type, InheritedElement&gt;();</span><br><span class="line">    _inheritedWidgets[widget.runtimeType] = this;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  //通过调用updateShouldNotify避免不必要的更新</span><br><span class="line">  @override</span><br><span class="line">  void updated(InheritedWidget oldWidget) &#123;</span><br><span class="line">    if (widget.updateShouldNotify(oldWidget))</span><br><span class="line">      super.updated(oldWidget);</span><br><span class="line">  &#125;</span><br><span class="line">  // 通知依赖方进行更新。遍历_dependents列表并调用didChangeDependencies方法，该方法内会调用mardNeedsBuild，于是在下一帧绘制流程中，对应的Widget就会进行rebuild，界面也就进行了更新</span><br><span class="line">  @override</span><br><span class="line">  void notifyClients(InheritedWidget oldWidget) &#123;</span><br><span class="line">    assert(_debugCheckOwnerBuildTargetExists(&apos;notifyClients&apos;));</span><br><span class="line">    for (Element dependent in _dependents.keys) &#123;</span><br><span class="line">      assert(() &#123;</span><br><span class="line">        // check that it really is our descendant</span><br><span class="line">        Element ancestor = dependent._parent;</span><br><span class="line">        while (ancestor != this &amp;&amp; ancestor != null)</span><br><span class="line">          ancestor = ancestor._parent;</span><br><span class="line">        return ancestor == this;</span><br><span class="line">      &#125;());</span><br><span class="line">      // check that it really depends on us</span><br><span class="line">      assert(dependent._dependencies.contains(this));</span><br><span class="line">      notifyDependent(oldWidget, dependent);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>总结来说就是Element在mount的过程中,如果不是InheritedElement,就简单的将缓存指向父节点的缓存;如果是InheritedElement,就创建一个缓存的副本,然后将自身添加到该副本中。</p>
+<p>到这里还有一个疑问,依赖它的Widget是在何时被添加到_dependents这个列表中的呢?对于InheritedWidget有一个通用的约定就是添加static的of方法,该方法中通过inheritFromWidgetofExactType找到parent中对应类型的实例并返回,于此同时,也将自己注册到了依赖列表中。该方法实现位于Element类。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">@override</span><br><span class="line">InheritedWidget inheritFromWidgetOfExactType(Type targetType) &#123;</span><br><span class="line">  // 通过HashMap缓存找到对应类型的InheritedElement</span><br><span class="line">  final InheritedElement ancestor = _inheritedWidgets == null ? null : _inheritedWidgets[targetType];</span><br><span class="line">  if (ancestor != null) &#123;</span><br><span class="line">    // 这个列表记录了当前Element依赖的所有InheritedElement，用于在当前Element deactivate时，将自己从InheritedElement的_dependents列表中移除，避免不必要的更新操作</span><br><span class="line">    _dependencies ??= new HashSet&lt;InheritedElement&gt;();</span><br><span class="line">    _dependencies.add(ancestor);</span><br><span class="line">    // 这里将自己添加到了_dependents列表中，相当于注册了监听</span><br><span class="line">    ancestor._dependents.add(this);</span><br><span class="line">    return ancestor.widget;</span><br><span class="line">  &#125;</span><br><span class="line">  _hadUnsatisfiedDependencies = true;</span><br><span class="line">  return null;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>比如当我们在statefulWidget中调用Theme.of(context).primaryColor时,传入的context就代表着这个Widget的Element,被添加到_dependents中了。当InheritedWidget更新时,调用notifyClients流程，触发markNeedsBuild,从而通过Theme.of引用的地方,也会触发更新。</p>
+<h2 id="Provider"><a href="#Provider" class="headerlink" title="Provider"></a>Provider</h2><p>Provider是基于InheritedWidget原理封装的状态管理框架。相比于其他的flutter_redux、flutter_mobx、fish_flutter等复杂框架,它的特点是简单、好理解,可以方便组合和控制刷新颗粒度。</p>
+<p>相比于直接读晦涩的源码,不如跟随着Provider的思路从零实现一个简略版的Provider。</p>
+<p>首先,我们需要一个保存需要共享的数据InheritedWidget,由于具体数据不可预期,我们使用泛型,定义一个通用的InheritedProvider类,继承自InheritedWidget。Provider意味着数据提供者。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">class InheritedProvider&lt;T&gt; extends InheritedWidget &#123;</span><br><span class="line">  InheritedProvider(&#123;@required this.data,Widget child&#125;) : super(child: child);</span><br><span class="line">  // 共享数据</span><br><span class="line">  final T data;</span><br><span class="line"></span><br><span class="line">  @override</span><br><span class="line">  bool updateShouldNotify(InheritedWidget oldWidget) &#123;</span><br><span class="line">    // 简单处理,每次更新都会调用依赖它的节点的&quot;didChangeDependencies&quot;</span><br><span class="line">    return true;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接下来做的就是在数据变化的时候来重新构建InheritedProvider。为此需要考虑2个问题:</p>
+<ul>
+<li>数据发生变化后怎么通知? ChangedNotifier类</li>
+<li>谁来重新构建InheritedProvider? 订阅者</li>
+</ul>
+<p>ChangeNotifier类定义如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">class ChangeNotifier implements Listenable &#123;</span><br><span class="line">  @override</span><br><span class="line">  void addListener(VoidCallback listener) &#123;</span><br><span class="line">     //添加监听器</span><br><span class="line">  &#125;</span><br><span class="line">  @override</span><br><span class="line">  void removeListener(VoidCallback listener) &#123;</span><br><span class="line">    //移除监听器</span><br><span class="line">  &#125;</span><br><span class="line">  void notifyListeners() &#123;</span><br><span class="line">    //通知所有监听器，触发监听器回调   </span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>我们将要共享的状态放到一个Model类中,并让它继承自ChangeNotifier,这样当共享的状态改变时,只需要调用notifyListeners()来通知订阅者,然后由订阅者来重建InheritedProvider,随之刷新依赖的节点。</p>
+<p>接下来便实现这个订阅者类。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">class ChangeNotifierProvider&lt;T extends ChangeNotifier&gt; extends StatefulWidget &#123;</span><br><span class="line">  const ChangeNotifierProvider(&#123;Key key, this.data, this.child&#125;) : super(key: key);</span><br><span class="line"></span><br><span class="line">  final Widget child;</span><br><span class="line">  final T data;</span><br><span class="line"></span><br><span class="line">  //子树中的Widget通过of方法获取共享数据</span><br><span class="line">  static T of&lt;T&gt;(BuildContext context) &#123;</span><br><span class="line">    final provider = context.dependOnInheritedWidgetOfExactType&lt;InheritedProvider&lt;T&gt;&gt;();</span><br><span class="line">    return provider.data;</span><br><span class="line">  &#125;</span><br><span class="line">  @override</span><br><span class="line">  State&lt;StatefulWidget&gt; createState() =&gt; _ChangeNotifierProviderState&lt;T&gt;();</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">class _ChangeNotifierProviderState&lt;T extends ChangeNotifier&gt; extends State&lt;ChangeNotifierProvider&gt;&#123;</span><br><span class="line">  // 注册到监听器中的回调函数</span><br><span class="line">  void update() &#123;</span><br><span class="line">    //数据发生变化,model类调用了notifyListeners,重新构建InheritedProvider</span><br><span class="line">    setState(() &#123;&#125;);</span><br><span class="line">  &#125;</span><br><span class="line">  @override</span><br><span class="line">  void initState() &#123;</span><br><span class="line">    //给model添加监听器</span><br><span class="line">    widget.data.addListener(update);</span><br><span class="line">    super.initState();</span><br><span class="line">  &#125;</span><br><span class="line">  @override</span><br><span class="line">  void dispose() &#123;</span><br><span class="line">    widget.data.removeListener(update);</span><br><span class="line">    super.dispose();</span><br><span class="line">  &#125;</span><br><span class="line">  @override</span><br><span class="line">  void didUpdateWidget(ChangeNotifierProvider&lt;ChangeNotifier&gt; oldWidget) &#123;</span><br><span class="line">    if (widget.data != oldWidget.data) &#123;</span><br><span class="line">      oldWidget.data.removeListener(update);</span><br><span class="line">      widget.data.addListener(update);</span><br><span class="line">    &#125;</span><br><span class="line">    super.didUpdateWidget(oldWidget);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @override</span><br><span class="line">  Widget build(BuildContext context) &#123;</span><br><span class="line">    return InheritedProvider&lt;T&gt;(data: widget.data,child: widget.child);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="基于Provider的计时器"><a href="#基于Provider的计时器" class="headerlink" title="基于Provider的计时器"></a>基于Provider的计时器</h3><p>下面基于我们自己实现的Provider来重构官方的计时器demo,代码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">void main() =&gt; runApp(MyApp());</span><br><span class="line"></span><br><span class="line">class MyApp extends StatelessWidget &#123;</span><br><span class="line">  @override</span><br><span class="line">  Widget build(BuildContext context) &#123;</span><br><span class="line">    return ChangeNotifierProvider(</span><br><span class="line">      data: CounterModel(),</span><br><span class="line">      child: MaterialApp(</span><br><span class="line">        home: MyHomePage(title: &apos;Provider Counter&apos;),</span><br><span class="line">      ),</span><br><span class="line">    );</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">class MyHomePage extends StatelessWidget &#123;</span><br><span class="line">  MyHomePage(&#123;Key key, this.title&#125;) : super(key: key);</span><br><span class="line"></span><br><span class="line">  final String title;</span><br><span class="line">  @override</span><br><span class="line">  Widget build(BuildContext context) &#123;</span><br><span class="line">    return Scaffold(</span><br><span class="line">      appBar: AppBar(</span><br><span class="line">        title: Text(title),</span><br><span class="line">      ),</span><br><span class="line">      body: Center(</span><br><span class="line">        child: Column(</span><br><span class="line">          mainAxisAlignment: MainAxisAlignment.center,</span><br><span class="line">          children: &lt;Widget&gt;[</span><br><span class="line">            Text(&apos;you pushed $&#123;ChangeNotifierProvider.of&lt;CounterModel&gt;(context).counter&#125; times&apos;),</span><br><span class="line">          ],</span><br><span class="line">        ),</span><br><span class="line">      ),</span><br><span class="line">      floatingActionButton: FloatingActionButton(</span><br><span class="line">          onPressed: ChangeNotifierProvider.of&lt;CounterModel&gt;(context).increment,</span><br><span class="line">          tooltip: &apos;Increment&apos;,</span><br><span class="line">          child: TestIcon(),</span><br><span class="line">        ),</span><br><span class="line">    );</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class TestIcon extends StatelessWidget &#123;</span><br><span class="line">  @override</span><br><span class="line">  Widget build(BuildContext context) &#123;</span><br><span class="line">    print(&apos;Icon 被重新构建&apos;);</span><br><span class="line">    return Icon(Icons.add);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class CounterModel with ChangeNotifier &#123;</span><br><span class="line">  int _count = 0;</span><br><span class="line">  //读方法</span><br><span class="line">  int get counter =&gt; _count;</span><br><span class="line">  //写方法</span><br><span class="line">  void increment () &#123;</span><br><span class="line">    _count ++;</span><br><span class="line">    //通知听众刷新</span><br><span class="line">    notifyListeners();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>虽然例子比较简单,却将Provider的原理和流程提现的很清楚了。CounterModel变化后会自动通知订阅者ChangeNotifierProvider,ChangeNotifierProvider内部重新构建InheritedWidget,随后依赖InheritedWidget的子孙Widget就会刷新。</p>
+<p>使用Provider后:</p>
+<ul>
+<li>业务代码更关注数据了，只要更新Model,则UI会自动更新，不用再到处手动调用setState。</li>
+<li>数据改变的消息传递被屏蔽了,无需手动去处理状态改变事件的发布和订阅。这些都已被封装在了Provider中。</li>
+</ul>
+<h3 id="Provider进一步优化"><a href="#Provider进一步优化" class="headerlink" title="Provider进一步优化"></a>Provider进一步优化</h3><p>或许你在运行时就注意到了,每次点击按钮时,都会有一行被重新构建的输出。调用of(context)方法,会触发context级别的刷新。而这里的context是MyHomePage,也就是说,每点击一次按钮,都会刷新整个页面。因此上面的代码存在严重的性能问题。</p>
+<p>同样，我们参考Provider的官方思路来优化我们的实现,这里就引入的Consumer.我们在Consumer的源码中可以找到这样一行注释:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">To do so, we will wrap _only_ the widgets that depends on a provider into a [Consumer]:</span><br></pre></td></tr></table></figure></p>
+<p>一句话就阐明了思路,既然会触发context级别的刷新,我们就缩短context的范围。Consumer,需要provider里共享的数据的叫消费者,刷新也被严格限制在Consumer包裹的范围内。</p>
+<p>基于上述思路,我们实现如下Consumer:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">class Consumer&lt;T&gt; extends StatelessWidget &#123;</span><br><span class="line">  Consumer(&#123;</span><br><span class="line">    Key key,</span><br><span class="line">    @required this.builder,</span><br><span class="line">    this.child,</span><br><span class="line">  &#125;)  : assert(builder != null),</span><br><span class="line">        super(key: key);</span><br><span class="line"></span><br><span class="line">  final Widget child;</span><br><span class="line">  final Widget Function(BuildContext context, T value, Widget child) builder;</span><br><span class="line"></span><br><span class="line">  @override</span><br><span class="line">  Widget build(BuildContext context) &#123;</span><br><span class="line">    return builder(</span><br><span class="line">      context,</span><br><span class="line">      ChangeNotifierProvider.of&lt;T&gt;(context),</span><br><span class="line">      child</span><br><span class="line">    );</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>此时,我们调用of方法,传递的context是Consumer。基于Consumer,改造页面如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">class MyHomePage extends StatelessWidget &#123;</span><br><span class="line">  MyHomePage(&#123;Key key, this.title&#125;) : super(key: key);</span><br><span class="line"></span><br><span class="line">  final String title;</span><br><span class="line">  @override</span><br><span class="line">  Widget build(BuildContext context) &#123;</span><br><span class="line">    print(&apos;页面重建&apos;);</span><br><span class="line">    return Scaffold(</span><br><span class="line">      appBar: AppBar(</span><br><span class="line">        title: Text(title),</span><br><span class="line">      ),</span><br><span class="line">      body: Center(</span><br><span class="line">        child: Column(</span><br><span class="line">          mainAxisAlignment: MainAxisAlignment.center,</span><br><span class="line">          children: &lt;Widget&gt;[</span><br><span class="line">            Consumer&lt;CounterModel&gt;(</span><br><span class="line">              builder: (context,counter,child)&#123;</span><br><span class="line">                return Text(&apos;you pushed $&#123;counter.counter&#125; times&apos;);</span><br><span class="line">              &#125;,</span><br><span class="line">            )</span><br><span class="line">          ],</span><br><span class="line">        ),</span><br><span class="line">      ),</span><br><span class="line">      floatingActionButton: Consumer&lt;CounterModel&gt;(</span><br><span class="line">        builder: (context,counter,child)&#123;</span><br><span class="line">          return FloatingActionButton(</span><br><span class="line">            onPressed: counter.increment,</span><br><span class="line">            tooltip: &apos;Increment&apos;,</span><br><span class="line">            child: child,</span><br><span class="line">          );</span><br><span class="line">        &#125;,</span><br><span class="line">        child: TestIcon(),</span><br><span class="line">      ),</span><br><span class="line">    );</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>此时再运行点击按钮,可以看到点击按钮后,TestIcon不再被刷新了,只有Consumer包裹的才会被刷新。我们通过Consumer的组合,可以自由决定页面刷新的颗粒度。</p>
+<p>以上就是Provider的核心思路和大致实现,更多细节可以查看 <a href="https://pub.dev/packages/provider" target="_blank" rel="noopener">官方框架</a>。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">Flutter</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2019/12/14/flutter-stateManagement/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-flutter-widget" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/12/09/flutter-widget/">深入理解Widget</a>
+    </h1>
+  
+
+        
+        <a href="/2019/12/09/flutter-widget/" class="archive-article-date">
+  	<time datetime="2019-12-09T09:22:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-12-09</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="Widget渲染过程"><a href="#Widget渲染过程" class="headerlink" title="Widget渲染过程"></a>Widget渲染过程</h1><h2 id="Widget"><a href="#Widget" class="headerlink" title="Widget"></a>Widget</h2><p>在Android和iOS中,是命令式编程,我们拿到对应的视图进行直接操作更新,如label.text = “someText”。强调精确控制过程细节。<br>在Flutter中,是声明式编程,核心思想是数据和视图分离。只需要维护数据,对应绑定的UI就会自动更新。如setState(() {labelText = “someText”;});</p>
+<p>Widget是不可变的,更新意味着销毁+重建(build),包括StatefulWidget,它的所谓更新其实是通过State代理重建了一个基于新数据的新Widget。</p>
+<p>Widget本身不是视图，不直接绘制任何东西。就像接口以JSON格式返回数据描述,客户端解析后执行渲染等等操作。Widget类似JSON,是一个描述UI的配置数据,RenderObject根据配置进行布局及绘制。因而Widget是轻量级的，重新构建的代价很小。而RenderObject是重量级的，重新构建开销较大，只在必要时重建。</p>
+<p>Flutter中一切皆Widget,包括前端框架中的View、ViewController、Activity、Application、Layout等等,都是Widget。</p>
+<h2 id="Element"><a href="#Element" class="headerlink" title="Element"></a>Element</h2><p>Element是Widget的一个实例化对象,是连接Widget和RenderObject的纽带:首先根据Widget生成Element,然后创建相应的RenderObject并关联到Element.renderObject属性上,最后再通过RenderObject来完成布局和绘制。</p>
+<p>大多数情况下,开发者只需要关注Widget树即可，因为内部已经将对Widget树的操作映射到了Element树上。而在某些情况下,我们会直接操作Element对象。</p>
+<p>查看BuildContext的源码,从注释上可以看到,Element对象其实一直出现在我们的代码中,只不过换了个名字,叫BuildContext。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">/// [BuildContext] objects are actually [Element] objects. The [BuildContext]</span><br><span class="line">/// interface is used to discourage direct manipulation of [Element] objects.</span><br><span class="line">abstract class BuildContext &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>进一步查看Element的源码,发现它确实实现了BuildContext。以及在调用build方法时,将自己(this)作为参数传入。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">abstract class Element extends DiagnosticableTree implements BuildContext&#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class StatelessElement extends ComponentElement &#123;</span><br><span class="line">  @override</span><br><span class="line">  Widget build() =&gt; widget.build(this);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>至此,我们弄清楚了context的实质。Widget屏蔽了绝大部分UI内部操作的细节，让我们专注于Widget层，同时，又将Element在build方法中以参数的形式返回，让我们在必要时可以直接操作Element。比如,我们可以通过Theme.of(context)的方法来获取主题数据，内部正是调用了Element的inheritFromWidgetOfExactType()方法。</p>
+<h2 id="RenderObject"><a href="#RenderObject" class="headerlink" title="RenderObject"></a>RenderObject</h2><p>RenderObject最主要的职责就是布局和绘制。</p>
+<h2 id="布局"><a href="#布局" class="headerlink" title="布局"></a>布局</h2><p>在布局阶段,父节点会调用子节点的layout()方法,大致实现如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">void layout(Constraints constraints, &#123; bool parentUsesSize = false &#125;) &#123;</span><br><span class="line">   ...</span><br><span class="line">   RenderObject relayoutBoundary; </span><br><span class="line">    if (!parentUsesSize || sizedByParent || constraints.isTight </span><br><span class="line">        || parent is! RenderObject) &#123;</span><br><span class="line">      relayoutBoundary = this;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      final RenderObject parent = this.parent;</span><br><span class="line">      relayoutBoundary = parent._relayoutBoundary;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">    if (sizedByParent) &#123;</span><br><span class="line">        performResize();</span><br><span class="line">    &#125;</span><br><span class="line">    performLayout();</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>layout方法接收两个参数,第一个为constraints,即父节点对子节点大小的限制。第二个是parentUsesSize,表示子节点布局变化是否会影响父节点。</p>
+<p>当sizedByParent为true时,意味着它的大小仅通过parent传的constraints就可以确定了,此时调用performResize确定大小。</p>
+<p>performLayout方法中除了完成自身布局,也必须完成子节点的布局。最终的调用栈为:layout()&gt;performResize()/performLayout&gt;child.layout()&gt;… 如此递归完成整个UI布局。</p>
+<h2 id="绘制"><a href="#绘制" class="headerlink" title="绘制"></a>绘制</h2><p>RenderObject通过paint()方法完成具体绘制逻辑,子类可以实现该方法完成自身的绘制逻辑。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">void paint(PaintingContext context, Offset offset) &#123; &#125;</span><br></pre></td></tr></table></figure></p>
+<p>通过context.canvas可以获取canvas对象,之后调动canvas Api实现绘制。</p>
+<h1 id="Widget生命周期"><a href="#Widget生命周期" class="headerlink" title="Widget生命周期"></a>Widget生命周期</h1><p>StatelessWidget通过父Widget在初始化时传入的静态配置就能完全控制其静态展示。StatefullWidget还需要借助于State,在特定的阶段来处理用户的交互,这些特定的阶段,就涵盖了一个组件从加载到卸载的全过程,即生命周期。</p>
+<h2 id="State生命周期"><a href="#State生命周期" class="headerlink" title="State生命周期"></a>State生命周期</h2><p>State的生命周期,值在用户参与的情况下,关联的Widget从创建显示到更新直至销毁的各个过程阶段。如果所示:<br><img src="/images/flutter_state_lifecycle.png" alt="生命周期"></p>
+<p>创建:<br>State初始化时会依次执行:构造方法-&gt;initState-&gt;didChangeDependencies-&gt;build,随后完成页面渲染。</p>
+<ul>
+<li>构造方法是生命周期的起点,通过StatefulWidget.createState()来创建一个State</li>
+<li>initState,在State对象被插入视图树的时候调用。在生命周期中只会被调用一次,因此可以在这里做一些初始化工作。</li>
+<li>didChangeDependencies在initState之后被调用,专门处理对象依赖关系变化。</li>
+<li>build阶段构建Widget并返回</li>
+</ul>
+<p>更新:<br>Widget的状态更新,主要由3个方法触发:setState、didChangeDependencies与didUpdateWidget。</p>
+<ul>
+<li>setState,将element标记为dirty,并把它添加到全局的dirty链表里,以便在下一帧更新信号时更新.</li>
+<li>didChangeDependencies:当系统语言或应用主题改变时,系统会通知State执行该方法,触发组件构建。</li>
+<li>didUpdateWidget:组件状态改变时调用,如父Widget的状态发生变化</li>
+</ul>
+<p>销毁:</p>
+<ul>
+<li>deactivate:当组件的可见状态发生变化时,会被调用。如当前页push下一页.</li>
+<li>dispose:当组件被销毁时,会被调用,如当前页执行pop。可以在此进行资源的释放、移除监听等。</li>
+</ul>
+<h2 id="App生命周期"><a href="#App生命周期" class="headerlink" title="App生命周期"></a>App生命周期</h2><p>我们可以通过WidgetsBindingObserver类来监听App中的相关生命周期。具体有:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">abstract class WidgetsBindingObserver &#123;</span><br><span class="line">  //页面pop</span><br><span class="line">  Future&lt;bool&gt; didPopRoute() =&gt; Future&lt;bool&gt;.value(false);</span><br><span class="line">  //页面push</span><br><span class="line">  Future&lt;bool&gt; didPushRoute(String route) =&gt; Future&lt;bool&gt;.value(false);</span><br><span class="line">  //系统窗口相关改变回调，如旋转</span><br><span class="line">  void didChangeMetrics() &#123; &#125;</span><br><span class="line">  //文本缩放系数变化</span><br><span class="line">  void didChangeTextScaleFactor() &#123; &#125;</span><br><span class="line">  //系统亮度变化</span><br><span class="line">  void didChangePlatformBrightness() &#123; &#125;</span><br><span class="line">  //本地化语言变化</span><br><span class="line">  void didChangeLocales(List&lt;Locale&gt; locale) &#123; &#125;</span><br><span class="line">  //App生命周期变化</span><br><span class="line">  void didChangeAppLifecycleState(AppLifecycleState state) &#123; &#125;</span><br><span class="line">  //内存警告回调</span><br><span class="line">  void didHaveMemoryPressure() &#123; &#125;</span><br><span class="line">  //Accessibility相关特性回调</span><br><span class="line">  void didChangeAccessibilityFeatures() &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>如下监听了App当前状态,进入前后台时会触发回调。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">class _MyHomePageState extends State&lt;MyHomePage&gt; with WidgetsBindingObserver &#123;</span><br><span class="line"></span><br><span class="line">  void initState () &#123;</span><br><span class="line">    super.initState();</span><br><span class="line">    WidgetsBinding.instance.addObserver(this);//注册监听</span><br><span class="line">  &#125;</span><br><span class="line">  void dispose () &#123;</span><br><span class="line">    super.dispose();</span><br><span class="line">    WidgetsBinding.instance.removeObserver(this);//移除监听</span><br><span class="line">  &#125;</span><br><span class="line">  @override</span><br><span class="line">  void didChangeAppLifecycleState(AppLifecycleState state) &#123;</span><br><span class="line">    super.didChangeAppLifecycleState(state);</span><br><span class="line">    print(&quot;$state&quot;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">Flutter</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2019/12/09/flutter-widget/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-flutter-dart" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/12/04/flutter-dart/">Dart语法精粹</a>
+    </h1>
+  
+
+        
+        <a href="/2019/12/04/flutter-dart/" class="archive-article-date">
+  	<time datetime="2019-12-04T08:13:52.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-12-04</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="重要概念"><a href="#重要概念" class="headerlink" title="重要概念"></a>重要概念</h2><ul>
+<li><p>在Dart中,所有的数据类型都是对象,包括数字、函数和null等。所有的对象都继承自Object。</p>
+</li>
+<li><p>Dart是类型安全的,只有同类型变量能相互赋值。当能根据上下文推断类型时，可以在定义时省略类型信息。如果要专门定义动态类型，可以通过dynamic关键字。</p>
+</li>
+<li><p>Dart没有专门的标识符来进行访问控制，如果变量名以下划线(_)开头,它是一个私有变量。</p>
+</li>
+</ul>
+<h2 id="变量"><a href="#变量" class="headerlink" title="变量"></a>变量</h2><p>这是一个声明并初始化变量的例子。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var name = &apos;Bob&apos;;</span><br></pre></td></tr></table></figure></p>
+<p>变量存储引用(对象的地址)。变量名name包含了一个指向Bob字符串的引用。因为使用字符串进行了初始化，name被推断为String类型。</p>
+<h3 id="默认值"><a href="#默认值" class="headerlink" title="默认值"></a>默认值</h3><p>未初始化变量的默认值为null，包括int等类型。</p>
+<p>?. 和 ?? 运算符可以更好的帮助我们处理null值。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">int num ;</span><br><span class="line">// num为null,打印0</span><br><span class="line">print(num ?? 0);</span><br><span class="line"></span><br><span class="line">String name;</span><br><span class="line">//name为null，若直接调用length会崩溃。?.运行符会在null的情况下阻断右边的调用</span><br><span class="line">print(name?.length);</span><br></pre></td></tr></table></figure></p>
+<h3 id="final-和-const"><a href="#final-和-const" class="headerlink" title="final 和 const"></a>final 和 const</h3><p>final 修饰的变量只能被赋值一次;const 修饰的变量在编译时会转化成常量,const变量同时也是final变量。顶级的final变量或类中的final变量在第一次使用时初始化。</p>
+<p>const也经常用来修饰构造函数,此时创建的对象是不可变的。</p>
+<p>const适用于定义编译常量的场景，final适用于定义运行时常量的场景</p>
+<h2 id="内置数据类型"><a href="#内置数据类型" class="headerlink" title="内置数据类型"></a>内置数据类型</h2><h3 id="Numbers"><a href="#Numbers" class="headerlink" title="Numbers"></a>Numbers</h3><p>int 定义整数,double 定义浮点数,都继承自 num。num对象定义了基本的+,-,*,/等操作符和运算。</p>
+<p>两者是不同的数据类型，因此把浮点数赋值给int变量是不允许的。</p>
+<h3 id="Strings"><a href="#Strings" class="headerlink" title="Strings"></a>Strings</h3><p>String 是 UTF-16编码格式的字符序列。可以使用’’或””来创建字符串。</p>
+<p>可以通过${exp} 直接把表达式的值插入到字符串中，此时Dart会调用对象的toString()方法获取字符串。这种方法与用大量+来组合相比，更加简洁。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">var str1 = &apos;my name is&apos;;</span><br><span class="line">var str2 = &apos;$str1 cloud&apos;;</span><br><span class="line">print(str2);// my name is cloud</span><br></pre></td></tr></table></figure></p>
+<h3 id="Booleans"><a href="#Booleans" class="headerlink" title="Booleans"></a>Booleans</h3><p>bool类型只有两个常量值:true和false.<br>Dart严格的数据类型使得if(4)这样的代码是无法编译通过的，必须使用bool类型。</p>
+<h3 id="Lists-amp-Sets-amp-Maps"><a href="#Lists-amp-Sets-amp-Maps" class="headerlink" title="Lists &amp; Sets &amp; Maps"></a>Lists &amp; Sets &amp; Maps</h3><p>List是有序集合,也称为数组,索引从下标0开始。</p>
+<p>Set是无序集合.</p>
+<p>Map又称字典,存储Key-Value键值对。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var numLists = [1,2,3];</span><br><span class="line">var numMap = &#123;&quot;1&quot;:&quot;one&quot;,&quot;2&quot;:&quot;two&quot;,&quot;3&quot;:&quot;three&quot;&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h2><p>函数本身也是对象和数据类型,这意味着函数可以被赋值给变量、作为另一个函数的参数等。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">//函数定义，判断数字是否为0。如果函数体只有一行,可以使用=&gt;来简化。</span><br><span class="line">bool isZero(int number) =&gt; number == 0;</span><br><span class="line"></span><br><span class="line">//函数作为参数</span><br><span class="line">void printInfo(int number, Function check) &#123;</span><br><span class="line">    print(&quot;$number is zero:$&#123;check(number)&#125;&quot;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">printInfo(0,isZero);</span><br></pre></td></tr></table></figure>
+<h3 id="可选参数"><a href="#可选参数" class="headerlink" title="可选参数"></a>可选参数</h3><p>函数参数分为必要参数和可选参数，使用{param,param2,…}的形式定义可选命名参数。可选参数可以给定默认值，如果不提供，默认为null.<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">//device和time为可选参数,time指定了默认值now</span><br><span class="line">say(String person,String msg,&#123;String device,String time = &apos;now&apos;&#125;)&#123;</span><br><span class="line">  print(&quot;$person say $msg via $device in $time&quot;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">//cloud say hello via android in now</span><br><span class="line">say(&apos;cloud&apos;, &apos;hello&apos;,device: &apos;android&apos;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="匿名函数-闭包"><a href="#匿名函数-闭包" class="headerlink" title="匿名函数(闭包)"></a>匿名函数(闭包)</h3><p>没有名字的函数叫匿名函数，又叫闭包。闭包经常用于事件的回调，相比于另起一个地方定义函数，闭包的形式使得关联代码更加内聚。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var list = [&apos;apples&apos;, &apos;oranges&apos;, &apos;grapes&apos;, &apos;bananas&apos;, &apos;plums&apos;];</span><br><span class="line">list.forEach((i) &#123;</span><br><span class="line">  print(list.indexOf(i).toString() + &apos;: &apos; + i);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="main函数-入口函数"><a href="#main函数-入口函数" class="headerlink" title="main函数(入口函数)"></a>main函数(入口函数)</h3><p>main()是整个程序的入口,每个程序都有main函数。</p>
+<h2 id="类"><a href="#类" class="headerlink" title="类"></a>类</h2><h3 id="构造方法"><a href="#构造方法" class="headerlink" title="构造方法"></a>构造方法</h3><p>构造方法即与类名同名的函数，用来构造类的实例。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">class Point &#123;</span><br><span class="line">  num x, y;</span><br><span class="line">  //完整写法</span><br><span class="line">  Point(num x, num y) &#123;</span><br><span class="line">    this.x = x;</span><br><span class="line">    this.y = y;</span><br><span class="line">  &#125;</span><br><span class="line">  //语法糖</span><br><span class="line">  Point(this.x, this.y);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>子类不会继承父类的构造方法。如果在类中不声明构造方法,则会提供默认构造方法。</p>
+<p>可以通过命名构造函数的方式，形象的定义适用不同场景和功能的构造方法。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">class Point &#123;</span><br><span class="line">  num x, y;</span><br><span class="line">  Point(this.x, this.y);</span><br><span class="line">  // 初始值为0的命名构造函数</span><br><span class="line">  Point.origin() &#123;</span><br><span class="line">    x = 0;</span><br><span class="line">    y = 0;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>子类构造方法默认触发的是父类中无参数非命名的构造方法,也可以通过:来手动指定父类需要触发的构造方法。如Point.origin() : super.origin(){…}</p>
+<h3 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h3><h4 id="实例方法"><a href="#实例方法" class="headerlink" title="实例方法"></a>实例方法</h4><p>例方法可以访问对象的变量和this.</p>
+<h4 id="静态方法-类方法"><a href="#静态方法-类方法" class="headerlink" title="静态方法(类方法)"></a>静态方法(类方法)</h4><p>方法前加static关键字定义静态方法,静态方法不需要实例化就可调用。</p>
+<h4 id="计算方法-计算属性"><a href="#计算方法-计算属性" class="headerlink" title="计算方法(计算属性)"></a>计算方法(计算属性)</h4><p>可以通过get 和 set 关键字定义计算属性,对外界来说是无感的，等同于访问实例变量。相比直接访问,计算属性可以进行异常检查及逻辑控制。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">class Rectangle &#123;</span><br><span class="line">  num left, top, width, height;</span><br><span class="line"></span><br><span class="line">  Rectangle(this.left, this.top, this.width, this.height);</span><br><span class="line"></span><br><span class="line">  // 定义了right 和 bottom 两个计算属性</span><br><span class="line">  num get right =&gt; left + width;</span><br><span class="line">  set right(num value) =&gt; left = value - width;</span><br><span class="line">  num get bottom =&gt; top + height;</span><br><span class="line">  set bottom(num value) =&gt; top = value - height;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="抽象方法"><a href="#抽象方法" class="headerlink" title="抽象方法"></a>抽象方法</h4><p>实例方法和计算方法都可以是抽象方法,但抽象方法只能位于抽象类中。抽象方法只提供方法定义,子类提供具体实现。如果用分号来替代函数体，则这个函数就是抽象函数。</p>
+<h3 id="Mixin"><a href="#Mixin" class="headerlink" title="Mixin"></a>Mixin</h3><p>Dart 是单继承的，不能通过继承多个父类来重用。在其他语言中,往往通过类似协议或接口来实现类似需求。但是遵守协议后都需要自己实现一遍，如果实现是一致的，就会很低效且繁琐。</p>
+<p>Mixin效果上可以理解为带有默认实现的协议或接口,使用者可以直接使用其他类定义好的行为。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">class Point &#123;</span><br><span class="line">  num x = 0, y = 0;</span><br><span class="line">  void printInfo() =&gt; print(&apos;($x,$y)&apos;);</span><br><span class="line">&#125;</span><br><span class="line">//通过Minin,通过非继承的方式获取了Point中的变量和方法</span><br><span class="line">class Coordinate with Point &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var coor = Coordinate();</span><br><span class="line">coor.x = 5;</span><br><span class="line">coor.printInfo();//(5,0)</span><br></pre></td></tr></table></figure>
+<h2 id="异步编程"><a href="#异步编程" class="headerlink" title="异步编程"></a>异步编程</h2><ol>
+<li>async 和 await 配合使用，可以用同步的代码风格编写异步方法。</li>
+<li>使用async标记这是一个异步方法,只有被标记的方法内才可以使用await。</li>
+<li>在异步方法的调用前使用await标记,表明直到获取返回结果后才会继续往下执行。</li>
+<li>async方法的返回值是Future类型,代表一个未来会被返回的值。 </li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Future checkVersion() async &#123;</span><br><span class="line">    var version;</span><br><span class="line">    try &#123;</span><br><span class="line">      version = await lookUpVersion();</span><br><span class="line">    &#125; catch (e) &#123;</span><br><span class="line">      //处理异常</span><br><span class="line">    &#125;</span><br><span class="line">    // 处理获取version后的后续逻辑</span><br><span class="line">    print(version);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Future&lt;String&gt; lookUpVersion() async =&gt; &apos;1.0.0&apos;;</span><br></pre></td></tr></table></figure>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">Flutter</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2019/12/04/flutter-dart/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-flutter-start" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/12/01/flutter-start/">Flutter-Get started</a>
+    </h1>
+  
+
+        
+        <a href="/2019/12/01/flutter-start/" class="archive-article-date">
+  	<time datetime="2019-12-01T09:09:27.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-12-01</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="配置开发环境"><a href="#配置开发环境" class="headerlink" title="配置开发环境"></a>配置开发环境</h1><p>1 建立配置文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cd ~</span><br><span class="line">touch .bash_proflie</span><br><span class="line">open .bash_profile</span><br></pre></td></tr></table></figure>
+<p>切换到根目录，建立配置文件。(无此文件会建立，已存在也不会影响)。之后打开文件。</p>
+<p>2 写入配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#使用国内镜像</span><br><span class="line">export PUB_HOSTED_URL=https://pub.flutter-io.cn</span><br><span class="line">export FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn</span><br><span class="line">#Flutter</span><br><span class="line">export FLUTTER_HOME=/Users/zhenhaoxu/Code/flutter</span><br><span class="line">export PATH=$PATH:$&#123;FLUTTER_HOME&#125;/bin</span><br></pre></td></tr></table></figure>
+<p>FLUTTER_HOME中的路径是从官网下载的SDK的存放地址。</p>
+<p>3  刷新环境变量</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source .bash_profile</span><br></pre></td></tr></table></figure>
+<p>之后输入flutter指令，检查是否配置成功。</p>
+<p>4  配置开发环境</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">flutter doctor</span><br></pre></td></tr></table></figure>
+<p>根据反馈结果安装所需要的环境</p>
+<h1 id="Native工程集成flutter"><a href="#Native工程集成flutter" class="headerlink" title="Native工程集成flutter"></a>Native工程集成flutter</h1><p>基于flutter1.12<br><a href="https://flutter.dev/docs/development/add-to-app" target="_blank" rel="noopener">官方教程地址</a></p>
+<p>假定已经有原生App,位于/PATH/native-iOS(native-android)。<br>执行如下命令,以module的形式创建flutter,建议存放目录与native项目同级。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">flutter create --template module my_flutter</span><br></pre></td></tr></table></figure>
+<p>module形态的flutter工程目录如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">some/path/ </span><br><span class="line">  my_flutter/</span><br><span class="line">    lib/main.dart </span><br><span class="line">    .ios/ </span><br><span class="line">    .android/</span><br></pre></td></tr></table></figure></p>
+<p>lib是存放dart源码的目录,.ios和.android是在flutter工程目录下运行时的宿主工程。</p>
+<h2 id="1-1-iOS项目集成flutter"><a href="#1-1-iOS项目集成flutter" class="headerlink" title="1.1 iOS项目集成flutter"></a>1.1 iOS项目集成flutter</h2><p>在iOS中主要通过cocoapods以第三方框架的方式导入flutter的构建产物。<br>在podfile文件中添加如下两行:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">//指定flutter的本地路径。与native同级可以确保团队开发时路径一致。</span><br><span class="line">flutter_application_path = &apos;../my_flutter&apos;</span><br><span class="line">//</span><br><span class="line">load File.join(flutter_application_path, &apos;.ios&apos;, &apos;Flutter&apos;, &apos;podhelper.rb&apos;)</span><br><span class="line">// 如果有多个target,每个target都要加下面这行</span><br><span class="line">install_all_flutter_pods(flutter_application_path)</span><br></pre></td></tr></table></figure></p>
+<p>在podfile中添加的podhelper.rb ruby脚本会在pod install/update时执行,脚本主要做以下事情:</p>
+<ol>
+<li>解析’Generated.xcconfig’文件,获取Flutter工程配置信息，文件在’.ios/Flutter/‘目录下,文件中包含了Flutter SDK路径、Flutter工程路径、Flutter工程入口、编译目录等信息。</li>
+<li>将Flutter SDK中的Flutter.framework通过pod 添加到Native工程。</li>
+<li>将Flutter工程依赖的插件通过pod添加到Native工程，因为有些插件有Native部分代码.</li>
+</ol>
+<p>Generated.xcconfig信息如下所示,在多人合作开发时，会出现FLUTTER_ROOT和FLUTTER_APPLICATION_PATH团队间不一致的问题。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">FLUTTER_ROOT=/Users/zhenhaoxu/Code/flutter</span><br><span class="line">FLUTTER_APPLICATION_PATH=/Users/zhenhaoxu/Code/FlutterProj/flutter-hybrid/flutter_module</span><br><span class="line">FLUTTER_TARGET=lib/main.dart</span><br><span class="line">FLUTTER_BUILD_DIR=build</span><br><span class="line">SYMROOT=$&#123;SOURCE_ROOT&#125;/../build/ios</span><br><span class="line">FLUTTER_BUILD_NAME=1.0.0</span><br><span class="line">FLUTTER_BUILD_NUMBER=1</span><br></pre></td></tr></table></figure></p>
+<h2 id="1-2-Android项目集成flutter"><a href="#1-2-Android项目集成flutter" class="headerlink" title="1.2. Android项目集成flutter"></a>1.2. Android项目集成flutter</h2><ol>
+<li><p>指定jdk版本为1.8<br>Android目录/app/build.gradle,找到android标签</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">android &#123;</span><br><span class="line">  //...</span><br><span class="line">  compileOptions &#123;</span><br><span class="line">    sourceCompatibility 1.8</span><br><span class="line">    targetCompatibility 1.8</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将flutter module作为子项目<br>在根目录的settings.gradle中添加如下配置:</p>
+</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">setBinding(new Binding([gradle: this]))                                 </span><br><span class="line">evaluate(new File(                                                      </span><br><span class="line">  settingsDir.parentFile,                                               </span><br><span class="line">  &apos;my_flutter/.android/include_flutter.groovy&apos;                          </span><br><span class="line">))</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>添加flutter库的依赖<br>Android目录/app/build.gradle添加如下配置:<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dependencies &#123;</span><br><span class="line">  implementation project(&apos;:flutter&apos;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">Flutter</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2019/12/01/flutter-start/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-iOS_thread" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -521,571 +1218,10 @@
 
 
   
-    <article id="post-kvc_kvo" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/04/19/kvc_kvo/">深入理解runtime-KVC和KVO</a>
-    </h1>
-  
-
-        
-        <a href="/2018/04/19/kvc_kvo/" class="archive-article-date">
-  	<time datetime="2018-04-19T03:16:06.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-04-19</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="KVO"><a href="#KVO" class="headerlink" title="KVO"></a>KVO</h2><p>KVO全称是Key-Value Observing，键值监听，可以用于监听某个对象属性值的改变，对应于观察者模式。</p>
-<p>KVO是通过isa-swizzing来实现的,通过runtime替换实例对象的isa指针为动态创建的派生类,在派生类中重写setter方法。</p>
-<ol>
-<li>动态生成子类，并将实例对象的isa指针指向子类;</li>
-<li>子类重写set方法，当值将被改变时，调用willChangeValueForKey:。调用父类的set方法执行改变。调用didChangeValueForKey:通知值已经变更。</li>
-<li>didChangeValueForKey内部会调用obser的observerValueForKeyPath方法，让观察者收到改变的通知。</li>
-</ol>
-<h3 id="手动触发KVO"><a href="#手动触发KVO" class="headerlink" title="手动触发KVO"></a>手动触发KVO</h3><p>如果需要精确的控制KVO的触发时机,可以通过手动触发KVO。</p>
-<ol>
-<li>实现automaticallyNotifiesObserversOf<key>方法，关闭对应属性的自动触发</key></li>
-<li>在属性的set方法里，依次执行willChangeValueForKey:,变量赋值,didChangeValueForKey:。</li>
-</ol>
-<h2 id="KVC"><a href="#KVC" class="headerlink" title="KVC"></a>KVC</h2><p>KVC全称Key-Value Coding,键值编码,可以用于通过key名直接访问或修改对象的属性值，而不需要调用明确的存取方法。</p>
-<p>setValue:forKey执行逻辑:</p>
-<ol>
-<li>按照setKey:、_setKey:的顺序查找方法，如果找到、传值调用;</li>
-<li>查看accessInstanceVariablesDirectly方法的返回值。如果返回NO,调用setValue:forUnderfinedKey并抛出异常。如果返回Yes,按照_key,_isKey,key,isKey顺序查找成员变量，如找到，直接赋值。如果没找到，同样调用setValue:forUnderfinedKey并抛出异常。</li>
-</ol>
-<p>valueForKey:执行逻辑:</p>
-<ol>
-<li>按照getKey、key、isKey、_key顺序查找方法，如果找到，直接调用。</li>
-<li>查看accessInstanceVariablesDirectly方法的返回值，如果返回Yes,按照_key,_isKey,key,isKey顺序查找成员变量，如果找到，直接取值。否则，调用valueForUnderfinedKye:并抛出异常。</li>
-</ol>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/04/19/kvc_kvo/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-objc_message" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/04/07/objc_message/">深入理解runtime:消息机制</a>
-    </h1>
-  
-
-        
-        <a href="/2018/04/07/objc_message/" class="archive-article-date">
-  	<time datetime="2018-04-07T09:42:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-04-07</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="方法调用"><a href="#方法调用" class="headerlink" title="方法调用"></a>方法调用</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">//oc代码</span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    ZHAnimal *animal = [ZHAnimal new];</span><br><span class="line">    [animal run];</span><br><span class="line">&#125;</span><br><span class="line">//重写后的c++代码</span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    ZHAnimal *animal = objc_msgSend(objc_getClass(&quot;ZHAnimal&quot;), sel_registerName(&quot;new&quot;));</span><br><span class="line">    objc_msgSend(animal, sel_registerName(&quot;run&quot;));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>经过Clang重写后,可以看到oc的方法调用，本质是调用objc_msgSend函数，并且默认传入2个参数，消息接收者和方法选择器。这也是为什么我们在oc方法内可以直接使用self和_cmd这两个变量名的原因。</p>
-<p>oc的方法调用，一般称为发送消息。相比于其他语言的方法调用，如c++,函数名就是函数的入口地址，方法调用时直接调用方法实现，在编译期确定方法实现。oc的函数名，可以称为消息名，经过消息机制后才会确定对应的方法实现，在运行期确定方法实现。</p>
-<p>需要注意的是，如果我们创建不同的类，定义相同的方法，通过@selector()打印时会发现地址是相同的，不同类的相同SEL是同一个对象。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">objc_msgSend(void /* id self, SEL op, ... */ )</span><br><span class="line"></span><br><span class="line">objc_msgSendSuper(void /* struct objc_super *super, SEL op, ... */ )</span><br><span class="line"></span><br><span class="line">struct objc_super2 &#123;</span><br><span class="line">    id receiver;</span><br><span class="line">    Class current_class;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>需要注意的是，当我们调用[super method]方法时,底层会转换为objc_msgSendSuper2函数的调用，接收struct objc_super2和SEL两个参数，在内部调用objc_msgSend。其中receiver的值还是self，也就说，super调用的本质还是给self发送消息，只是在方法查找时会跳过self的Class而优先从superClass的方法列表中查找。当前对象无论调用什么方法,receiver都是当前对象。</p>
-<h2 id="消息发送流程"><a href="#消息发送流程" class="headerlink" title="消息发送流程"></a>消息发送流程</h2><p>对象通过isa指针访问类对象，通过类对象可以访问所有继承者链中的类。<br><img src="/images/objc_classrelation.png" alt></p>
-<p>objc_msgSend的执行流程可分为消息发送、动态方法解析和消息转发3个阶段:</p>
-<h3 id="消息发送"><a href="#消息发送" class="headerlink" title="消息发送"></a>消息发送</h3><ol>
-<li>判断receiver是否为空，若为空则直接返回;</li>
-<li>根据receiver的isa找到receiverClass并在其缓存中查找方法,若找到，调用方法，结束查找。</li>
-<li>从receierClass的class_rw_t中查找方法，若找到，调用方法，结束查找并将方法缓存到receiverClass的cache中。(即使调用的是父类的方法，也会缓存到receiverClass中)</li>
-<li>根据reciverClass的super指针往上遍历，重复2，3查找流程。</li>
-<li>还没找到，进入动态方法解析阶段。</li>
-</ol>
-<h3 id="动态方法解析"><a href="#动态方法解析" class="headerlink" title="动态方法解析"></a>动态方法解析</h3><ol>
-<li>判断是否已经进行过动态解析，如果是，进入消息转发阶段。</li>
-<li>调用 + (BOOL)resolveInstanceMethod:(SEL)sel 或 + (BOOL)resolveClassMethod:(SEL)sel。开发者可以在此动态添加方法实现</li>
-<li>标记为已经进行过动态解析。</li>
-<li>重新走消息发送流程。如果确实动态添加了方法实现，此时消息发送流程中能找到方法并缓存，如果没有添加，进入消息转发阶段。</li>
-</ol>
-<h3 id="消息转发"><a href="#消息转发" class="headerlink" title="消息转发"></a>消息转发</h3><ol>
-<li>调用- (id)forwardingTargetForSelector:(SEL)aSelector方法来尝试确定能处理方法的其他对象。如果返回值不为空，效果类似于objc_msgSend(返回值,SEL)。若为空，进入下一环节。</li>
-<li>调用- (NSMethodSignature *)methodSignatureForSelector:方法来确定SEL的方法签名。官方文档对此有如下描述: This method is used in situations where an NSInvocation object must be created, such as during message forwarding.可见主要是为了将消息调用封装成NSInvocation对象搜集方法签名信息。如果有返回值，进入下一环节，否则就会抛出UnRecognize selector的错误。</li>
-<li>调用-/+ (void)forwardInvocation方法。NSInvocation对象包括了消息的所有元素：调用者、选择器、参数和返回值。因此拿到NSInvocation后可以自定义处理逻辑。至此，方法调用完毕。</li>
-</ol>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/04/07/objc_message/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-objc_category" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/03/24/objc_category/">深入理解runtime:分类及关联对象</a>
-    </h1>
-  
-
-        
-        <a href="/2018/03/24/objc_category/" class="archive-article-date">
-  	<time datetime="2018-03-24T03:12:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-03-24</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="Category简介"><a href="#Category简介" class="headerlink" title="Category简介"></a>Category简介</h2><p>Category主要为已经存在的类添加方法。此外，还可以把类的实现分开在不同的文件里，这样可以减少单个文件的体积，把不同的功能组织到不同的category里。</p>
-<h2 id="Category数据结构"><a href="#Category数据结构" class="headerlink" title="Category数据结构"></a>Category数据结构</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">struct category_t &#123;</span><br><span class="line">    const char *name;</span><br><span class="line">    classref_t cls;</span><br><span class="line">    struct method_list_t *instanceMethods;</span><br><span class="line">    struct method_list_t *classMethods;</span><br><span class="line">    struct protocol_list_t *protocols;</span><br><span class="line">    struct property_list_t *instanceProperties;</span><br><span class="line">    // Fields below this point are not always present on disk.</span><br><span class="line">    struct property_list_t *_classProperties;</span><br><span class="line">    ...</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>在objc-runtime-new.h中可以找到分类底层数据结构的定义。从数据结构上可以清楚的看到分类能干什么，不能干什么。它能存储实例方法、类方法、协议和属性，但没有对应的存储ivars的成员变量，故分类中不能添加成员变量。</p>
-<h2 id="Category的加载过程"><a href="#Category的加载过程" class="headerlink" title="Category的加载过程"></a>Category的加载过程</h2><p>Category和Extensiton很类似，两者的区别在于，Extensition在编译期就直接和原类编译在一起，Category是在运行时动态添加到原类中的。</p>
-<p>应用程序启动流程如下:</p>
-<ol>
-<li>应用程序启动后，系统读取可执行文件(Mach-O文件),从里面获取dyld的路径并加载dyld(动态链接器);</li>
-<li>由dyld加载依赖库,生成对应的image对象，对这些image进行链接,并调用回调函数;</li>
-<li>runtime接收dyld的函数回调，执行map_images、load_images等操作,初始化依赖库里的类结构，调用里面所有的load方法;</li>
-<li>dyld返回main函数地址,main函数被调用</li>
-</ol>
-<p>在编译阶段，每个Category文件都是独立的，为category_t结构。在程序启动后的map_images阶段，会遍历category_t的二维数组，把所有独立的Category中对应的方法合并到对应的类和元类中。合并过程如下:</p>
-<ol>
-<li>遍历某个类的所有分类，取出分类中的方法列表、属性列表等，合并成addedLists。并且最后参与编译的分类，最先加入;</li>
-<li>原先的methodlists中的方法列表根据addedLists数量进行内存扩容;</li>
-<li>methodslists位置往后挪到addedListsCount个位置，前面的位置由addedLists填充，合并完毕;</li>
-</ol>
-<p>需要注意的是第3步的挪动操作，因为方法查找是在方法列表中从前往后找的，找到即结束。这样的设计让分类中的方法总是比原类中的方法优先调用，也就是表现为分类中的同名方法会覆盖类中的原方法，但其实原方法还是在methodlist中的。</p>
-<h2 id="load和initialize方法"><a href="#load和initialize方法" class="headerlink" title="load和initialize方法"></a>load和initialize方法</h2><p>load方法调用在load_images阶段，main函数之前。load方法是拿到函数地址直接调用的，并没有走objc_msgSend方法，因此不会像分类一样存在方法覆盖的问题。此外，会优先调用类的load方法，并保证父类优先调用，之后调用分类的load方法，调用顺序为编译时的顺序。</p>
-<p>initialize在类第一次接收到消息时调用。在lookup函数查找方法时，会判断是否需要初始化，如果需要，通过objcMsgSend调用initialize方法。由于走的是消息机制，会被分类覆盖。</p>
-<p>为了提高app启动速度，我们尽量少在load方法里做事情，推迟到initialize里懒加载。</p>
-<h2 id="关联对象"><a href="#关联对象" class="headerlink" title="关联对象"></a>关联对象</h2><p>在运行期，对象的内存布局已经确定，如果动态添加成员变量会破坏已有的内存布局。在实际项目中，我们可以通过关联对象技术实现分类添加成员变量的效果。</p>
-<p>在objc-references.mm文件中，我们可以看到关联对象的底层数据结构。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">class AssociationsManager &#123;</span><br><span class="line">    // associative references: object pointer -&gt; PtrPtrHashMap.</span><br><span class="line">    static AssociationsHashMap *_map;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">class AssociationsHashMap : public unordered_map&lt;disguised_ptr_t, ObjectAssociationMap *, DisguisedPointerHash, DisguisedPointerEqual, AssociationsHashMapAllocator&gt; &#123;</span><br><span class="line">    </span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">class ObjectAssociationMap : public std::map&lt;void *, ObjcAssociation, ObjectPointerLess, ObjectAssociationMapAllocator&gt; &#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">class ObjcAssociation &#123;</span><br><span class="line">        uintptr_t _policy;</span><br><span class="line">        id _value;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p><img src="/images/category-association.png" alt></p>
-<p>当我们使用objc_setAssociatedObject设置关联对象时，究竟发现了什么呢？</p>
-<ol>
-<li>所有的关联对象都被被存在一个全局的hashMap中，由AssociationManager进行管理。hashMap的key是实例对象的内存地址，value是一个ObjectAssociationMap对象，保存了与这个实例对象关联的信息。</li>
-<li>ObjectAssociationMap的key是关联时指定的属性的key，即传入的第二个参数。value是ObjcAssociation对象，存储关联时指定的value和policy.</li>
-</ol>
-<p>在这种设计下，可以通过实例对象的内存地址和关联属性名作为key，高效的存储和查找。</p>
-<p>在对象销毁时，会根据对象isa中的has_assoc判断是否有管理对象，如果有，会做关联对象的清理工作。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/03/24/objc_category/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-objc_object" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/03/19/objc_object/">深入理解runtime:对象的本质</a>
-    </h1>
-  
-
-        
-        <a href="/2018/03/19/objc_object/" class="archive-article-date">
-  	<time datetime="2018-03-19T08:06:17.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-03-19</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>runtime不只是一些C语言的API，还包括一套面向对象的数据结构。研究runtime，首先需要研究对象模型。</p>
-<h2 id="NSObject的底层实现"><a href="#NSObject的底层实现" class="headerlink" title="NSObject的底层实现"></a>NSObject的底层实现</h2><h3 id="重写为c-c"><a href="#重写为c-c" class="headerlink" title="重写为c/c++"></a>重写为c/c++</h3><p>借助LLVM,我们可以将oc的代码重写为对应的c代码。<br>待转化的oc代码，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">#import &lt;Foundation/Foundation.h&gt;</span><br><span class="line"></span><br><span class="line">@interface ZHAnimal : NSObject</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      age;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHAnimal</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@interface ZHCat : ZHAnimal</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      legs;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHCat</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>准备的事例代码使用了oc的类声明、属性及继承特性，以便我们探索这些特性的底层实现。</p>
-<p>之后，我们使用Clang将main.m文件重写输出为mainarm64.cpp文件，指定的架构参数是arm64<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc main.m -o mainarm64.cpp</span><br></pre></td></tr></table></figure></p>
-<p>在mainarm64.cpp文件中，我们首先搜索”ZHCat_IMPL {“,可以找到如下代码：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct ZHCat_IMPL &#123;</span><br><span class="line">	struct ZHAnimal_IMPL ZHAnimal_IVARS;</span><br><span class="line">	NSInteger _legs;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>除了自身的成员变量_legs,还能看到名为 ZHAnimal_IVARS 类型为 ZHAnimal_IMPL 的结构体变量声明。</p>
-<p>我们接着搜索”ZHAnimal_IMPL {“,可以找到如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct ZHAnimal_IMPL &#123;</span><br><span class="line">	struct NSObject_IMPL NSObject_IVARS;</span><br><span class="line">	NSInteger _age;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
-<p>这段代码逻辑和上面的一样。那么接着看NSObject。可以找到如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">struct objc_selector; struct objc_class;</span><br><span class="line"></span><br><span class="line">typedef struct objc_class *Class;</span><br><span class="line"></span><br><span class="line">struct NSObject_IMPL &#123;</span><br><span class="line">    Class isa;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
-<p>到此为止，简单小结一下：</p>
-<ol>
-<li>对象底层是基于struct数据结构实现的。</li>
-<li>NSObject里面包含一个objc_class类型的结构体指针isa.</li>
-<li>子类的结构体中会包含父类的结构体声明，以此来实现继承关系。</li>
-</ol>
-<h3 id="探寻objc-class"><a href="#探寻objc-class" class="headerlink" title="探寻objc_class"></a>探寻objc_class</h3><p>在<a href="https://opensource.apple.com/tarballs/objc4/" target="_blank" rel="noopener">objc4源码</a>可以下载到开源代码，注意下载序号大的新版本。</p>
-<p>在objc-runtime-new文件中，我们终于看到了objc_class的实现。代码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">struct objc_class : objc_object &#123;</span><br><span class="line">    // Class ISA;</span><br><span class="line">    Class superclass;</span><br><span class="line">    cache_t cache;             // formerly cache pointer and vtable</span><br><span class="line">    class_data_bits_t bits;    // class_rw_t * plus custom rr/alloc flags</span><br><span class="line"></span><br><span class="line">    class_rw_t *data() &#123; </span><br><span class="line">        return bits.data();</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">struct objc_object &#123;</span><br><span class="line">private:</span><br><span class="line">    isa_t isa;</span><br><span class="line"></span><br><span class="line">public:</span><br><span class="line"></span><br><span class="line">    // ISA() assumes this is NOT a tagged pointer object</span><br><span class="line">    Class ISA();</span><br><span class="line"></span><br><span class="line">    // getIsa() allows this to be a tagged pointer object</span><br><span class="line">    Class getIsa();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">typedef struct objc_object *id;</span><br></pre></td></tr></table></figure></p>
-<p>追踪到最后的数据结构是objc_object，里面有一个isa_t类型的isa成员。</p>
-<ol>
-<li><strong>oc中所有的对象都会包含一个isa_t类型的成员变量</strong>。objc_class,类也是对象，通过继承于objc_object拿到了的isa_t结构类型的isa成员。</li>
-<li>对象或者说实例对象，只有isa，用来找到对应的类对象。类对象才有superclass(父类指针)、cache(方法缓存)和bits(类数据信息)。（bits里包含了ivars成员变量列表、methods方法列表、protocals协议列表和properties属性列表等类信息）</li>
-</ol>
-<p><img src="/images/objc_object.png" alt="objc对象本质"></p>
-<h2 id="Class中的数据结构"><a href="#Class中的数据结构" class="headerlink" title="Class中的数据结构"></a>Class中的数据结构</h2><h3 id="isa-t"><a href="#isa-t" class="headerlink" title="isa_t"></a>isa_t</h3><p>isa数据结构的定义，摘录于objc4-750.1</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">union isa_t &#123;</span><br><span class="line">    isa_t() &#123; &#125;</span><br><span class="line">    isa_t(uintptr_t value) : bits(value) &#123; &#125; </span><br><span class="line"></span><br><span class="line">    Class cls;</span><br><span class="line">    uintptr_t bits;</span><br><span class="line">#if defined(ISA_BITFIELD)</span><br><span class="line">    struct &#123;</span><br><span class="line">        ISA_BITFIELD;  // defined in isa.h</span><br><span class="line">    &#125;;</span><br><span class="line">#endif</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">#   define ISA_BITFIELD                                                        \</span><br><span class="line">      uintptr_t nonpointer        : 1;                                         \</span><br><span class="line">      uintptr_t has_assoc         : 1;                                         \</span><br><span class="line">      uintptr_t has_cxx_dtor      : 1;                                         \</span><br><span class="line">      uintptr_t shiftcls          : 44; /*MACH_VM_MAX_ADDRESS 0x7fffffe00000*/ \</span><br><span class="line">      uintptr_t magic             : 6;                                         \</span><br><span class="line">      uintptr_t weakly_referenced : 1;                                         \</span><br><span class="line">      uintptr_t deallocating      : 1;                                         \</span><br><span class="line">      uintptr_t has_sidetable_rc  : 1;                                         \</span><br><span class="line">      uintptr_t extra_rc          : 8</span><br></pre></td></tr></table></figure>
-<p>在arm64架构之前，isa就是一个普通的指针，存储着Class、Meta-Class对象地址</p>
-<p>从arm64架构开始，isa成了一个union结构的共同体，并使用位域来存储更多的信息。</p>
-<p>其含义如图所示:可以看到大多与内存管理相关</p>
-<p><img src="/images/class-union.jpg" alt="weiyu"></p>
-<h3 id="class-data-bits-t"><a href="#class-data-bits-t" class="headerlink" title="class_data_bits_t"></a>class_data_bits_t</h3><p><img src="/images/class_rw_t.png" alt="class_rw_t"></p>
-<p>class_ro_t存储着类的原始信息，在运行时根据class_ro_t生成class_rw_t，并通过ro指针指回了class_ro_t.</p>
-<p>以方法列表为例，假如Animal类有run方法，同时通过分类扩展了eat方法。那么，run方法首先位于class_ro_t中的baseMethodList中，在运行时，会加载所有分类，把分类中的方法和baseMethodList合并成methods，且分类中的方法在前。</p>
-<p>class_rw_t中没有定义ivars的字段，在访问成员变量时，直接通过isa_t找到对应的objc_class,并通过class_ro_t的ivarlist做地址偏移，查找对应的对象内存。因此，内存布局在编译时就已经确定，runtime不能动态修改ivars，会破坏已有的内存布局。只能通过类似关联对象的方式重新开辟一块专门的内存空间。</p>
-<h3 id="method-t"><a href="#method-t" class="headerlink" title="method_t"></a>method_t</h3><p>method_list_t数组中存储着method_t，method_t是对方法的封装。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">struct method_t &#123;</span><br><span class="line">    SEL name;//方法名</span><br><span class="line">    const char *types;//编码，内含返回值类型、参数类型等信息</span><br><span class="line">    IMP imp; //本质为函数指针，存储函数实现的地址</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
-<h3 id="cache-t"><a href="#cache-t" class="headerlink" title="cache_t"></a>cache_t</h3><p>方法调用是在methods中通过receiver和SEL查找定位IMP的过程。如果一个方法被多次调用，通过缓存技术就能提高效率。</p>
-<p>cache_t就是这样一个缓存，他通过散列表来缓存曾经调用过的方法，用以提高方法的查找速度。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">struct cache_t &#123;</span><br><span class="line">    struct bucket_t *_buckets;//散列表</span><br><span class="line">    mask_t _mask;//散列表的长度 - 1</span><br><span class="line">    mask_t _occupied;//已经缓存的方法数量</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">struct bucket_t &#123;</span><br><span class="line">    IMP _imp;</span><br><span class="line">    cache_key_t _key;//SEL为key</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Class points to cache. SEL is key. Cache buckets store SEL+IMP.</span><br><span class="line">// Caches are never built in the dyld shared cache.</span><br><span class="line">static inline mask_t cache_hash(cache_key_t key, mask_t mask) </span><br><span class="line">&#123;</span><br><span class="line">    return (mask_t)(key &amp; mask);</span><br><span class="line">&#125;</span><br><span class="line">//objc-cache.mm</span><br></pre></td></tr></table></figure>
-<p>通过源码可以看到散列表的实现机制是：将SEL和长度进行&amp;操作(类似取余)，得到的结果作为_buckets的下标。存取_buckets都可以通过下标直接查找。这种机制是非依次存放的，是一种空间换时间的思路。而当空间不够存放时，会进行扩容。此时因为key已经改变，会清空已缓存的数据，重新建索引。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/03/19/objc_object/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-compile" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/03/08/compile/">深入理解编译过程</a>
-    </h1>
-  
-
-        
-        <a href="/2018/03/08/compile/" class="archive-article-date">
-  	<time datetime="2018-03-08T08:05:25.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-03-08</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="编译器"><a href="#编译器" class="headerlink" title="编译器"></a>编译器</h2><p>把一种编程语言(原始语言)转换为另一种编程语言(目标语言)的程序叫做编译器。</p>
-<p>编译器一般由前端和后端两部分组成，前端负责词法分析、语法分析，生成中间代码。后端以中间代码作为输入，进行架构无关的优化，接着针对不同的架构生成不同的机器码。</p>
-<blockquote>
-<p>前后端分离及通过中间代码(IR)协作的设计，使得前后端可以独立变化。新增一门语言只需要修改前端，而新增一个CPU架构只需要修改后端即可。</p>
-</blockquote>
-<h2 id="LLVM"><a href="#LLVM" class="headerlink" title="LLVM"></a>LLVM</h2><p>什么是LLVM,他是一系列编译器组件和工具链的集合。引用维基百科的解释</p>
-<blockquote>
-<p>LLVM包含一系列模块化的编译器组件和工具链，用来开发编译器前端和后端。现今LLVM已单纯成为一个品牌，适用于LLVM下的所有项目，包含LLVM中介码（LLVM IR）、LLVM调试工具、LLVM C++标准库等。</p>
-</blockquote>
-<blockquote>
-<p>LLVM引发一些人来为许多语言开发新的编译器，其中一个最引发注意的就是Clang，它是一个新的编译器，同时支持C、Objective-C以及C++.</p>
-</blockquote>
-<p>这里引出了我们的主角Clang。Object-c/c/c++编译器的前端就是Clang。以下是编译器编译的大致流程。</p>
-<p><img src="/images/compile-progress.png" alt="编译流程"></p>
-<h2 id="文件编译流程"><a href="#文件编译流程" class="headerlink" title="文件编译流程"></a>文件编译流程</h2><p>本节将从代码层面跟踪一个文件的编译过程，文件名为main.c。代码如下:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#define IPhoneXBarHeight 88</span><br><span class="line">#define DEBUG 1</span><br><span class="line"></span><br><span class="line">int main() &#123;</span><br><span class="line">    //屏幕宽度</span><br><span class="line">    int barHeight = IPhoneXBarHeight;</span><br><span class="line">#ifdef DEBUG</span><br><span class="line">    printf(&quot;hello debug\n&quot;);</span><br><span class="line">#else</span><br><span class="line">    printf(&quot;hello world\n&quot;);</span><br><span class="line">#endif</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="预处理"><a href="#预处理" class="headerlink" title="预处理"></a>预处理</h3><p>预处理阶段会进行头文件引入替换、宏替换、注释处理、条件编译等操作。</p>
-<p>用clang进行预处理</p>
-<blockquote>
-<p>xcrun clang -E main.c</p>
-</blockquote>
-<p>处理后结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">int main() &#123;</span><br><span class="line">    int barHeight = 88;</span><br><span class="line">    printf(&quot;hello debug\n&quot;);</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>include &lt;stdio.h&gt;在预处理阶段会被替换成stido.h中的内容，这个过程是递归的，因为stdio.h也有可能引用了其他头文件。</p>
-<p>在省略了几百行stdio.h的内容后，在末尾看到main函数预处理后只有3行。</p>
-<p>IPhoneXBarHeight这个宏被替换成了具体的数字。</p>
-<p>条件编译后，只留下了符合条件的printf(“hello debug\n”);</p>
-<h3 id="词法分析"><a href="#词法分析" class="headerlink" title="词法分析"></a>词法分析</h3><p>词法分析器读入预处理后的字符流，将他们组织成有意义的词素(最小的意义单位)序列。对于每个词素，词法分析器产生词法单元(token)作为输出。</p>
-<blockquote>
-<p> xcrun clang -fmodules -fsyntax-only -Xclang -dump-tokens main.c</p>
-</blockquote>
-<p>结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">annot_module_include &apos;#include &lt;s&apos;		Loc=&lt;main.c:1:1&gt;</span><br><span class="line">int &apos;int&apos;	 [StartOfLine]	Loc=&lt;main.c:5:1&gt;</span><br><span class="line">identifier &apos;main&apos;	 [LeadingSpace]	Loc=&lt;main.c:5:5&gt;</span><br><span class="line">l_paren &apos;(&apos;		Loc=&lt;main.c:5:9&gt;</span><br><span class="line">r_paren &apos;)&apos;		Loc=&lt;main.c:5:10&gt;</span><br><span class="line">l_brace &apos;&#123;&apos;	 [LeadingSpace]	Loc=&lt;main.c:5:12&gt;</span><br><span class="line">int &apos;int&apos;	 [StartOfLine] [LeadingSpace]	Loc=&lt;main.c:7:5&gt;</span><br><span class="line">identifier &apos;barHeight&apos;	 [LeadingSpace]	Loc=&lt;main.c:7:9&gt;</span><br><span class="line">...</span><br></pre></td></tr></table></figure></p>
-<p>identifier ‘barHeight’     [LeadingSpace]    Loc=<a href="main.c:7:9" target="_blank" rel="noopener">main.c:7:9</a>表示 barHeight 这个变量名位于 main.c 第7行，左起第9个字符开始。这里的位置是基于原始代码的位置，而不是预处理后的。保存token在源文件中的位置方便后续clang分析的时候能够找出出错的原始位置。</p>
-<h3 id="语法分析"><a href="#语法分析" class="headerlink" title="语法分析"></a>语法分析</h3><p>词法分析的Token流会被解析成一颗抽象语法树(AST).</p>
-<blockquote>
-<p>xcrun clang -fsyntax-only -Xclang -ast-dump main.c | open -f</p>
-</blockquote>
-<p>部分结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[0;34m`-[0m[0;1;32mFunctionDecl[0m[0;33m 0x7fbdbe8b5630[0m &lt;[0;33mmain.c:5:1[0m, [0;33mline:14:1[0m&gt; [0;33mline:5:5[0m[0;1;36m main[0m [0;32m&apos;int ()&apos;[0m</span><br><span class="line">[0;34m  `-[0m[0;1;35mCompoundStmt[0m[0;33m 0x7fbdbe8b58f8[0m &lt;[0;33mcol:12[0m, [0;33mline:14:1[0m&gt;</span><br><span class="line">[0;34m    |-[0m[0;1;35mDeclStmt[0m[0;33m 0x7fbdbe8b5768[0m &lt;[0;33mline:7:5[0m, [0;33mcol:37[0m&gt;</span><br><span class="line">[0;34m    | `-[0m[0;1;32mVarDecl[0m[0;33m 0x7fbdbe8b56e8[0m &lt;[0;33mcol:5[0m, [0;33mline:2:26[0m&gt; [0;33mline:7:9[0m[0;1;36m barHeight[0m [0;32m&apos;int&apos;[0m cinit</span><br><span class="line">[0;34m    |   `-[0m[0;1;35mIntegerLiteral[0m[0;33m 0x7fbdbe8b5748[0m &lt;[0;33mline:2:26[0m&gt; [0;32m&apos;int&apos;[0m[0;36m[0m[0;36m[0m[0;1;36m 88[0m</span><br></pre></td></tr></table></figure></p>
-<p>有了抽象语法树，clang就可以对这个树进行分析，找出代码中的错误，如类型不匹配，调用了未声明的方法等。</p>
-<h3 id="CodeGen"><a href="#CodeGen" class="headerlink" title="CodeGen"></a>CodeGen</h3><p>CodeGen遍历语法树，生成LLVM IR代码。IR是前端的输出，后端的输入。</p>
-<blockquote>
-<p>xcrun clang -S -emit-llvm main.c -o main.ll</p>
-</blockquote>
-<p>部分结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">@.str = private unnamed_addr constant [13 x i8] c&quot;hello debug\0A\00&quot;, align 1</span><br><span class="line"></span><br><span class="line">; Function Attrs: noinline nounwind optnone ssp uwtable</span><br><span class="line">define i32 @main() #0 &#123;</span><br><span class="line">  %1 = alloca i32, align 4</span><br><span class="line">  %2 = alloca i32, align 4</span><br><span class="line">  store i32 0, i32* %1, align 4</span><br><span class="line">  store i32 88, i32* %2, align 4</span><br><span class="line">  %3 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @.str, i32 0, i32 0))</span><br><span class="line">  ret i32 0</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>Objective-c代码会在这一步进行runtime的桥接:property合成，ARC处理等。</p>
-<h3 id="LLVM-Optimizer"><a href="#LLVM-Optimizer" class="headerlink" title="LLVM Optimizer"></a>LLVM Optimizer</h3><p>LLVM对IR进行优化后，会针对不同架构生成不同的目标代码，最后以汇编代码的格式输出。</p>
-<blockquote>
-<p>xcrun clang -S main.c -o main.s</p>
-</blockquote>
-<p>部分代码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">_main:                                  ## @main</span><br><span class="line">	.cfi_startproc</span><br><span class="line">## %bb.0:</span><br><span class="line">	pushq	%rbp</span><br><span class="line">	.cfi_def_cfa_offset 16</span><br><span class="line">	.cfi_offset %rbp, -16</span><br><span class="line">	movq	%rsp, %rbp</span><br><span class="line">	.cfi_def_cfa_register %rbp</span><br><span class="line">	subq	$16, %rsp</span><br><span class="line">	movl	$0, -4(%rbp)</span><br><span class="line">	movl	$88, -8(%rbp)</span><br><span class="line">	leaq	L_.str(%rip), %rdi</span><br><span class="line">	movb	$0, %al</span><br><span class="line">	callq	_printf</span><br></pre></td></tr></table></figure></p>
-<h3 id="汇编器"><a href="#汇编器" class="headerlink" title="汇编器"></a>汇编器</h3><p>汇编器以汇编代码作为输入，将汇编代码转换为机器代码，最后输出.o目标文件 。</p>
-<blockquote>
-<p>xcrun clang -fmodules -c main.c -o main.o</p>
-</blockquote>
-<p>生成了main.o文件后，我们可以通过如下命令查看其中的符号。</p>
-<blockquote>
-<p>xcrun nm -nm main.o</p>
-</blockquote>
-<p>结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">                 (undefined) external _printf</span><br><span class="line">0000000000000000 (__TEXT,__text) external _main</span><br></pre></td></tr></table></figure></p>
-<p>注意printf前的修饰。undefined表示在当前文件找不到符号。external表示这个符号是外部可以访问的。</p>
-<h3 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h3><p>链接器把编译产生的.o文件和(dylib、a、tbd)文件一起生成mach-o可执行文件，之后会把多个Mach-O文件合并成一个，并在合并过程中创建一个全局符号表，记录所有已定义的和未定义的符号。链接时如果出现相同符号的情况，就会出现”ld:dumplicate symbols”的错误信息;如果在其他目标文件里没有找到符号，就会提示”Undefined symbols”的错误信息。总的来说，链接就是把符号绑定到地址上。</p>
-<blockquote>
-<p>xcrun clang main.o -o main</p>
-</blockquote>
-<p>执行后可以看到控制器会输出 “hello debug”<br>此时再查看可执行文件的符号表，<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">                 (undefined) external _printf (from libSystem)</span><br><span class="line">                 (undefined) external dyld_stub_binder (from libSystem)</span><br><span class="line">0000000100000000 (__TEXT,__text) [referenced dynamically] external __mh_execute_header</span><br><span class="line">0000000100000f50 (__TEXT,__text) external _main</span><br></pre></td></tr></table></figure></p>
-<p>from libSystem表示这个符号来自于libSystem，会在运行时动态绑定。链接器会尝试解析所有的undefined符号，加载对应的动态库。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/03/08/compile/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
+    <nav id="page-nav">
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
+    </nav>
   
 
 
@@ -1096,7 +1232,7 @@
   <div class="outer">
     <div id="footer-info">
     	<div class="footer-left">
-    		&copy; 2019 Cloud
+    		&copy; 2020 Cloud
     	</div>
       	<div class="footer-right">
       		<a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/litten/hexo-theme-yilia" target="_blank">Yilia</a> by Litten
@@ -1177,6 +1313,10 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
             <input type="checkbox" q-on="click:toggleTag(e)" q-attr="checked:showTags">
           </label>
           <ul class="article-tag-list" q-show="showTags">
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">Flutter</a>
+              </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">底层原理</a>

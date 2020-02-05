@@ -6,22 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="dns-prefetch" href="https://xuzhenhao.github.io">
-  <title>深入理解runtime:消息机制 | cloud的博客</title>
+  <title>Dart语法精粹 | cloud的博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="方法调用12345678910//oc代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = [ZHAnimal new];    [animal run];&amp;#125;//重写后的c++代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = objc">
-<meta name="keywords" content="底层原理,runtime">
+  <meta name="description" content="重要概念 在Dart中,所有的数据类型都是对象,包括数字、函数和null等。所有的对象都继承自Object。  Dart是类型安全的,只有同类型变量能相互赋值。当能根据上下文推断类型时，可以在定义时省略类型信息。如果要专门定义动态类型，可以通过dynamic关键字。  Dart没有专门的标识符来进行访问控制，如果变量名以下划线(_)开头,它是一个私有变量。   变量这是一个声明并初始化变量的例子。">
+<meta name="keywords" content="Flutter">
 <meta property="og:type" content="article">
-<meta property="og:title" content="深入理解runtime:消息机制">
-<meta property="og:url" content="https://xuzhenhao.github.io/2018/04/07/objc_message/index.html">
+<meta property="og:title" content="Dart语法精粹">
+<meta property="og:url" content="https://xuzhenhao.github.io/2019/12/04/flutter-dart/index.html">
 <meta property="og:site_name" content="cloud的博客">
-<meta property="og:description" content="方法调用12345678910//oc代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = [ZHAnimal new];    [animal run];&amp;#125;//重写后的c++代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = objc">
+<meta property="og:description" content="重要概念 在Dart中,所有的数据类型都是对象,包括数字、函数和null等。所有的对象都继承自Object。  Dart是类型安全的,只有同类型变量能相互赋值。当能根据上下文推断类型时，可以在定义时省略类型信息。如果要专门定义动态类型，可以通过dynamic关键字。  Dart没有专门的标识符来进行访问控制，如果变量名以下划线(_)开头,它是一个私有变量。   变量这是一个声明并初始化变量的例子。">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="https://xuzhenhao.github.io/images/objc_classrelation.png">
-<meta property="og:updated_time" content="2019-12-13T07:30:29.545Z">
+<meta property="og:updated_time" content="2020-01-04T09:47:16.715Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="深入理解runtime:消息机制">
-<meta name="twitter:description" content="方法调用12345678910//oc代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = [ZHAnimal new];    [animal run];&amp;#125;//重写后的c++代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = objc">
-<meta name="twitter:image" content="https://xuzhenhao.github.io/images/objc_classrelation.png">
+<meta name="twitter:title" content="Dart语法精粹">
+<meta name="twitter:description" content="重要概念 在Dart中,所有的数据类型都是对象,包括数字、函数和null等。所有的对象都继承自Object。  Dart是类型安全的,只有同类型变量能相互赋值。当能根据上下文推断类型时，可以在定义时省略类型信息。如果要专门定义动态类型，可以通过dynamic关键字。  Dart没有专门的标识符来进行访问控制，如果变量名以下划线(_)开头,它是一个私有变量。   变量这是一个声明并初始化变量的例子。">
   
     <link rel="alternative" href="/atom.xml" title="cloud的博客" type="application/atom+xml">
   
@@ -141,52 +139,74 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-objc_message" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-flutter-dart" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      深入理解runtime:消息机制
+      Dart语法精粹
     </h1>
   
 
         
-        <a href="/2018/04/07/objc_message/" class="archive-article-date">
-  	<time datetime="2018-04-07T09:42:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-04-07</time>
+        <a href="/2019/12/04/flutter-dart/" class="archive-article-date">
+  	<time datetime="2019-12-04T08:13:52.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-12-04</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="方法调用"><a href="#方法调用" class="headerlink" title="方法调用"></a>方法调用</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">//oc代码</span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    ZHAnimal *animal = [ZHAnimal new];</span><br><span class="line">    [animal run];</span><br><span class="line">&#125;</span><br><span class="line">//重写后的c++代码</span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    ZHAnimal *animal = objc_msgSend(objc_getClass(&quot;ZHAnimal&quot;), sel_registerName(&quot;new&quot;));</span><br><span class="line">    objc_msgSend(animal, sel_registerName(&quot;run&quot;));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>经过Clang重写后,可以看到oc的方法调用，本质是调用objc_msgSend函数，并且默认传入2个参数，消息接收者和方法选择器。这也是为什么我们在oc方法内可以直接使用self和_cmd这两个变量名的原因。</p>
-<p>oc的方法调用，一般称为发送消息。相比于其他语言的方法调用，如c++,函数名就是函数的入口地址，方法调用时直接调用方法实现，在编译期确定方法实现。oc的函数名，可以称为消息名，经过消息机制后才会确定对应的方法实现，在运行期确定方法实现。</p>
-<p>需要注意的是，如果我们创建不同的类，定义相同的方法，通过@selector()打印时会发现地址是相同的，不同类的相同SEL是同一个对象。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">objc_msgSend(void /* id self, SEL op, ... */ )</span><br><span class="line"></span><br><span class="line">objc_msgSendSuper(void /* struct objc_super *super, SEL op, ... */ )</span><br><span class="line"></span><br><span class="line">struct objc_super2 &#123;</span><br><span class="line">    id receiver;</span><br><span class="line">    Class current_class;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>需要注意的是，当我们调用[super method]方法时,底层会转换为objc_msgSendSuper2函数的调用，接收struct objc_super2和SEL两个参数，在内部调用objc_msgSend。其中receiver的值还是self，也就说，super调用的本质还是给self发送消息，只是在方法查找时会跳过self的Class而优先从superClass的方法列表中查找。当前对象无论调用什么方法,receiver都是当前对象。</p>
-<h2 id="消息发送流程"><a href="#消息发送流程" class="headerlink" title="消息发送流程"></a>消息发送流程</h2><p>对象通过isa指针访问类对象，通过类对象可以访问所有继承者链中的类。<br><img src="/images/objc_classrelation.png" alt></p>
-<p>objc_msgSend的执行流程可分为消息发送、动态方法解析和消息转发3个阶段:</p>
-<h3 id="消息发送"><a href="#消息发送" class="headerlink" title="消息发送"></a>消息发送</h3><ol>
-<li>判断receiver是否为空，若为空则直接返回;</li>
-<li>根据receiver的isa找到receiverClass并在其缓存中查找方法,若找到，调用方法，结束查找。</li>
-<li>从receierClass的class_rw_t中查找方法，若找到，调用方法，结束查找并将方法缓存到receiverClass的cache中。(即使调用的是父类的方法，也会缓存到receiverClass中)</li>
-<li>根据reciverClass的super指针往上遍历，重复2，3查找流程。</li>
-<li>还没找到，进入动态方法解析阶段。</li>
+        <h2 id="重要概念"><a href="#重要概念" class="headerlink" title="重要概念"></a>重要概念</h2><ul>
+<li><p>在Dart中,所有的数据类型都是对象,包括数字、函数和null等。所有的对象都继承自Object。</p>
+</li>
+<li><p>Dart是类型安全的,只有同类型变量能相互赋值。当能根据上下文推断类型时，可以在定义时省略类型信息。如果要专门定义动态类型，可以通过dynamic关键字。</p>
+</li>
+<li><p>Dart没有专门的标识符来进行访问控制，如果变量名以下划线(_)开头,它是一个私有变量。</p>
+</li>
+</ul>
+<h2 id="变量"><a href="#变量" class="headerlink" title="变量"></a>变量</h2><p>这是一个声明并初始化变量的例子。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var name = &apos;Bob&apos;;</span><br></pre></td></tr></table></figure></p>
+<p>变量存储引用(对象的地址)。变量名name包含了一个指向Bob字符串的引用。因为使用字符串进行了初始化，name被推断为String类型。</p>
+<h3 id="默认值"><a href="#默认值" class="headerlink" title="默认值"></a>默认值</h3><p>未初始化变量的默认值为null，包括int等类型。</p>
+<p>?. 和 ?? 运算符可以更好的帮助我们处理null值。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">int num ;</span><br><span class="line">// num为null,打印0</span><br><span class="line">print(num ?? 0);</span><br><span class="line"></span><br><span class="line">String name;</span><br><span class="line">//name为null，若直接调用length会崩溃。?.运行符会在null的情况下阻断右边的调用</span><br><span class="line">print(name?.length);</span><br></pre></td></tr></table></figure></p>
+<h3 id="final-和-const"><a href="#final-和-const" class="headerlink" title="final 和 const"></a>final 和 const</h3><p>final 修饰的变量只能被赋值一次;const 修饰的变量在编译时会转化成常量,const变量同时也是final变量。顶级的final变量或类中的final变量在第一次使用时初始化。</p>
+<p>const也经常用来修饰构造函数,此时创建的对象是不可变的。</p>
+<p>const适用于定义编译常量的场景，final适用于定义运行时常量的场景</p>
+<h2 id="内置数据类型"><a href="#内置数据类型" class="headerlink" title="内置数据类型"></a>内置数据类型</h2><h3 id="Numbers"><a href="#Numbers" class="headerlink" title="Numbers"></a>Numbers</h3><p>int 定义整数,double 定义浮点数,都继承自 num。num对象定义了基本的+,-,*,/等操作符和运算。</p>
+<p>两者是不同的数据类型，因此把浮点数赋值给int变量是不允许的。</p>
+<h3 id="Strings"><a href="#Strings" class="headerlink" title="Strings"></a>Strings</h3><p>String 是 UTF-16编码格式的字符序列。可以使用’’或””来创建字符串。</p>
+<p>可以通过${exp} 直接把表达式的值插入到字符串中，此时Dart会调用对象的toString()方法获取字符串。这种方法与用大量+来组合相比，更加简洁。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">var str1 = &apos;my name is&apos;;</span><br><span class="line">var str2 = &apos;$str1 cloud&apos;;</span><br><span class="line">print(str2);// my name is cloud</span><br></pre></td></tr></table></figure></p>
+<h3 id="Booleans"><a href="#Booleans" class="headerlink" title="Booleans"></a>Booleans</h3><p>bool类型只有两个常量值:true和false.<br>Dart严格的数据类型使得if(4)这样的代码是无法编译通过的，必须使用bool类型。</p>
+<h3 id="Lists-amp-Sets-amp-Maps"><a href="#Lists-amp-Sets-amp-Maps" class="headerlink" title="Lists &amp; Sets &amp; Maps"></a>Lists &amp; Sets &amp; Maps</h3><p>List是有序集合,也称为数组,索引从下标0开始。</p>
+<p>Set是无序集合.</p>
+<p>Map又称字典,存储Key-Value键值对。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var numLists = [1,2,3];</span><br><span class="line">var numMap = &#123;&quot;1&quot;:&quot;one&quot;,&quot;2&quot;:&quot;two&quot;,&quot;3&quot;:&quot;three&quot;&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h2><p>函数本身也是对象和数据类型,这意味着函数可以被赋值给变量、作为另一个函数的参数等。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">//函数定义，判断数字是否为0。如果函数体只有一行,可以使用=&gt;来简化。</span><br><span class="line">bool isZero(int number) =&gt; number == 0;</span><br><span class="line"></span><br><span class="line">//函数作为参数</span><br><span class="line">void printInfo(int number, Function check) &#123;</span><br><span class="line">    print(&quot;$number is zero:$&#123;check(number)&#125;&quot;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">printInfo(0,isZero);</span><br></pre></td></tr></table></figure>
+<h3 id="可选参数"><a href="#可选参数" class="headerlink" title="可选参数"></a>可选参数</h3><p>函数参数分为必要参数和可选参数，使用{param,param2,…}的形式定义可选命名参数。可选参数可以给定默认值，如果不提供，默认为null.<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">//device和time为可选参数,time指定了默认值now</span><br><span class="line">say(String person,String msg,&#123;String device,String time = &apos;now&apos;&#125;)&#123;</span><br><span class="line">  print(&quot;$person say $msg via $device in $time&quot;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">//cloud say hello via android in now</span><br><span class="line">say(&apos;cloud&apos;, &apos;hello&apos;,device: &apos;android&apos;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="匿名函数-闭包"><a href="#匿名函数-闭包" class="headerlink" title="匿名函数(闭包)"></a>匿名函数(闭包)</h3><p>没有名字的函数叫匿名函数，又叫闭包。闭包经常用于事件的回调，相比于另起一个地方定义函数，闭包的形式使得关联代码更加内聚。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var list = [&apos;apples&apos;, &apos;oranges&apos;, &apos;grapes&apos;, &apos;bananas&apos;, &apos;plums&apos;];</span><br><span class="line">list.forEach((i) &#123;</span><br><span class="line">  print(list.indexOf(i).toString() + &apos;: &apos; + i);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="main函数-入口函数"><a href="#main函数-入口函数" class="headerlink" title="main函数(入口函数)"></a>main函数(入口函数)</h3><p>main()是整个程序的入口,每个程序都有main函数。</p>
+<h2 id="类"><a href="#类" class="headerlink" title="类"></a>类</h2><h3 id="构造方法"><a href="#构造方法" class="headerlink" title="构造方法"></a>构造方法</h3><p>构造方法即与类名同名的函数，用来构造类的实例。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">class Point &#123;</span><br><span class="line">  num x, y;</span><br><span class="line">  //完整写法</span><br><span class="line">  Point(num x, num y) &#123;</span><br><span class="line">    this.x = x;</span><br><span class="line">    this.y = y;</span><br><span class="line">  &#125;</span><br><span class="line">  //语法糖</span><br><span class="line">  Point(this.x, this.y);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>子类不会继承父类的构造方法。如果在类中不声明构造方法,则会提供默认构造方法。</p>
+<p>可以通过命名构造函数的方式，形象的定义适用不同场景和功能的构造方法。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">class Point &#123;</span><br><span class="line">  num x, y;</span><br><span class="line">  Point(this.x, this.y);</span><br><span class="line">  // 初始值为0的命名构造函数</span><br><span class="line">  Point.origin() &#123;</span><br><span class="line">    x = 0;</span><br><span class="line">    y = 0;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>子类构造方法默认触发的是父类中无参数非命名的构造方法,也可以通过:来手动指定父类需要触发的构造方法。如Point.origin() : super.origin(){…}</p>
+<h3 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h3><h4 id="实例方法"><a href="#实例方法" class="headerlink" title="实例方法"></a>实例方法</h4><p>例方法可以访问对象的变量和this.</p>
+<h4 id="静态方法-类方法"><a href="#静态方法-类方法" class="headerlink" title="静态方法(类方法)"></a>静态方法(类方法)</h4><p>方法前加static关键字定义静态方法,静态方法不需要实例化就可调用。</p>
+<h4 id="计算方法-计算属性"><a href="#计算方法-计算属性" class="headerlink" title="计算方法(计算属性)"></a>计算方法(计算属性)</h4><p>可以通过get 和 set 关键字定义计算属性,对外界来说是无感的，等同于访问实例变量。相比直接访问,计算属性可以进行异常检查及逻辑控制。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">class Rectangle &#123;</span><br><span class="line">  num left, top, width, height;</span><br><span class="line"></span><br><span class="line">  Rectangle(this.left, this.top, this.width, this.height);</span><br><span class="line"></span><br><span class="line">  // 定义了right 和 bottom 两个计算属性</span><br><span class="line">  num get right =&gt; left + width;</span><br><span class="line">  set right(num value) =&gt; left = value - width;</span><br><span class="line">  num get bottom =&gt; top + height;</span><br><span class="line">  set bottom(num value) =&gt; top = value - height;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="抽象方法"><a href="#抽象方法" class="headerlink" title="抽象方法"></a>抽象方法</h4><p>实例方法和计算方法都可以是抽象方法,但抽象方法只能位于抽象类中。抽象方法只提供方法定义,子类提供具体实现。如果用分号来替代函数体，则这个函数就是抽象函数。</p>
+<h3 id="Mixin"><a href="#Mixin" class="headerlink" title="Mixin"></a>Mixin</h3><p>Dart 是单继承的，不能通过继承多个父类来重用。在其他语言中,往往通过类似协议或接口来实现类似需求。但是遵守协议后都需要自己实现一遍，如果实现是一致的，就会很低效且繁琐。</p>
+<p>Mixin效果上可以理解为带有默认实现的协议或接口,使用者可以直接使用其他类定义好的行为。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">class Point &#123;</span><br><span class="line">  num x = 0, y = 0;</span><br><span class="line">  void printInfo() =&gt; print(&apos;($x,$y)&apos;);</span><br><span class="line">&#125;</span><br><span class="line">//通过Minin,通过非继承的方式获取了Point中的变量和方法</span><br><span class="line">class Coordinate with Point &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var coor = Coordinate();</span><br><span class="line">coor.x = 5;</span><br><span class="line">coor.printInfo();//(5,0)</span><br></pre></td></tr></table></figure>
+<h2 id="异步编程"><a href="#异步编程" class="headerlink" title="异步编程"></a>异步编程</h2><ol>
+<li>async 和 await 配合使用，可以用同步的代码风格编写异步方法。</li>
+<li>使用async标记这是一个异步方法,只有被标记的方法内才可以使用await。</li>
+<li>在异步方法的调用前使用await标记,表明直到获取返回结果后才会继续往下执行。</li>
+<li>async方法的返回值是Future类型,代表一个未来会被返回的值。 </li>
 </ol>
-<h3 id="动态方法解析"><a href="#动态方法解析" class="headerlink" title="动态方法解析"></a>动态方法解析</h3><ol>
-<li>判断是否已经进行过动态解析，如果是，进入消息转发阶段。</li>
-<li>调用 + (BOOL)resolveInstanceMethod:(SEL)sel 或 + (BOOL)resolveClassMethod:(SEL)sel。开发者可以在此动态添加方法实现</li>
-<li>标记为已经进行过动态解析。</li>
-<li>重新走消息发送流程。如果确实动态添加了方法实现，此时消息发送流程中能找到方法并缓存，如果没有添加，进入消息转发阶段。</li>
-</ol>
-<h3 id="消息转发"><a href="#消息转发" class="headerlink" title="消息转发"></a>消息转发</h3><ol>
-<li>调用- (id)forwardingTargetForSelector:(SEL)aSelector方法来尝试确定能处理方法的其他对象。如果返回值不为空，效果类似于objc_msgSend(返回值,SEL)。若为空，进入下一环节。</li>
-<li>调用- (NSMethodSignature *)methodSignatureForSelector:方法来确定SEL的方法签名。官方文档对此有如下描述: This method is used in situations where an NSInvocation object must be created, such as during message forwarding.可见主要是为了将消息调用封装成NSInvocation对象搜集方法签名信息。如果有返回值，进入下一环节，否则就会抛出UnRecognize selector的错误。</li>
-<li>调用-/+ (void)forwardInvocation方法。NSInvocation对象包括了消息的所有元素：调用者、选择器、参数和返回值。因此拿到NSInvocation后可以自定义处理逻辑。至此，方法调用完毕。</li>
-</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Future checkVersion() async &#123;</span><br><span class="line">    var version;</span><br><span class="line">    try &#123;</span><br><span class="line">      version = await lookUpVersion();</span><br><span class="line">    &#125; catch (e) &#123;</span><br><span class="line">      //处理异常</span><br><span class="line">    &#125;</span><br><span class="line">    // 处理获取version后的后续逻辑</span><br><span class="line">    print(version);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Future&lt;String&gt; lookUpVersion() async =&gt; &apos;1.0.0&apos;;</span><br></pre></td></tr></table></figure>
 
       
 
@@ -221,11 +241,7 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">Flutter</a>
         		</li>
       		
 		</ul>
@@ -281,7 +297,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://xuzhenhao.github.io/2018/04/07/objc_message/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=https://xuzhenhao.github.io/2019/12/04/flutter-dart/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -295,18 +311,18 @@
   
 <nav id="article-nav">
   
-    <a href="/2018/04/19/kvc_kvo/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/2019/12/09/flutter-widget/" id="article-nav-newer" class="article-nav-link-wrap">
       <i class="icon-circle-left"></i>
       <div class="article-nav-title">
         
-          深入理解runtime-KVC和KVO
+          深入理解Widget
         
       </div>
     </a>
   
   
-    <a href="/2018/03/24/objc_category/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">深入理解runtime:分类及关联对象</div>
+    <a href="/2019/12/01/flutter-start/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Flutter-Get started</div>
       <i class="icon-circle-right"></i>
     </a>
   

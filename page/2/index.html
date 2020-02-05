@@ -6,17 +6,17 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="dns-prefetch" href="https://xuzhenhao.github.io">
-  <title>欢迎来到Cloud的Blog</title>
+  <title>cloud的博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta property="og:type" content="website">
-<meta property="og:title" content="欢迎来到Cloud的Blog">
+<meta property="og:title" content="cloud的博客">
 <meta property="og:url" content="https://xuzhenhao.github.io/page/2/index.html">
-<meta property="og:site_name" content="欢迎来到Cloud的Blog">
+<meta property="og:site_name" content="cloud的博客">
 <meta property="og:locale" content="default">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="欢迎来到Cloud的Blog">
+<meta name="twitter:title" content="cloud的博客">
   
-    <link rel="alternative" href="/atom.xml" title="欢迎来到Cloud的Blog" type="application/atom+xml">
+    <link rel="alternative" href="/atom.xml" title="cloud的博客" type="application/atom+xml">
   
   
     <link rel="icon" href="/favicon.png">
@@ -43,7 +43,7 @@
 <div class="intrude-less">
 	<header id="header" class="inner">
 		<a href="/" class="profilepic">
-			<img src class="js-avatar">
+			<img src="https://osstest.baobaobooks.net/static/img/avatar.jpg" class="js-avatar">
 		</a>
 		<hgroup>
 		  <h1 class="header-author"><a href="/">Cloud</a></h1>
@@ -77,14 +77,6 @@
 		<nav class="header-nav">
 			<div class="social">
 				
-					<a class="github" target="_blank" href="#" title="github"><i class="icon-github"></i></a>
-		        
-					<a class="weibo" target="_blank" href="#" title="weibo"><i class="icon-weibo"></i></a>
-		        
-					<a class="rss" target="_blank" href="#" title="rss"><i class="icon-rss"></i></a>
-		        
-					<a class="zhihu" target="_blank" href="#" title="zhihu"><i class="icon-zhihu"></i></a>
-		        
 			</div>
 		</nav>
 	</header>		
@@ -101,7 +93,7 @@
 	<div class="intrude-less">
 		<header id="header" class="inner">
 			<div class="profilepic">
-				<img src class="js-avatar">
+				<img src="https://osstest.baobaobooks.net/static/img/avatar.jpg" class="js-avatar">
 			</div>
 			<hgroup>
 			  <h1 class="header-author js-header-author">Cloud</h1>
@@ -118,14 +110,6 @@
 			<nav class="header-nav">
 				<div class="social">
 					
-						<a class="github" target="_blank" href="#" title="github"><i class="icon-github"></i></a>
-			        
-						<a class="weibo" target="_blank" href="#" title="weibo"><i class="icon-weibo"></i></a>
-			        
-						<a class="rss" target="_blank" href="#" title="rss"><i class="icon-rss"></i></a>
-			        
-						<a class="zhihu" target="_blank" href="#" title="zhihu"><i class="icon-zhihu"></i></a>
-			        
 				</div>
 			</nav>
 
@@ -152,296 +136,39 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-golang/Docker" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-kvc_kvo" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2019/06/11/golang/Docker/">Docker</a>
+      <a class="article-title" href="/2018/04/19/kvc_kvo/">深入理解runtime-KVC和KVO</a>
     </h1>
   
 
         
-        <a href="/2019/06/11/golang/Docker/" class="archive-article-date">
-  	<time datetime="2019-06-11T06:16:47.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-06-11</time>
+        <a href="/2018/04/19/kvc_kvo/" class="archive-article-date">
+  	<time datetime="2018-04-19T03:16:06.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-04-19</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>容器:镜像被运行起来后的实例;</p>
-<p>网络:外部或容器间如何互相访问的网络方式，如host模式、bridge模式;</p>
-<p>数据卷:容器和宿主机之间，容器和容器之间共享存储方式，类似虚拟机与主机之间的共享文件目录;</p>
-<h2 id="基本操作"><a href="#基本操作" class="headerlink" title="基本操作"></a>基本操作</h2><p>安装docker(centos)<br><a href="https://docs.docker.com/install/linux/docker-ce/centos/" target="_blank" rel="noopener">官方文档</a><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install -y yum-utils \</span><br><span class="line">  device-mapper-persistent-data \</span><br><span class="line">  lvm2</span><br><span class="line"></span><br><span class="line">sudo yum-config-manager \</span><br><span class="line">    --add-repo \</span><br><span class="line">    https://download.docker.com/linux/centos/docker-ce.repo</span><br><span class="line"></span><br><span class="line">sudo yum install docker-ce docker-ce-cli containerd.io</span><br></pre></td></tr></table></figure></p>
-<p>删除docker<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo yum remove docker-ce</span><br><span class="line">sudo rm -rf /var/lib/docker</span><br></pre></td></tr></table></figure></p>
-<p>启动关闭<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl start docker     //启动</span><br><span class="line">sudo systemctl stop docker      //关闭</span><br><span class="line">sudo systemctl status docker    //查看状态</span><br><span class="line">sudo systemctl restart docker   //重启</span><br></pre></td></tr></table></figure></p>
-<h2 id="Docker核心技术"><a href="#Docker核心技术" class="headerlink" title="Docker核心技术"></a>Docker核心技术</h2><p>镜像、容器、数据、网络</p>
-<h3 id="镜像"><a href="#镜像" class="headerlink" title="镜像"></a>镜像</h3><p>镜像: 一个Docker的可执行文件，其中包括运行应用程序所需的所有代码内容、依赖库、环境变量和配置文件,通过镜像可以创建一个或多个容器;(类似iso文件)</p>
-<p>操作<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">docker search [镜像名称] //搜索hub上的镜像</span><br><span class="line">docker pull   [镜像名称] //拉取指定镜像,保存地址位于/var/lib/docker/image</span><br><span class="line">docker images   查看所有镜像</span><br><span class="line">docker rmi [imageId] 删除镜像</span><br><span class="line">docker save -o nginx.tar nginx  将本地的一个或多个镜像打包保存成本地tar文件</span><br><span class="line">docker save load &lt; nginx.tar  导入本地的tar文件</span><br></pre></td></tr></table></figure></p>
-<h3 id="容器"><a href="#容器" class="headerlink" title="容器"></a>容器</h3><p>容器:Docker将镜像文件运行起来后，产生的对象就是容器。容器相当于是镜像运行起来的一个实例。</p>
-<p>操作<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">docker ps -a    //显示容器列表</span><br><span class="line">docker run -d --name [name] [镜像名称]   //利用镜像创建并启动一个容器.-d以守护进程方式，--name 为容器起名</span><br><span class="line">docker start [容器id/容器name]  //启动容器</span><br><span class="line"></span><br><span class="line">docker pause [容器id/name]  //暂停容器</span><br><span class="line">docker unpause [容器id/name] //取消暂停</span><br><span class="line"></span><br><span class="line">docker stop [容器id/name]   //关闭容器（有延迟）</span><br><span class="line">docker kill [容器id/name]   //立即关闭容器</span><br><span class="line"></span><br><span class="line">docker rm [容器id/name]   //删除容器</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">docker exec -it [容器id] /bin/bash   //进入容器</span><br><span class="line">docker commit -m &apos;改动信息&apos; -a &apos;作者信息&apos; [容器id][镜像名:标签]</span><br></pre></td></tr></table></figure></p>
-<h3 id="数据管理"><a href="#数据管理" class="headerlink" title="数据管理"></a>数据管理</h3><p>生产环境使用Docker的过程中，往往需要对数据进行持久化保存，或者需要更多容器之间进行数据共享.此时就需要数据卷和数据卷容器。</p>
-<p>数据卷就是将宿主机的某个目录，映射到容器中，作为数据存储的目录，我们就可以在宿主机对数据进行存储。</p>
-<p>数据卷特性:</p>
+        <h2 id="KVO"><a href="#KVO" class="headerlink" title="KVO"></a>KVO</h2><p>KVO全称是Key-Value Observing，键值监听，可以用于监听某个对象属性值的改变，对应于观察者模式。</p>
+<p>KVO是通过isa-swizzing来实现的,通过runtime替换实例对象的isa指针为动态创建的派生类,在派生类中重写setter方法。</p>
 <ol>
-<li>数据卷可以在容器之间共享和重用，本地与容器间传递数据更高效。</li>
-<li>对数据卷的修改会立马有效，容器内本地与本地目录均可。</li>
-<li>对数据卷的更新，不会影响镜像，对数据与应用进行了解耦操作</li>
-<li>卷会一直存在，直到没有容器使用。</li>
-</ol>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -itd --name [容器名字] -v [宿主机目录]:[容器目录][镜像名称] //添加数据卷</span><br></pre></td></tr></table></figure>
-<p>数据卷容器也是一个容器，但是它的目的是专门用来提供数据卷供其他容器挂载。即使用特定的容器维护数据卷。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker create -v [容器数据卷目录] --name [容器名称][镜像名称]   //创建一个数据卷容器</span><br><span class="line">docker run --volumes-from [数据卷容器id] -tid --name [容器名字][镜像名字] //创建容器时挂载数据卷容器</span><br></pre></td></tr></table></figure>
-<h3 id="网络"><a href="#网络" class="headerlink" title="网络"></a>网络</h3><p>端口映射:默认情况下，容器和宿主机之间网络是隔离的，我们可以通过端口映射的方式，将容器中的端口，映射到宿主机的某个端口上，这样我们就可以通过宿主机的Ip+port的方式来访问容器里的内容。</p>
-<p>指定端口映射<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">//如docker run -d -p 80:80 --name nginx nginx 访问主机80端口时，映射到nginx容器中80端口。不指定ip,默认0.0.0.0</span><br><span class="line">docker run -d -p [宿主ip]:[宿主机端口]:[容器端口]</span><br></pre></td></tr></table></figure></p>
-<p>bridge模式:类似虚拟机的桥接模式，利用宿主机的网卡进行通信。因为涉及网络转换，所以会造成资源浪费，网络效率低。</p>
-<p>host模式:容器使用宿主机的ip地址进行通信。</p>
-<p>container模式:类似一个局域网，容器和容器共享网络。</p>
-<h2 id="DockerFile"><a href="#DockerFile" class="headerlink" title="DockerFile"></a>DockerFile</h2><h3 id="指令"><a href="#指令" class="headerlink" title="指令"></a>指令</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">FROM [image]  //后续所有的指令都会在 FROM 的镜像中执行</span><br><span class="line">MAINTAINER [name]   //指定维护者信息</span><br><span class="line">RUN [command]       //shell模式 执行命令</span><br><span class="line">RUN [&quot;executalbe&quot;,&quot;param&quot;] //exex模式执行命令</span><br><span class="line">CMD [&quot;/usr/sbin/nginx&quot;,&quot;-g&quot;,&quot;daemon off;&quot;]  //添加镜像启动时的命令</span><br><span class="line">EXPOSE [port]   //容器对外暴露的端口号</span><br></pre></td></tr></table></figure>
-<h3 id="DockerFile构建go环境"><a href="#DockerFile构建go环境" class="headerlink" title="DockerFile构建go环境"></a>DockerFile构建go环境</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">docker run -itd --name ubuntu-go ubuntu /bin/bash</span><br><span class="line">docker exec -it ubuntu-go /bin/bash</span><br><span class="line">## in ubuntu-go 更新软件源，安装基本软件</span><br><span class="line">apt-get update</span><br><span class="line">apt-get install gcc libc6-dev git vim lrzsz -y</span><br><span class="line">## 配置go环境</span><br><span class="line">apt-get install golang -y</span><br><span class="line">mkdir -p /usr/local/go</span><br><span class="line">export GOROOT=/usr/local/go</span><br><span class="line">export PATH=$PATH:/usr/local/go/bin</span><br><span class="line">export GOPATH=/root/go</span><br><span class="line">export PATH=$GOPATH/bin/:$PATH</span><br><span class="line">## 安装beego  如果失败，配置环境后exit退出一下</span><br><span class="line">go get github.com/</span><br></pre></td></tr></table></figure>
-<h2 id="compose"><a href="#compose" class="headerlink" title="compose"></a>compose</h2><p>在工作中为了完成业务目标，首先把业务拆分成多个子任务，然后对这些子任务进行顺序组合。当子任务按照方案执行完毕后，就完成了业务目标。</p>
-<p>任务编排，就是对多个子任务执行顺序进行确定的过程。</p>
-<p>常见的任务编排工具:<br>单机版: docker compose<br>集群版: k8s</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2019/06/11/golang/Docker/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-golang/Go02-聊天室" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/06/04/golang/Go02-聊天室/">Go02-聊天室</a>
-    </h1>
-  
-
-        
-        <a href="/2019/06/04/golang/Go02-聊天室/" class="archive-article-date">
-  	<time datetime="2019-06-04T09:38:36.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-06-04</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>搭建完环境后,最快的学习方式莫过于应用go进行开发，边开发边学习。本篇展示了一个简单的终端聊天室demo,覆盖了go中绝大多数是语法特性。过程中建议配合<a href="https://www.runoob.com/go/go-tutorial.html" target="_blank" rel="noopener">Go语言教程</a>食用。</p>
-<p>聊天室功能展示:</p>
-<ol>
-<li>新建一个终端，作为server端。运行 go run chat.go 来启动服务</li>
-<li>另开一个终端a,作为其中一个client端。 通过 nc 127.0.0.1 8000 来连接到服务端，成功后会看到类似 127.0.0.1:54071:login 的提示，证明登录成功。</li>
-<li>再另开一个终端b,作为另一个client。操作同2。b登录成功后，a的界面会收到b的登录信息。</li>
-<li>登录后，a、b可以在各自终端任意输入，另一端能收到并显示对方消息。</li>
-</ol>
-<h2 id="完整代码"><a href="#完整代码" class="headerlink" title="完整代码"></a>完整代码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br></pre></td><td class="code"><pre><span class="line">//①</span><br><span class="line">package main</span><br><span class="line"></span><br><span class="line">//②</span><br><span class="line">import (</span><br><span class="line">	&quot;fmt&quot;</span><br><span class="line">	&quot;net&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">// Client 用户结构体类型 ③</span><br><span class="line">type Client struct &#123;</span><br><span class="line">	C    chan string // 消息通道</span><br><span class="line">	Name string      //用户名</span><br><span class="line">	Addr string      //地址,ip+host</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 在线用户全局map,key为Client.Addr，value为Client  ④</span><br><span class="line">var onlineMap map[string]Client</span><br><span class="line"></span><br><span class="line">// 全局消息channel ⑤</span><br><span class="line">var message = make(chan string)</span><br><span class="line"></span><br><span class="line">// 入口函数 ⑥</span><br><span class="line">func main() &#123;</span><br><span class="line">	//创建Socket</span><br><span class="line">	listener, err := net.Listen(&quot;tcp&quot;, &quot;127.0.0.1:8000&quot;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		fmt.Println(err)</span><br><span class="line">		return</span><br><span class="line">	&#125;</span><br><span class="line">	defer listener.Close()</span><br><span class="line">	go Manager()</span><br><span class="line"></span><br><span class="line">	//循环监听客户端连接请求</span><br><span class="line">	for &#123;</span><br><span class="line">		conn, err := listener.Accept()</span><br><span class="line">		if err != nil &#123;</span><br><span class="line">			fmt.Println(&quot;Accept err&quot;, err)</span><br><span class="line">			return</span><br><span class="line">		&#125;</span><br><span class="line">		//启动 go程处理客户端数据请求</span><br><span class="line">		go HandlerConnect(conn)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Manager 监听全局消息通道中是否有数据，有就发给所有在线用户 ⑦</span><br><span class="line">func Manager() &#123;</span><br><span class="line">	//初始化 OnlineMap</span><br><span class="line">	onlineMap = make(map[string]Client)</span><br><span class="line"></span><br><span class="line">	//监听全局channel中是否有数据，有数据存储至msg，无数据阻塞</span><br><span class="line">	for &#123;</span><br><span class="line">		msg := &lt;-message</span><br><span class="line"></span><br><span class="line">		//循环发送消息给所有在线用户</span><br><span class="line">		for _, clnt := range onlineMap &#123;</span><br><span class="line">			clnt.C &lt;- msg</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// HandlerConnect 处理具体某个用户的连接 ⑧</span><br><span class="line">func HandlerConnect(conn net.Conn) &#123;</span><br><span class="line">	defer conn.Close()</span><br><span class="line"></span><br><span class="line">	//获取用户网络地址,ip+port</span><br><span class="line">	netAddr := conn.RemoteAddr().String()</span><br><span class="line">	//创建新连接用户的结构体</span><br><span class="line">	clinet := Client&#123;make(chan string), netAddr, netAddr&#125;</span><br><span class="line">	// 将新连接用户，添加到在线用户map中，key:ip+port,vale:client</span><br><span class="line">	onlineMap[netAddr] = clinet</span><br><span class="line"></span><br><span class="line">	//创建专门用来给当前用户发送消息的 go 程</span><br><span class="line">	go WriteMsgToClient(clinet, conn)</span><br><span class="line">	//发送 用户上线消息 到全局消息channel中</span><br><span class="line">	message &lt;- MakeMessage(clinet, &quot;login&quot;)</span><br><span class="line"></span><br><span class="line">	//创建一个匿名go程，专门处理用户发送的消息</span><br><span class="line">	go func() &#123;</span><br><span class="line">		buf := make([]byte, 4096)</span><br><span class="line">		for &#123;</span><br><span class="line">			n, err := conn.Read(buf)</span><br><span class="line">			if n == 0 &#123;</span><br><span class="line">				fmt.Println(&quot;检测到客户端退出&quot;)</span><br><span class="line">				return</span><br><span class="line">			&#125;</span><br><span class="line">			if err != nil &#123;</span><br><span class="line">				fmt.Println(err)</span><br><span class="line">				return</span><br><span class="line">			&#125;</span><br><span class="line">			//将读到的用户消息广播给所有在线用户</span><br><span class="line">			message &lt;- MakeMessage(clinet, string(buf[:n]))</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;()</span><br><span class="line">	for &#123;</span><br><span class="line">		//防止线程死掉</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// WriteMsgToClient 监听用户自身的消息channel,将消息显示到控制台(客户端)上 ⑨</span><br><span class="line">func WriteMsgToClient(clnt Client, conn net.Conn) &#123;</span><br><span class="line">	//监听用户 自身Channel上是否有消息</span><br><span class="line">	for msg := range clnt.C &#123;</span><br><span class="line">		conn.Write([]byte(msg + &quot;\n&quot;))</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// MakeMessage 制作消息，传入对应参数拼成一条完整的消息 </span><br><span class="line">func MakeMessage(clnt Client, msg string) string &#123;</span><br><span class="line">	buf := &quot;[&quot; + clnt.Addr + &quot;]&quot; + clnt.Name + &quot;:&quot; + msg</span><br><span class="line"></span><br><span class="line">	return buf</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="代码分析"><a href="#代码分析" class="headerlink" title="代码分析"></a>代码分析</h2><ol>
-<li>package main 指明这个文件属于main包。每个源文件都必须指明这个文件属于哪个包。go中不像其他语言直接导入具体文件的头文件，而是以包的形式导入复用的，因此，包名是基础。</li>
-<li>②中通过包名导入了2个系统包。fmt包中包含格式化IO的函数。net包中包含网络相关的函数。</li>
-<li>③定义了名为Client的结构体,用来表示聊天室中的用户。C是通道(channel)类型的成员变量，通道中传递的数据类型是string.channel是可以让一个goroutine发送特定的值到另外一个goroutine的通信机制。server端收到消息后，Manager goroutine 会把消息下发到用户各自的channel中。</li>
-<li>④定义了一个全局的map，用来存储当前连接上聊天室的用户列表。key为用户的ip+port,value为Client实体。当server端收到某个用户的发的消息后，需要通过这张表来进行消息广播。</li>
-<li>⑤定义了一个全局的通道，所有待广播的消息都会先写入这个channel,之后分发到用户各自的消息通道中。</li>
-<li><p>main函数是整个程序的执行入口。main里面创建了Socket后就一直循环监听用户的连接和通信。核心是Manager 和 HandlerConnect 2个goroutine 来并发处理消息的接收和广播。</p>
-</li>
-<li><p>Manager 监听全局消息通道中是否有数据，有就发到所有在线用户各自的消息通道中。同时会触发⑨的逻辑，从而显示具体的消息在终端上。</p>
-</li>
-<li><p>HandlerConnect中核心的对象是net.Conn对象，通过连接获取到用户的端口信息及读取用户在终端的输入。</p>
-</li>
-</ol>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2019/06/04/golang/Go02-聊天室/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-iOS底层/深入理解RunLoop" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/05/28/iOS底层/深入理解RunLoop/">深入理解RunLoop</a>
-    </h1>
-  
-
-        
-        <a href="/2019/05/28/iOS底层/深入理解RunLoop/" class="archive-article-date">
-  	<time datetime="2019-05-28T06:12:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-28</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="runLoop概念"><a href="#runLoop概念" class="headerlink" title="runLoop概念"></a>runLoop概念</h2><p>runLoop简单来说就是一个do-while循环,内部一直处于”接受消息-&gt;处理事件-&gt;休眠等待”的循环中。如果是我们自己写的do-while循环，哪怕不处理事件，也会持续占用cpu资源。runLoop在休眠时几乎不会占用系统资源，在有消息到来时立刻被唤醒。</p>
-<h2 id="runLoop与线程"><a href="#runLoop与线程" class="headerlink" title="runLoop与线程"></a>runLoop与线程</h2><p>通常来说,一个线程一次只能执行一个任务,在执行完对应任务后就会退出，</p>
-<ol>
-<li>每条线程都有唯一一个与之对应的RunLoop对象;</li>
-<li>RunLoop保存在一个全局的字典里，线程作为key，RunLoop作为value;</li>
-<li>线程刚创建时并没有RunLoop对象，RunLoop会在第一次获取时创建，并保存在全局字典中。</li>
-</ol>
-<h2 id="runLoop数据结构"><a href="#runLoop数据结构" class="headerlink" title="runLoop数据结构"></a>runLoop数据结构</h2><h2 id="runLoop运行逻辑"><a href="#runLoop运行逻辑" class="headerlink" title="runLoop运行逻辑"></a>runLoop运行逻辑</h2><ol>
-<li>通知observer,进入Loop;</li>
-<li>如果有timers事件,通知Observer,即将处理timers;</li>
-<li>如果有sources要处理的话，通过observer,即将处理sources</li>
-<li>处理source0</li>
-<li>如果当前是主线程的runloop,并且主线程有事，跳转到第9步;</li>
-<li>通知observer,runloop即将进入休眠状态;</li>
-<li>进入休眠状态，等待唤醒;</li>
-<li>通知observer,runloop被唤醒</li>
-<li>处理唤醒时收到的消息(处理timer、处理dispatchport、处理source1)。继续循环，跳回2;</li>
-<li>通知observer，runloop即将退出;</li>
-</ol>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2019/05/28/iOS底层/深入理解RunLoop/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-iOS底层/深入理解Runtime-KVC及KVO" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/05/24/iOS底层/深入理解Runtime-KVC及KVO/">深入理解runtime-KVC及KVO</a>
-    </h1>
-  
-
-        
-        <a href="/2019/05/24/iOS底层/深入理解Runtime-KVC及KVO/" class="archive-article-date">
-  	<time datetime="2019-05-24T03:16:06.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-24</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>KVC和KVO的底层实现机制都是isa-swizzing,通过runtime替换实例对象的isa指针为派生类来达到目的。</p>
-<h2 id="KVO"><a href="#KVO" class="headerlink" title="KVO"></a>KVO</h2><p>KVO全称是Key-Value Observing，键值监听，可以用于监听某个对象属性值的改变，对应于观察者模式。</p>
-<p>KVO实现机制:</p>
-<ol>
-<li>使用runtime动态生成子类，并将实例对象的isa指针指向子类;</li>
-<li>子类重写set方法，当值被改变时，依次调用willChangeValueForKey:、[super set]、didChangeValueForKey:</li>
+<li>动态生成子类，并将实例对象的isa指针指向子类;</li>
+<li>子类重写set方法，当值将被改变时，调用willChangeValueForKey:。调用父类的set方法执行改变。调用didChangeValueForKey:通知值已经变更。</li>
 <li>didChangeValueForKey内部会调用obser的observerValueForKeyPath方法，让观察者收到改变的通知。</li>
 </ol>
-<p>在某些场景下，如果我们有手动触发KVO的需求，比如用KVO监听数组，可以按第2步的调用顺序来模仿系统调用实现KVO的效果。</p>
-<h2 id="KVC"><a href="#KVC" class="headerlink" title="KVC"></a>KVC</h2><p>KVO全称Key-Value Coding,键值编码,可以用于通过key名直接访问或修改对象的属性值，而不需要调用明确的存取方法。</p>
+<h3 id="手动触发KVO"><a href="#手动触发KVO" class="headerlink" title="手动触发KVO"></a>手动触发KVO</h3><p>如果需要精确的控制KVO的触发时机,可以通过手动触发KVO。</p>
+<ol>
+<li>实现automaticallyNotifiesObserversOf<key>方法，关闭对应属性的自动触发</key></li>
+<li>在属性的set方法里，依次执行willChangeValueForKey:,变量赋值,didChangeValueForKey:。</li>
+</ol>
+<h2 id="KVC"><a href="#KVC" class="headerlink" title="KVC"></a>KVC</h2><p>KVC全称Key-Value Coding,键值编码,可以用于通过key名直接访问或修改对象的属性值，而不需要调用明确的存取方法。</p>
 <p>setValue:forKey执行逻辑:</p>
 <ol>
 <li>按照setKey:、_setKey:的顺序查找方法，如果找到、传值调用;</li>
@@ -460,11 +187,26 @@
     <div class="article-info article-info-index">
       
       
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
       
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2019/05/24/iOS底层/深入理解Runtime-KVC及KVO/">展开全文 >></a>
+          <a class="article-more-a" href="/2018/04/19/kvc_kvo/">展开全文 >></a>
         </p>
       
 
@@ -494,36 +236,139 @@
 
 
   
-    <article id="post-iOS底层/深入理解Runtime-分类及关联对象" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-objc_message" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2019/05/24/iOS底层/深入理解Runtime-分类及关联对象/">深入理解runtime(三):分类及关联对象</a>
+      <a class="article-title" href="/2018/04/07/objc_message/">深入理解runtime:消息机制</a>
     </h1>
   
 
         
-        <a href="/2019/05/24/iOS底层/深入理解Runtime-分类及关联对象/" class="archive-article-date">
-  	<time datetime="2019-05-24T03:12:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-24</time>
+        <a href="/2018/04/07/objc_message/" class="archive-article-date">
+  	<time datetime="2018-04-07T09:42:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-04-07</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="Category数据结构"><a href="#Category数据结构" class="headerlink" title="Category数据结构"></a>Category数据结构</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">struct category_t &#123;</span><br><span class="line">    const char *name;</span><br><span class="line">    classref_t cls;</span><br><span class="line">    struct method_list_t *instanceMethods;</span><br><span class="line">    struct method_list_t *classMethods;</span><br><span class="line">    struct protocol_list_t *protocols;</span><br><span class="line">    struct property_list_t *instanceProperties;</span><br><span class="line">    // Fields below this point are not always present on disk.</span><br><span class="line">    struct property_list_t *_classProperties;</span><br><span class="line">    ...</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+        <h2 id="方法调用"><a href="#方法调用" class="headerlink" title="方法调用"></a>方法调用</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">//oc代码</span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    ZHAnimal *animal = [ZHAnimal new];</span><br><span class="line">    [animal run];</span><br><span class="line">&#125;</span><br><span class="line">//重写后的c++代码</span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    ZHAnimal *animal = objc_msgSend(objc_getClass(&quot;ZHAnimal&quot;), sel_registerName(&quot;new&quot;));</span><br><span class="line">    objc_msgSend(animal, sel_registerName(&quot;run&quot;));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>经过Clang重写后,可以看到oc的方法调用，本质是调用objc_msgSend函数，并且默认传入2个参数，消息接收者和方法选择器。这也是为什么我们在oc方法内可以直接使用self和_cmd这两个变量名的原因。</p>
+<p>oc的方法调用，一般称为发送消息。相比于其他语言的方法调用，如c++,函数名就是函数的入口地址，方法调用时直接调用方法实现，在编译期确定方法实现。oc的函数名，可以称为消息名，经过消息机制后才会确定对应的方法实现，在运行期确定方法实现。</p>
+<p>需要注意的是，如果我们创建不同的类，定义相同的方法，通过@selector()打印时会发现地址是相同的，不同类的相同SEL是同一个对象。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">objc_msgSend(void /* id self, SEL op, ... */ )</span><br><span class="line"></span><br><span class="line">objc_msgSendSuper(void /* struct objc_super *super, SEL op, ... */ )</span><br><span class="line"></span><br><span class="line">struct objc_super2 &#123;</span><br><span class="line">    id receiver;</span><br><span class="line">    Class current_class;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>需要注意的是，当我们调用[super method]方法时,底层会转换为objc_msgSendSuper2函数的调用，接收struct objc_super2和SEL两个参数，在内部调用objc_msgSend。其中receiver的值还是self，也就说，super调用的本质还是给self发送消息，只是在方法查找时会跳过self的Class而优先从superClass的方法列表中查找。当前对象无论调用什么方法,receiver都是当前对象。</p>
+<h2 id="消息发送流程"><a href="#消息发送流程" class="headerlink" title="消息发送流程"></a>消息发送流程</h2><p>对象通过isa指针访问类对象，通过类对象可以访问所有继承者链中的类。<br><img src="/images/objc_classrelation.png" alt></p>
+<p>objc_msgSend的执行流程可分为消息发送、动态方法解析和消息转发3个阶段:</p>
+<h3 id="消息发送"><a href="#消息发送" class="headerlink" title="消息发送"></a>消息发送</h3><ol>
+<li>判断receiver是否为空，若为空则直接返回;</li>
+<li>根据receiver的isa找到receiverClass并在其缓存中查找方法,若找到，调用方法，结束查找。</li>
+<li>从receierClass的class_rw_t中查找方法，若找到，调用方法，结束查找并将方法缓存到receiverClass的cache中。(即使调用的是父类的方法，也会缓存到receiverClass中)</li>
+<li>根据reciverClass的super指针往上遍历，重复2，3查找流程。</li>
+<li>还没找到，进入动态方法解析阶段。</li>
+</ol>
+<h3 id="动态方法解析"><a href="#动态方法解析" class="headerlink" title="动态方法解析"></a>动态方法解析</h3><ol>
+<li>判断是否已经进行过动态解析，如果是，进入消息转发阶段。</li>
+<li>调用 + (BOOL)resolveInstanceMethod:(SEL)sel 或 + (BOOL)resolveClassMethod:(SEL)sel。开发者可以在此动态添加方法实现</li>
+<li>标记为已经进行过动态解析。</li>
+<li>重新走消息发送流程。如果确实动态添加了方法实现，此时消息发送流程中能找到方法并缓存，如果没有添加，进入消息转发阶段。</li>
+</ol>
+<h3 id="消息转发"><a href="#消息转发" class="headerlink" title="消息转发"></a>消息转发</h3><ol>
+<li>调用- (id)forwardingTargetForSelector:(SEL)aSelector方法来尝试确定能处理方法的其他对象。如果返回值不为空，效果类似于objc_msgSend(返回值,SEL)。若为空，进入下一环节。</li>
+<li>调用- (NSMethodSignature *)methodSignatureForSelector:方法来确定SEL的方法签名。官方文档对此有如下描述: This method is used in situations where an NSInvocation object must be created, such as during message forwarding.可见主要是为了将消息调用封装成NSInvocation对象搜集方法签名信息。如果有返回值，进入下一环节，否则就会抛出UnRecognize selector的错误。</li>
+<li>调用-/+ (void)forwardInvocation方法。NSInvocation对象包括了消息的所有元素：调用者、选择器、参数和返回值。因此拿到NSInvocation后可以自定义处理逻辑。至此，方法调用完毕。</li>
+</ol>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/04/07/objc_message/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-objc_category" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/03/24/objc_category/">深入理解runtime:分类及关联对象</a>
+    </h1>
+  
+
+        
+        <a href="/2018/03/24/objc_category/" class="archive-article-date">
+  	<time datetime="2018-03-24T03:12:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-03-24</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="Category简介"><a href="#Category简介" class="headerlink" title="Category简介"></a>Category简介</h2><p>Category主要为已经存在的类添加方法。此外，还可以把类的实现分开在不同的文件里，这样可以减少单个文件的体积，把不同的功能组织到不同的category里。</p>
+<h2 id="Category数据结构"><a href="#Category数据结构" class="headerlink" title="Category数据结构"></a>Category数据结构</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">struct category_t &#123;</span><br><span class="line">    const char *name;</span><br><span class="line">    classref_t cls;</span><br><span class="line">    struct method_list_t *instanceMethods;</span><br><span class="line">    struct method_list_t *classMethods;</span><br><span class="line">    struct protocol_list_t *protocols;</span><br><span class="line">    struct property_list_t *instanceProperties;</span><br><span class="line">    // Fields below this point are not always present on disk.</span><br><span class="line">    struct property_list_t *_classProperties;</span><br><span class="line">    ...</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 <p>在objc-runtime-new.h中可以找到分类底层数据结构的定义。从数据结构上可以清楚的看到分类能干什么，不能干什么。它能存储实例方法、类方法、协议和属性，但没有对应的存储ivars的成员变量，故分类中不能添加成员变量。</p>
 <h2 id="Category的加载过程"><a href="#Category的加载过程" class="headerlink" title="Category的加载过程"></a>Category的加载过程</h2><p>Category和Extensiton很类似，两者的区别在于，Extensition在编译期就直接和原类编译在一起，Category是在运行时动态添加到原类中的。</p>
 <p>应用程序启动流程如下:</p>
 <ol>
-<li>应用程序启动后，系统读取可执行文件(Mach-O文件),从里面获取dyld的路径并加载dyld;</li>
-<li>runtime向dyld注册回调函数;</li>
-<li>由dyld加载依赖库,生成对应的image对象，对这些image进行链接,并在image改变后调用回调函数;</li>
-<li>runtime接收dyld的函数回调，执行map_images、load_images等操作;</li>
-<li>调用main()函数</li>
+<li>应用程序启动后，系统读取可执行文件(Mach-O文件),从里面获取dyld的路径并加载dyld(动态链接器);</li>
+<li>由dyld加载依赖库,生成对应的image对象，对这些image进行链接,并调用回调函数;</li>
+<li>runtime接收dyld的函数回调，执行map_images、load_images等操作,初始化依赖库里的类结构，调用里面所有的load方法;</li>
+<li>dyld返回main函数地址,main函数被调用</li>
 </ol>
 <p>在编译阶段，每个Category文件都是独立的，为category_t结构。在程序启动后的map_images阶段，会遍历category_t的二维数组，把所有独立的Category中对应的方法合并到对应的类和元类中。合并过程如下:</p>
 <ol>
@@ -531,19 +376,21 @@
 <li>原先的methodlists中的方法列表根据addedLists数量进行内存扩容;</li>
 <li>methodslists位置往后挪到addedListsCount个位置，前面的位置由addedLists填充，合并完毕;</li>
 </ol>
-<p>需要注意的是第3步的挪动操作，因为方法查找是从前往后找的，找到即结束。这样的设计让分类中的方法总是比原类中的方法优先调用，也就是表现为分类中的同名方法会覆盖类中的原方法，但其实原方法还是在methodlist中的。</p>
+<p>需要注意的是第3步的挪动操作，因为方法查找是在方法列表中从前往后找的，找到即结束。这样的设计让分类中的方法总是比原类中的方法优先调用，也就是表现为分类中的同名方法会覆盖类中的原方法，但其实原方法还是在methodlist中的。</p>
 <h2 id="load和initialize方法"><a href="#load和initialize方法" class="headerlink" title="load和initialize方法"></a>load和initialize方法</h2><p>load方法调用在load_images阶段，main函数之前。load方法是拿到函数地址直接调用的，并没有走objc_msgSend方法，因此不会像分类一样存在方法覆盖的问题。此外，会优先调用类的load方法，并保证父类优先调用，之后调用分类的load方法，调用顺序为编译时的顺序。</p>
 <p>initialize在类第一次接收到消息时调用。在lookup函数查找方法时，会判断是否需要初始化，如果需要，通过objcMsgSend调用initialize方法。由于走的是消息机制，会被分类覆盖。</p>
-<h2 id="关联对象"><a href="#关联对象" class="headerlink" title="关联对象"></a>关联对象</h2><p>前文说过，动态添加成员变量会破坏已有的内存布局。在实际项目中，我们往往通过关联对象技术实现分类添加成员变量的效果。</p>
+<p>为了提高app启动速度，我们尽量少在load方法里做事情，推迟到initialize里懒加载。</p>
+<h2 id="关联对象"><a href="#关联对象" class="headerlink" title="关联对象"></a>关联对象</h2><p>在运行期，对象的内存布局已经确定，如果动态添加成员变量会破坏已有的内存布局。在实际项目中，我们可以通过关联对象技术实现分类添加成员变量的效果。</p>
 <p>在objc-references.mm文件中，我们可以看到关联对象的底层数据结构。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">class AssociationsManager &#123;</span><br><span class="line">    // associative references: object pointer -&gt; PtrPtrHashMap.</span><br><span class="line">    static AssociationsHashMap *_map;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">class AssociationsHashMap : public unordered_map&lt;disguised_ptr_t, ObjectAssociationMap *, DisguisedPointerHash, DisguisedPointerEqual, AssociationsHashMapAllocator&gt; &#123;</span><br><span class="line">    </span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">class ObjectAssociationMap : public std::map&lt;void *, ObjcAssociation, ObjectPointerLess, ObjectAssociationMapAllocator&gt; &#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">class ObjcAssociation &#123;</span><br><span class="line">        uintptr_t _policy;</span><br><span class="line">        id _value;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p><img src="深入理解Runtime-分类及关联对象/Association.png" alt></p>
+<p><img src="/images/category-association.png" alt></p>
 <p>当我们使用objc_setAssociatedObject设置关联对象时，究竟发现了什么呢？</p>
 <ol>
 <li>所有的关联对象都被被存在一个全局的hashMap中，由AssociationManager进行管理。hashMap的key是实例对象的内存地址，value是一个ObjectAssociationMap对象，保存了与这个实例对象关联的信息。</li>
 <li>ObjectAssociationMap的key是关联时指定的属性的key，即传入的第二个参数。value是ObjcAssociation对象，存储关联时指定的value和policy.</li>
 </ol>
-<p>可以看到，虽然数据结构构建的有些复杂，但在这种设计下，可以通过实例对象的内存地址和关联属性名作为key，高效的存储和查找。</p>
+<p>在这种设计下，可以通过实例对象的内存地址和关联属性名作为key，高效的存储和查找。</p>
+<p>在对象销毁时，会根据对象isa中的has_assoc判断是否有管理对象，如果有，会做关联对象的清理工作。</p>
 
       
 
@@ -552,11 +399,26 @@
     <div class="article-info article-info-index">
       
       
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
       
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2019/05/24/iOS底层/深入理解Runtime-分类及关联对象/">展开全文 >></a>
+          <a class="article-more-a" href="/2018/03/24/objc_category/">展开全文 >></a>
         </p>
       
 
@@ -586,148 +448,59 @@
 
 
   
-    <article id="post-iOS底层/深入理解Runtime-消息机制" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-objc_object" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2019/05/20/iOS底层/深入理解Runtime-消息机制/">深入理解runtime(二):消息机制</a>
+      <a class="article-title" href="/2018/03/19/objc_object/">深入理解runtime:对象的本质</a>
     </h1>
   
 
         
-        <a href="/2019/05/20/iOS底层/深入理解Runtime-消息机制/" class="archive-article-date">
-  	<time datetime="2019-05-20T09:42:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-20</time>
+        <a href="/2018/03/19/objc_object/" class="archive-article-date">
+  	<time datetime="2018-03-19T08:06:17.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-03-19</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="消息机制"><a href="#消息机制" class="headerlink" title="消息机制"></a>消息机制</h1><h2 id="方法调用"><a href="#方法调用" class="headerlink" title="方法调用"></a>方法调用</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">//oc代码</span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    ZHAnimal *animal = [ZHAnimal new];</span><br><span class="line">    [animal run];</span><br><span class="line">&#125;</span><br><span class="line">//重写后的c++代码</span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    ZHAnimal *animal = objc_msgSend(objc_getClass(&quot;ZHAnimal&quot;), sel_registerName(&quot;new&quot;));</span><br><span class="line">    objc_msgSend(animal, sel_registerName(&quot;run&quot;));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>可以看到，oc的方法调用，本质是objc_msgSend函数，故方法调用又叫发送消息。虽然run方法本身没有参数，但是转成objc_msgSend时会默认传入2个参数，消息接收者和方法选择器。这也是为什么我们在oc方法内可以直接使用self和_cmd这两个变量名的原因。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">objc_msgSend(void /* id self, SEL op, ... */ )</span><br><span class="line"></span><br><span class="line">objc_msgSendSuper(void /* struct objc_super *super, SEL op, ... */ )</span><br><span class="line"></span><br><span class="line">struct objc_super2 &#123;</span><br><span class="line">    id receiver;</span><br><span class="line">    Class current_class;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>需要注意的是，当我们调用[super method]方法时,底层会转换为objc_msgSendSuper2函数的调用，接收struct objc_super2和SEL两个参数。其中receiver的值还是self，也就说，super调用的本质还是给self发送消息，只是在方法查找时会跳过self的Class而优先从superClass的方法列表中查找。</p>
-<p>objc_msgSend的执行流程可分为消息发送、动态方法解析和消息转发3个阶段:</p>
-<h2 id="消息发送"><a href="#消息发送" class="headerlink" title="消息发送"></a>消息发送</h2><ol>
-<li>判断receiver是否为空，若为空则直接返回;</li>
-<li>根据receiver的isa找到receiverClass并在其缓存中查找方法,若找到，调用方法，结束查找。</li>
-<li>从receierClass的class_rw_t中查找方法，若找到，调用方法，结束查找并将方法缓存到receiverClass的cache中。(即使调用的是父类的方法，也会缓存到receiverClass中)</li>
-<li>根据reciverClass的super指针往上遍历，重复2，3查找流程。</li>
-<li>还没找到，进入动态方法解析阶段。</li>
-</ol>
-<h2 id="动态方法解析"><a href="#动态方法解析" class="headerlink" title="动态方法解析"></a>动态方法解析</h2><ol>
-<li>判断是否已经进行过动态解析，如果是，进入消息转发阶段。</li>
-<li>调用 + (BOOL)resolveInstanceMethod:(SEL)sel 或 + (BOOL)resolveClassMethod:(SEL)sel。开发者可以在此动态添加方法实现</li>
-<li>标记为已经进行过动态解析。</li>
-<li>重新走消息发送流程。如果确实动态添加了方法实现，此时消息发送流程中能找到方法并缓存，如果没有添加，进入消息转发阶段。</li>
-</ol>
-<h2 id="消息转发"><a href="#消息转发" class="headerlink" title="消息转发"></a>消息转发</h2><ol>
-<li>调用- (id)forwardingTargetForSelector:(SEL)aSelector方法来尝试确定能处理方法的其他对象。如果返回值不为空，效果类似于objc_msgSend(返回值,SEL)。若为空，进入下一环节。</li>
-<li><p>调用- (NSMethodSignature *)methodSignatureForSelector:方法来确定SEL的方法签名。官方文档对此有如下描述: This method is used in situations where an NSInvocation object must be created, such as during message forwarding.可见主要是为了将消息调用封装成NSInvocation对象搜集方法签名信息。如果有返回值，进入下一环节，否则就会抛出UnRecognize selector的错误。</p>
-</li>
-<li><p>调用-/+ (void)forwardInvocation方法。NSInvocation对象包括了消息的所有元素：调用者、选择器、参数和返回值。因此拿到NSInvocation后可以自定义处理逻辑。至此，方法调用完毕。</p>
-</li>
-</ol>
-<p>待续…</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2019/05/20/iOS底层/深入理解Runtime-消息机制/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-iOS底层/深入理解Runtime-对象的本质" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/">深入理解Runtime(一):对象的本质</a>
-    </h1>
-  
-
-        
-        <a href="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/" class="archive-article-date">
-  	<time datetime="2019-05-16T09:58:33.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-16</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>runtime不只是一些C语言的API，更包括了一套完整的面向对象的数据结构。研究runtime，首先需要研究对象模型。</p>
-<h1 id="对象的本质"><a href="#对象的本质" class="headerlink" title="对象的本质"></a>对象的本质</h1><h2 id="NSObject的底层实现"><a href="#NSObject的底层实现" class="headerlink" title="NSObject的底层实现"></a>NSObject的底层实现</h2><h3 id="OC转c-c"><a href="#OC转c-c" class="headerlink" title="OC转c/c++"></a>OC转c/c++</h3><p>为了探索本质,我们需要将oc的代码转化为对应的c代码。<br>待转化的oc代码，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">#import &lt;Foundation/Foundation.h&gt;</span><br><span class="line"></span><br><span class="line">@interface ZHAnimal : NSObject</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      age;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHAnimal</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@interface ZHCat : ZHAnimal</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      legs;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHCat</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>准备的事例代码使用了oc的类、属性及继承特性，以便我们探索这些特性的底层实现。</p>
-<p>之后，我们使用如下命令进行转换。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc main.m -o mainarm64.cpp</span><br></pre></td></tr></table></figure></p>
-<p>这个命令是意思是使用Clang编译器将main.m文件重写输出为mainarm64.cpp文件，指定的架构参数是arm64。</p>
+        <p>runtime不只是一些C语言的API，还包括一套面向对象的数据结构。研究runtime，首先需要研究对象模型。</p>
+<h2 id="NSObject的底层实现"><a href="#NSObject的底层实现" class="headerlink" title="NSObject的底层实现"></a>NSObject的底层实现</h2><h3 id="重写为c-c"><a href="#重写为c-c" class="headerlink" title="重写为c/c++"></a>重写为c/c++</h3><p>借助LLVM,我们可以将oc的代码重写为对应的c代码。<br>待转化的oc代码，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">#import &lt;Foundation/Foundation.h&gt;</span><br><span class="line"></span><br><span class="line">@interface ZHAnimal : NSObject</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      age;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHAnimal</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@interface ZHCat : ZHAnimal</span><br><span class="line"></span><br><span class="line">@property (nonatomic, assign)   NSInteger      legs;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">@implementation ZHCat</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>准备的事例代码使用了oc的类声明、属性及继承特性，以便我们探索这些特性的底层实现。</p>
+<p>之后，我们使用Clang将main.m文件重写输出为mainarm64.cpp文件，指定的架构参数是arm64<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc main.m -o mainarm64.cpp</span><br></pre></td></tr></table></figure></p>
 <p>在mainarm64.cpp文件中，我们首先搜索”ZHCat_IMPL {“,可以找到如下代码：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct ZHCat_IMPL &#123;</span><br><span class="line">	struct ZHAnimal_IMPL ZHAnimal_IVARS;</span><br><span class="line">	NSInteger _legs;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>除了自身的成员变量_legs,还能看到 ZHAnimal_IMPL ZHAnimal_IVARS 的结构体变量，很容易猜测，这应该是父类ZHAnimal的类定义和成员变量。</p>
-<p>同理，我们搜索”ZHAnimal_IMPL {“,可以找到如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct ZHAnimal_IMPL &#123;</span><br><span class="line">	struct NSObject_IMPL NSObject_IVARS;</span><br><span class="line">	NSInteger _age;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>除了自身的成员变量_legs,还能看到名为 ZHAnimal_IVARS 类型为 ZHAnimal_IMPL 的结构体变量声明。</p>
+<p>我们接着搜索”ZHAnimal_IMPL {“,可以找到如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct ZHAnimal_IMPL &#123;</span><br><span class="line">	struct NSObject_IMPL NSObject_IVARS;</span><br><span class="line">	NSInteger _age;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
 <p>这段代码逻辑和上面的一样。那么接着看NSObject。可以找到如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">struct objc_selector; struct objc_class;</span><br><span class="line"></span><br><span class="line">typedef struct objc_class *Class;</span><br><span class="line"></span><br><span class="line">struct NSObject_IMPL &#123;</span><br><span class="line">    Class isa;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
 <p>到此为止，简单小结一下：</p>
 <ol>
-<li>NSObject的实现是struct,里面包含一个objc_class类型的结构体指针isa.</li>
-<li>对象之间存在继承关系，子类的结构体中会包含父类的结构体成分，且父类的成分在前。</li>
+<li>对象底层是基于struct数据结构实现的。</li>
+<li>NSObject里面包含一个objc_class类型的结构体指针isa.</li>
+<li>子类的结构体中会包含父类的结构体声明，以此来实现继承关系。</li>
 </ol>
-<p>现在，所有的谜题都指向objc_class，我们当然想知道objc_class里都有些什么，但是在mainarm64.cpp中只有声明。下一节，我们将继续探索。</p>
 <h3 id="探寻objc-class"><a href="#探寻objc-class" class="headerlink" title="探寻objc_class"></a>探寻objc_class</h3><p>在<a href="https://opensource.apple.com/tarballs/objc4/" target="_blank" rel="noopener">objc4源码</a>可以下载到开源代码，注意下载序号大的新版本。</p>
 <p>在objc-runtime-new文件中，我们终于看到了objc_class的实现。代码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">struct objc_class : objc_object &#123;</span><br><span class="line">    // Class ISA;</span><br><span class="line">    Class superclass;</span><br><span class="line">    cache_t cache;             // formerly cache pointer and vtable</span><br><span class="line">    class_data_bits_t bits;    // class_rw_t * plus custom rr/alloc flags</span><br><span class="line"></span><br><span class="line">    class_rw_t *data() &#123; </span><br><span class="line">        return bits.data();</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">struct objc_object &#123;</span><br><span class="line">private:</span><br><span class="line">    isa_t isa;</span><br><span class="line"></span><br><span class="line">public:</span><br><span class="line"></span><br><span class="line">    // ISA() assumes this is NOT a tagged pointer object</span><br><span class="line">    Class ISA();</span><br><span class="line"></span><br><span class="line">    // getIsa() allows this to be a tagged pointer object</span><br><span class="line">    Class getIsa();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">typedef struct objc_object *id;</span><br></pre></td></tr></table></figure></p>
-<p>通过这段源码，我们可以看到，追踪到最后的数据结构是objc_object，里面有一个isa_t类型的isa成员。</p>
+<p>追踪到最后的数据结构是objc_object，里面有一个isa_t类型的isa成员。</p>
 <ol>
-<li><strong>oc中所有的对象都会包含一个isa_t类型的成员变量</strong>。objc_class类也是一个对象，通过继承于objc_object拿到了的isa_t结构类型的isa成员。</li>
+<li><strong>oc中所有的对象都会包含一个isa_t类型的成员变量</strong>。objc_class,类也是对象，通过继承于objc_object拿到了的isa_t结构类型的isa成员。</li>
 <li>对象或者说实例对象，只有isa，用来找到对应的类对象。类对象才有superclass(父类指针)、cache(方法缓存)和bits(类数据信息)。（bits里包含了ivars成员变量列表、methods方法列表、protocals协议列表和properties属性列表等类信息）</li>
 </ol>
-<p><img src="深入理解Runtime-对象的本质/objc_object.png" alt="objc对象本质"></p>
-<h2 id="Class-objc-class-中的数据结构"><a href="#Class-objc-class-中的数据结构" class="headerlink" title="Class(objc_class)中的数据结构"></a>Class(objc_class)中的数据结构</h2><h3 id="isa-t"><a href="#isa-t" class="headerlink" title="isa_t"></a>isa_t</h3><p>isa数据结构的定义，摘录于objc4-750.1</p>
+<p><img src="/images/objc_object.png" alt="objc对象本质"></p>
+<h2 id="Class中的数据结构"><a href="#Class中的数据结构" class="headerlink" title="Class中的数据结构"></a>Class中的数据结构</h2><h3 id="isa-t"><a href="#isa-t" class="headerlink" title="isa_t"></a>isa_t</h3><p>isa数据结构的定义，摘录于objc4-750.1</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">union isa_t &#123;</span><br><span class="line">    isa_t() &#123; &#125;</span><br><span class="line">    isa_t(uintptr_t value) : bits(value) &#123; &#125; </span><br><span class="line"></span><br><span class="line">    Class cls;</span><br><span class="line">    uintptr_t bits;</span><br><span class="line">#if defined(ISA_BITFIELD)</span><br><span class="line">    struct &#123;</span><br><span class="line">        ISA_BITFIELD;  // defined in isa.h</span><br><span class="line">    &#125;;</span><br><span class="line">#endif</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">#   define ISA_BITFIELD                                                        \</span><br><span class="line">      uintptr_t nonpointer        : 1;                                         \</span><br><span class="line">      uintptr_t has_assoc         : 1;                                         \</span><br><span class="line">      uintptr_t has_cxx_dtor      : 1;                                         \</span><br><span class="line">      uintptr_t shiftcls          : 44; /*MACH_VM_MAX_ADDRESS 0x7fffffe00000*/ \</span><br><span class="line">      uintptr_t magic             : 6;                                         \</span><br><span class="line">      uintptr_t weakly_referenced : 1;                                         \</span><br><span class="line">      uintptr_t deallocating      : 1;                                         \</span><br><span class="line">      uintptr_t has_sidetable_rc  : 1;                                         \</span><br><span class="line">      uintptr_t extra_rc          : 8</span><br></pre></td></tr></table></figure>
 <p>在arm64架构之前，isa就是一个普通的指针，存储着Class、Meta-Class对象地址</p>
 <p>从arm64架构开始，isa成了一个union结构的共同体，并使用位域来存储更多的信息。</p>
 <p>其含义如图所示:可以看到大多与内存管理相关</p>
-<p><img src="深入理解Runtime-对象的本质/位域.jpg" alt="weiyu"></p>
-<h3 id="class-data-bits-t"><a href="#class-data-bits-t" class="headerlink" title="class_data_bits_t"></a>class_data_bits_t</h3><p><img src="深入理解Runtime-对象的本质/class_rw_t.png" alt="class_rw_t"></p>
+<p><img src="/images/class-union.jpg" alt="weiyu"></p>
+<h3 id="class-data-bits-t"><a href="#class-data-bits-t" class="headerlink" title="class_data_bits_t"></a>class_data_bits_t</h3><p><img src="/images/class_rw_t.png" alt="class_rw_t"></p>
 <p>class_ro_t存储着类的原始信息，在运行时根据class_ro_t生成class_rw_t，并通过ro指针指回了class_ro_t.</p>
 <p>以方法列表为例，假如Animal类有run方法，同时通过分类扩展了eat方法。那么，run方法首先位于class_ro_t中的baseMethodList中，在运行时，会加载所有分类，把分类中的方法和baseMethodList合并成methods，且分类中的方法在前。</p>
-<p>class_rw_t中没有定义ivars的字段，在访问成员变量时，直接通过isa_t找到对应的objc_class,并通过class_ro_t的ivarlist做地址偏移，查找对应的对象内存。因此，内存布局在编译时就已经确定，runtime不能动态修改ivars，会破坏已有的内存布局。只能通过类似关联对象的方式重新开辟一开专门的内存空间。</p>
+<p>class_rw_t中没有定义ivars的字段，在访问成员变量时，直接通过isa_t找到对应的objc_class,并通过class_ro_t的ivarlist做地址偏移，查找对应的对象内存。因此，内存布局在编译时就已经确定，runtime不能动态修改ivars，会破坏已有的内存布局。只能通过类似关联对象的方式重新开辟一块专门的内存空间。</p>
 <h3 id="method-t"><a href="#method-t" class="headerlink" title="method_t"></a>method_t</h3><p>method_list_t数组中存储着method_t，method_t是对方法的封装。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">struct method_t &#123;</span><br><span class="line">    SEL name;//方法名</span><br><span class="line">    const char *types;//编码，内含返回值类型、参数类型等信息</span><br><span class="line">    IMP imp; //本质为函数指针，存储函数实现的地址</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
 <h3 id="cache-t"><a href="#cache-t" class="headerlink" title="cache_t"></a>cache_t</h3><p>方法调用是在methods中通过receiver和SEL查找定位IMP的过程。如果一个方法被多次调用，通过缓存技术就能提高效率。</p>
 <p>cache_t就是这样一个缓存，他通过散列表来缓存曾经调用过的方法，用以提高方法的查找速度。</p>
@@ -741,11 +514,26 @@
     <div class="article-info article-info-index">
       
       
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
       
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2019/05/16/iOS底层/深入理解Runtime-对象的本质/">展开全文 >></a>
+          <a class="article-more-a" href="/2018/03/19/objc_object/">展开全文 >></a>
         </p>
       
 
@@ -775,20 +563,20 @@
 
 
   
-    <article id="post-iOS底层/深入理解编译过程" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-compile" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2019/05/15/iOS底层/深入理解编译过程/">深入理解编译过程</a>
+      <a class="article-title" href="/2018/03/08/compile/">深入理解编译过程</a>
     </h1>
   
 
         
-        <a href="/2019/05/15/iOS底层/深入理解编译过程/" class="archive-article-date">
-  	<time datetime="2019-05-15T08:05:25.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-15</time>
+        <a href="/2018/03/08/compile/" class="archive-article-date">
+  	<time datetime="2018-03-08T08:05:25.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-03-08</time>
 </a>
         
       </header>
@@ -808,16 +596,16 @@
 <p>LLVM引发一些人来为许多语言开发新的编译器，其中一个最引发注意的就是Clang，它是一个新的编译器，同时支持C、Objective-C以及C++.</p>
 </blockquote>
 <p>这里引出了我们的主角Clang。Object-c/c/c++编译器的前端就是Clang。以下是编译器编译的大致流程。</p>
-<p><img src="深入理解编译过程/编译流程.png" alt="编译流程"></p>
-<h2 id="m文件编译流程"><a href="#m文件编译流程" class="headerlink" title=".m文件编译流程"></a>.m文件编译流程</h2><p>本节将从代码层面跟踪一个文件的编译过程，文件名为main.c。代码如下:</p>
+<p><img src="/images/compile-progress.png" alt="编译流程"></p>
+<h2 id="文件编译流程"><a href="#文件编译流程" class="headerlink" title="文件编译流程"></a>文件编译流程</h2><p>本节将从代码层面跟踪一个文件的编译过程，文件名为main.c。代码如下:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#define IPhoneXBarHeight 88</span><br><span class="line">#define DEBUG 1</span><br><span class="line"></span><br><span class="line">int main() &#123;</span><br><span class="line">    //屏幕宽度</span><br><span class="line">    int barHeight = IPhoneXBarHeight;</span><br><span class="line">#ifdef DEBUG</span><br><span class="line">    printf(&quot;hello debug\n&quot;);</span><br><span class="line">#else</span><br><span class="line">    printf(&quot;hello world\n&quot;);</span><br><span class="line">#endif</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h3 id="预处理"><a href="#预处理" class="headerlink" title="预处理"></a>预处理</h3><p>预处理阶段会进行头文件引入替换、宏替换、注释处理、条件编译等操作。</p>
 <p>用clang进行预处理</p>
 <blockquote>
 <p>xcrun clang -E main.c</p>
 </blockquote>
-<p>结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">int main() &#123;</span><br><span class="line">    int barHeight = 88;</span><br><span class="line">    printf(&quot;hello debug\n&quot;);</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>#include &lt;stdio.h&gt;在预处理阶段会被替换成stido.h中的内容，这个过程是递归的，因为stdio.h也有可能引用了其他头文件。</p>
+<p>处理后结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">int main() &#123;</span><br><span class="line">    int barHeight = 88;</span><br><span class="line">    printf(&quot;hello debug\n&quot;);</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>include &lt;stdio.h&gt;在预处理阶段会被替换成stido.h中的内容，这个过程是递归的，因为stdio.h也有可能引用了其他头文件。</p>
 <p>在省略了几百行stdio.h的内容后，在末尾看到main函数预处理后只有3行。</p>
 <p>IPhoneXBarHeight这个宏被替换成了具体的数字。</p>
 <p>条件编译后，只留下了符合条件的printf(“hello debug\n”);</p>
@@ -832,7 +620,7 @@
 <p>xcrun clang -fsyntax-only -Xclang -ast-dump main.c | open -f</p>
 </blockquote>
 <p>部分结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[0;34m`-[0m[0;1;32mFunctionDecl[0m[0;33m 0x7fbdbe8b5630[0m &lt;[0;33mmain.c:5:1[0m, [0;33mline:14:1[0m&gt; [0;33mline:5:5[0m[0;1;36m main[0m [0;32m&apos;int ()&apos;[0m</span><br><span class="line">[0;34m  `-[0m[0;1;35mCompoundStmt[0m[0;33m 0x7fbdbe8b58f8[0m &lt;[0;33mcol:12[0m, [0;33mline:14:1[0m&gt;</span><br><span class="line">[0;34m    |-[0m[0;1;35mDeclStmt[0m[0;33m 0x7fbdbe8b5768[0m &lt;[0;33mline:7:5[0m, [0;33mcol:37[0m&gt;</span><br><span class="line">[0;34m    | `-[0m[0;1;32mVarDecl[0m[0;33m 0x7fbdbe8b56e8[0m &lt;[0;33mcol:5[0m, [0;33mline:2:26[0m&gt; [0;33mline:7:9[0m[0;1;36m barHeight[0m [0;32m&apos;int&apos;[0m cinit</span><br><span class="line">[0;34m    |   `-[0m[0;1;35mIntegerLiteral[0m[0;33m 0x7fbdbe8b5748[0m &lt;[0;33mline:2:26[0m&gt; [0;32m&apos;int&apos;[0m[0;36m[0m[0;36m[0m[0;1;36m 88[0m</span><br></pre></td></tr></table></figure></p>
-<p>有了抽象语法树，clang就可以对这个数进行分析，找出代码中的错误，如类型不匹配，调用了未声明的方法等。</p>
+<p>有了抽象语法树，clang就可以对这个树进行分析，找出代码中的错误，如类型不匹配，调用了未声明的方法等。</p>
 <h3 id="CodeGen"><a href="#CodeGen" class="headerlink" title="CodeGen"></a>CodeGen</h3><p>CodeGen遍历语法树，生成LLVM IR代码。IR是前端的输出，后端的输入。</p>
 <blockquote>
 <p>xcrun clang -S -emit-llvm main.c -o main.ll</p>
@@ -854,110 +642,12 @@
 </blockquote>
 <p>结果如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">                 (undefined) external _printf</span><br><span class="line">0000000000000000 (__TEXT,__text) external _main</span><br></pre></td></tr></table></figure></p>
 <p>注意printf前的修饰。undefined表示在当前文件找不到符号。external表示这个符号是外部可以访问的。</p>
-<h3 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h3><p>连接器把编译产生的.o文件和(dylib、a、tbd)文件一起生成mach-o可执行文件。</p>
+<h3 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h3><p>链接器把编译产生的.o文件和(dylib、a、tbd)文件一起生成mach-o可执行文件，之后会把多个Mach-O文件合并成一个，并在合并过程中创建一个全局符号表，记录所有已定义的和未定义的符号。链接时如果出现相同符号的情况，就会出现”ld:dumplicate symbols”的错误信息;如果在其他目标文件里没有找到符号，就会提示”Undefined symbols”的错误信息。总的来说，链接就是把符号绑定到地址上。</p>
 <blockquote>
 <p>xcrun clang main.o -o main</p>
 </blockquote>
 <p>执行后可以看到控制器会输出 “hello debug”<br>此时再查看可执行文件的符号表，<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">                 (undefined) external _printf (from libSystem)</span><br><span class="line">                 (undefined) external dyld_stub_binder (from libSystem)</span><br><span class="line">0000000100000000 (__TEXT,__text) [referenced dynamically] external __mh_execute_header</span><br><span class="line">0000000100000f50 (__TEXT,__text) external _main</span><br></pre></td></tr></table></figure></p>
-<p>from libSystem表示这个符号来自于libSystem，会在运行时动态绑定。</p>
-<h2 id="XCode编译过程"><a href="#XCode编译过程" class="headerlink" title="XCode编译过程"></a>XCode编译过程</h2>
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2019/05/15/iOS底层/深入理解编译过程/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-iOS底层/深入理解Block" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/05/14/iOS底层/深入理解Block/">深入理解Block</a>
-    </h1>
-  
-
-        
-        <a href="/2019/05/14/iOS底层/深入理解Block/" class="archive-article-date">
-  	<time datetime="2019-05-14T09:41:15.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-14</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="Block的本质"><a href="#Block的本质" class="headerlink" title="Block的本质"></a>Block的本质</h2><p>还是使用重写为C语言的方法，来探索底层实现。</p>
-<p>源代码:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    </span><br><span class="line">    int age = 18;</span><br><span class="line">    void (^ageBlock)(void) = ^&#123;</span><br><span class="line">        NSLog(@&quot;年龄是%d岁&quot;,age);</span><br><span class="line">    &#125;;</span><br><span class="line">    ageBlock();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>使用命令:</p>
-<blockquote>
-<p>xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc main.m -o mainarm64.cpp</p>
-</blockquote>
-<p>摘入.cpp文件中的关键代码如下:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line"></span><br><span class="line">    int age = 18;</span><br><span class="line">    void (*ageBlock)(void) = (&amp;__main_block_impl_0(</span><br><span class="line">                                                   __main_block_func_0,</span><br><span class="line">                                                   &amp;__main_block_desc_0_DATA,</span><br><span class="line">                                                   age)</span><br><span class="line">                              );</span><br><span class="line">    (ageBlock-&gt;FuncPtr)(ageBlock);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">struct __main_block_impl_0 &#123;</span><br><span class="line">  struct __block_impl impl;</span><br><span class="line">  struct __main_block_desc_0* Desc;</span><br><span class="line">  int age;</span><br><span class="line">  __main_block_impl_0(void *fp, struct __main_block_desc_0 *desc, int _age, int flags=0) : age(_age) &#123;</span><br><span class="line">    impl.isa = &amp;_NSConcreteStackBlock;</span><br><span class="line">    impl.Flags = flags;</span><br><span class="line">    impl.FuncPtr = fp;</span><br><span class="line">    Desc = desc;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">struct __block_impl &#123;</span><br><span class="line">  void *isa;</span><br><span class="line">  int Flags;</span><br><span class="line">  int Reserved;</span><br><span class="line">  void *FuncPtr;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">static void __main_block_func_0(struct __main_block_impl_0 *__cself) &#123;</span><br><span class="line">  int age = __cself-&gt;age; // bound by copy</span><br><span class="line"></span><br><span class="line">        NSLog((NSString *)&amp;__NSConstantStringImpl__var_folders_8c_jf6slqz973v1dxj8z9g8z02w0000gn_T_main_f2862d_mi_0,age);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">static struct __main_block_desc_0 &#123;</span><br><span class="line">  size_t reserved;</span><br><span class="line">  size_t Block_size;</span><br><span class="line">&#125; __main_block_desc_0_DATA = &#123; 0, sizeof(struct __main_block_impl_0)&#125;;</span><br></pre></td></tr></table></figure>
-<p>在main函数看到，ageBlock通过<strong>main_block_impl_0的构造函数生成，参数分别为</strong>main_block_func_0（block内代码的封装）、__main_block_desc_0_DATA(Block描述信息)及age(被捕获的变量).</p>
-<p>当我们调用block时，实质上是调用了封装的函数FuncPtr。</p>
-<p>至此，关于Block的本质我们可以得出如下结论：</p>
-<ol>
-<li>Block本质是一个OC对象，内部有isa指针指向类对象。</li>
-<li>Block会封装函数调用，并通过变量捕获封装函数调用的环境。</li>
-</ol>
-<h2 id="Block的类型"><a href="#Block的类型" class="headerlink" title="Block的类型"></a>Block的类型</h2><p>在上文中我们会看到类似 impl.isa = &amp;_NSConcreteStackBlock; 的代码，Block既然是对象，我们就可以通过 [NSObject class] 或 object_getClass方法查看对应的类。</p>
-<p>Block分为 NSGlobalBlock、NSStackBlock、NSMallocBlock3种类型，分别对应的内存地址为data区、栈区和堆区。</p>
-<p>Block类型归纳如下:<br><img src="深入理解Block/block类型.png" alt="block类型"></p>
-<p>在定义block类型属性时，我们往往使用copy关键字来修饰。在此处我们就能理解真正的用意。栈区变量的内存在离开作用域后就会被回收，为了不让block在使用前被回收，就需要将其从栈区拷贝到堆区内存。</p>
-<p>例如如下代码:(MRC环境下)<br><img src="深入理解Block/stackBlock.png" alt="stackBlock"></p>
-<p>加了copy后，block才能正常返回。在ARC下，编译器会帮我们自动处理。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">typedef void(^block_t)(void);</span><br><span class="line">block_t getBlock()&#123;</span><br><span class="line">    int age = 10;</span><br><span class="line">    return [^&#123;</span><br><span class="line">        NSLog(@&quot;age is %d&quot;,age);</span><br><span class="line">    &#125; copy];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>而如果我们block内不访问auto变量age,此时是GlobalBlock，位于data内存区，也是可以正常使用的。</p>
-<h2 id="Block的变量捕获"><a href="#Block的变量捕获" class="headerlink" title="Block的变量捕获"></a>Block的变量捕获</h2><p>在第一节，我们分析重写后的c代码时，发现<strong>main_block_impl_0结构体中有变量age的定义，而且在</strong>main_block_impl_0的构造函数中会把外部的age通过值传递的方式给结构体的age赋值。</p>
-<p>正因为是值传递的方式，所以我们只能读取使用，不能在block内部修改。</p>
-<p>此时我们会想到，只要使用<strong>block修饰，就能在block内部修改了。那么就来看下</strong>block内部的具体实现。</p>
-<p>还是第一章节的代码，加了__block 修饰age,重新重写为c++代码。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line"></span><br><span class="line">    __Block_byref_age_0 age = &#123;0,&amp;age, 0, sizeof(__Block_byref_age_0), 18&#125;;</span><br><span class="line">    void (*ageBlock)(void) = (&amp;__main_block_impl_0(</span><br><span class="line">                                                   __main_block_func_0,</span><br><span class="line">                                                   &amp;__main_block_desc_0_DATA,</span><br><span class="line">                                                   &amp;age,</span><br><span class="line">                                                   570425344));</span><br><span class="line">    (ageBlock)-&gt;FuncPtr)(ageBlock);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">struct __main_block_impl_0 &#123;</span><br><span class="line">  struct __block_impl impl;</span><br><span class="line">  struct __main_block_desc_0* Desc;</span><br><span class="line">  __Block_byref_age_0 *age; // by ref</span><br><span class="line">  __main_block_impl_0(void *fp, struct __main_block_desc_0 *desc, __Block_byref_age_0 *_age, int flags=0) : age(_age-&gt;__forwarding) &#123;</span><br><span class="line">    impl.isa = &amp;_NSConcreteStackBlock;</span><br><span class="line">    impl.Flags = flags;</span><br><span class="line">    impl.FuncPtr = fp;</span><br><span class="line">    Desc = desc;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">struct __Block_byref_age_0 &#123;</span><br><span class="line">  void *__isa;</span><br><span class="line">__Block_byref_age_0 *__forwarding;</span><br><span class="line"> int __flags;</span><br><span class="line"> int __size;</span><br><span class="line"> int age;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>在main函数可以看到，使用了<strong>block修饰后，age变量变成了</strong>Block_byref_age_0对象类型。__Block_byref_age_0结构体内部也有isa指针，是个对象。</p>
-<p>在<strong>main_block_impl_0的构造函数中，age对象以引用传递的方式传入block中。所以才有了block内部可以修改外部变量的效果。</strong>block的设计很好的屏蔽了内部实现细节。</p>
-<h2 id="Block的内存管理"><a href="#Block的内存管理" class="headerlink" title="Block的内存管理"></a>Block的内存管理</h2><p>在上一节中有一个细节，<strong>Block_byref_age_0结构体中有一个指向自己的forwarding指针。</strong>main_block_desc_0结构体中也多了copy和dispose两个函数。这些都和block的内存管理有关。具体如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">static struct __main_block_desc_0 &#123;</span><br><span class="line">  size_t reserved;</span><br><span class="line">  size_t Block_size;</span><br><span class="line">  void (*copy)(struct __main_block_impl_0*, struct __main_block_impl_0*);</span><br><span class="line">  void (*dispose)(struct __main_block_impl_0*);</span><br><span class="line">&#125;</span><br><span class="line">struct __Block_byref_age_0 &#123;</span><br><span class="line">  void *__isa;</span><br><span class="line">__Block_byref_age_0 *__forwarding;</span><br><span class="line"> int __flags;</span><br><span class="line"> int __size;</span><br><span class="line"> int age;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
-<p>还是以__block int age;为例，</p>
-<p>当block在栈上时，并不会对age变量产生强引用。</p>
-<p>当block被copy到堆时，会调用内部的copy函数对__block变量产生强引用。</p>
-<p>当block从堆中移除时，会调用内部的dispose函数，释放引用的变量。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">static void __main_block_func_0(struct __main_block_impl_0 *__cself) &#123;</span><br><span class="line">  __Block_byref_age_0 *age = __cself-&gt;age; // bound by ref</span><br><span class="line"></span><br><span class="line">        (age-&gt;__forwarding-&gt;age)++;</span><br><span class="line">        NSLog((NSString *)&amp;__NSConstantStringImpl__var_,(age-&gt;__forwarding-&gt;age));</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
-<p>在源码中，我们看到无论是读取age还是修改age，都是先通过自身的forwarding指针来访问和修改的，这是为什么呢？请看下图。<br><img src="深入理解Block/block内存管理.jpg" alt="stackBlock"></p>
-<p>当一个<strong>block变量从栈上被复制到堆上时，栈上的结构体中的</strong>forwarding指针也会指向堆上的结构体。所以通过forwarding修改可以保证修改的都是堆上的结构体，main函数释放的时候，只是释放了栈上的东西。而所有的对局部变量的修改都早已经转移到堆上了。</p>
+<p>from libSystem表示这个符号来自于libSystem，会在运行时动态绑定。链接器会尝试解析所有的undefined符号，加载对应的动态库。</p>
 
       
 
@@ -966,91 +656,22 @@
     <div class="article-info article-info-index">
       
       
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
       
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2019/05/14/iOS底层/深入理解Block/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-iOS架构/关于Reactive-Programming的思考" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/05/09/iOS架构/关于Reactive-Programming的思考/">关于Reactive Programming的思考</a>
-    </h1>
-  
-
-        
-        <a href="/2019/05/09/iOS架构/关于Reactive-Programming的思考/" class="archive-article-date">
-  	<time datetime="2019-05-09T02:00:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-09</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="主动命令与被动响应"><a href="#主动命令与被动响应" class="headerlink" title="主动命令与被动响应"></a>主动命令与被动响应</h2><p><img src="关于Reactive-Programming的思考/命令式与响应式区别.png" alt="命令式与响应式区别"><br>以一个歌曲列表界面为例，如果我们在列表页侧滑删除了一首歌，可以明显看到两种编程方式处理事件的区别。</p>
-<p>在命令式的事件回调中，我们除了要更新数据源，还要主动调用逻辑相关的一系列数据变更和UI操作。需求或逻辑越复杂的页面，在处理这类事件回调时负担就会越重，而且越容易出错。特别是当换人维护页面时，他必须先通读整个页面逻辑，才有把握去修改。</p>
-<p>在响应式的事件回调中，我们只需要关心对应的数据源修改。这个数据源修改会造成哪些连锁反应，不在我们响应这个事件的逻辑考虑范围内。这些逻辑只需要在页面初始化时进行订阅绑定。在这种模式下，无论是何种增删改查，都只需要处理相应的数据源即可。</p>
-<p>小结:响应式是一种去中心化的方式，不再需要一个中枢系统来组织、负责业务逻辑。各个组件只需要关心状态及对应的动作，客观上降低了系统的复杂度。</p>
-<h2 id="Monad"><a href="#Monad" class="headerlink" title="Monad"></a>Monad</h2><h3 id="为什么需要Monad"><a href="#为什么需要Monad" class="headerlink" title="为什么需要Monad"></a>为什么需要Monad</h3><p>将处理数据的流程比作流水线，假如每一个部分(函数)都遵守一个约定:接受同一数量(通常1个)、同一类型的参数。由于参数数量和类型的统一，同时不依赖其他状态，我们可以自由组装流程中每一个步骤，同时不影响其他步骤。</p>
-<p>那网络返回发生错误怎么办呢？因为成功或失败对应了不同的处理流程，之前我们至少需要两个参数才能完成。将两个或多个参数合为一个，需要一层额外的抽象。Monad就是这个抽象。</p>
-<h3 id="Monad条件"><a href="#Monad条件" class="headerlink" title="Monad条件"></a>Monad条件</h3><p>Monad一般要符合以下两个条件:</p>
-<ol>
-<li>需要封装一个Box<t>，将流程中关心的信息放在里面</t></li>
-<li>flatMap方法（也叫bind/lift）.</li>
-</ol>
-<p>在对Box<t>链式调用每一步中，需要做以下几件事：</t></p>
-<ol>
-<li>对Box<t>拆包，拿到我们真正关心的数据T</t></li>
-<li>处理数据</li>
-<li>仍然封包成Box类型（可能变换了数据，也可能封装类型发生改变，如Box<r>）</r></li>
-</ol>
-<p>可以看到入参与出参同为Box类型，因此只要所有方法都遵守这个规则，它们就可以被拼接起来，如同接口统一的乐高积木一样实现各种各样的可能。<br>这一整套拆包/封包的逻辑，称作flatMap方法，它构成了Monad的第二个要素。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2019/05/09/iOS架构/关于Reactive-Programming的思考/">展开全文 >></a>
+          <a class="article-more-a" href="/2018/03/08/compile/">展开全文 >></a>
         </p>
       
 
@@ -1094,7 +715,7 @@
   <div class="outer">
     <div id="footer-info">
     	<div class="footer-left">
-    		&copy; 2019 Cloud
+    		&copy; 2020 Cloud
     	</div>
       	<div class="footer-right">
       		<a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/litten/hexo-theme-yilia" target="_blank">Yilia</a> by Litten
@@ -1175,6 +796,18 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
             <input type="checkbox" q-on="click:toggleTag(e)" q-attr="checked:showTags">
           </label>
           <ul class="article-tag-list" q-show="showTags">
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">Flutter</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">底层原理</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">runtime</a>
+              </li>
             
             <div class="clearfix"></div>
           </ul>

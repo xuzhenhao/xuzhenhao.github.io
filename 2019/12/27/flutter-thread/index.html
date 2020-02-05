@@ -6,22 +6,22 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="dns-prefetch" href="https://xuzhenhao.github.io">
-  <title>深入理解runtime:消息机制 | cloud的博客</title>
+  <title>Flutter线程 | cloud的博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="方法调用12345678910//oc代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = [ZHAnimal new];    [animal run];&amp;#125;//重写后的c++代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = objc">
-<meta name="keywords" content="底层原理,runtime">
+  <meta name="description" content="单线程模型与事件循环 Dart是单线程模型，没有子线程。这意味着代码是有序的,按照在main函数出现的次序一个接一个执行到函数结算,不会被其他代码中断。也不存在多线程中的资源竞争问题。 需要注意的是,Dart支持异步,单线程和异步并不冲突。Dart的异步是基于事件的异步模型,等待过程不是阻塞的,在等待异步任务的结果时,会继续执行事件队列中的其他任务。给人的感觉像是同时做多件事情,但始终只有一个线程">
+<meta name="keywords" content="Flutter">
 <meta property="og:type" content="article">
-<meta property="og:title" content="深入理解runtime:消息机制">
-<meta property="og:url" content="https://xuzhenhao.github.io/2018/04/07/objc_message/index.html">
+<meta property="og:title" content="Flutter线程">
+<meta property="og:url" content="https://xuzhenhao.github.io/2019/12/27/flutter-thread/index.html">
 <meta property="og:site_name" content="cloud的博客">
-<meta property="og:description" content="方法调用12345678910//oc代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = [ZHAnimal new];    [animal run];&amp;#125;//重写后的c++代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = objc">
+<meta property="og:description" content="单线程模型与事件循环 Dart是单线程模型，没有子线程。这意味着代码是有序的,按照在main函数出现的次序一个接一个执行到函数结算,不会被其他代码中断。也不存在多线程中的资源竞争问题。 需要注意的是,Dart支持异步,单线程和异步并不冲突。Dart的异步是基于事件的异步模型,等待过程不是阻塞的,在等待异步任务的结果时,会继续执行事件队列中的其他任务。给人的感觉像是同时做多件事情,但始终只有一个线程">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="https://xuzhenhao.github.io/images/objc_classrelation.png">
-<meta property="og:updated_time" content="2019-12-13T07:30:29.545Z">
+<meta property="og:image" content="https://xuzhenhao.github.io/images/flutter_thread_loop.png">
+<meta property="og:updated_time" content="2020-02-05T08:52:20.169Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="深入理解runtime:消息机制">
-<meta name="twitter:description" content="方法调用12345678910//oc代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = [ZHAnimal new];    [animal run];&amp;#125;//重写后的c++代码int main(int argc, char * argv[]) &amp;#123;    ZHAnimal *animal = objc">
-<meta name="twitter:image" content="https://xuzhenhao.github.io/images/objc_classrelation.png">
+<meta name="twitter:title" content="Flutter线程">
+<meta name="twitter:description" content="单线程模型与事件循环 Dart是单线程模型，没有子线程。这意味着代码是有序的,按照在main函数出现的次序一个接一个执行到函数结算,不会被其他代码中断。也不存在多线程中的资源竞争问题。 需要注意的是,Dart支持异步,单线程和异步并不冲突。Dart的异步是基于事件的异步模型,等待过程不是阻塞的,在等待异步任务的结果时,会继续执行事件队列中的其他任务。给人的感觉像是同时做多件事情,但始终只有一个线程">
+<meta name="twitter:image" content="https://xuzhenhao.github.io/images/flutter_thread_loop.png">
   
     <link rel="alternative" href="/atom.xml" title="cloud的博客" type="application/atom+xml">
   
@@ -141,52 +141,38 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-objc_message" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-flutter-thread" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      深入理解runtime:消息机制
+      Flutter线程
     </h1>
   
 
         
-        <a href="/2018/04/07/objc_message/" class="archive-article-date">
-  	<time datetime="2018-04-07T09:42:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-04-07</time>
+        <a href="/2019/12/27/flutter-thread/" class="archive-article-date">
+  	<time datetime="2019-12-27T06:16:24.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-12-27</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="方法调用"><a href="#方法调用" class="headerlink" title="方法调用"></a>方法调用</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">//oc代码</span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    ZHAnimal *animal = [ZHAnimal new];</span><br><span class="line">    [animal run];</span><br><span class="line">&#125;</span><br><span class="line">//重写后的c++代码</span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    ZHAnimal *animal = objc_msgSend(objc_getClass(&quot;ZHAnimal&quot;), sel_registerName(&quot;new&quot;));</span><br><span class="line">    objc_msgSend(animal, sel_registerName(&quot;run&quot;));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>经过Clang重写后,可以看到oc的方法调用，本质是调用objc_msgSend函数，并且默认传入2个参数，消息接收者和方法选择器。这也是为什么我们在oc方法内可以直接使用self和_cmd这两个变量名的原因。</p>
-<p>oc的方法调用，一般称为发送消息。相比于其他语言的方法调用，如c++,函数名就是函数的入口地址，方法调用时直接调用方法实现，在编译期确定方法实现。oc的函数名，可以称为消息名，经过消息机制后才会确定对应的方法实现，在运行期确定方法实现。</p>
-<p>需要注意的是，如果我们创建不同的类，定义相同的方法，通过@selector()打印时会发现地址是相同的，不同类的相同SEL是同一个对象。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">objc_msgSend(void /* id self, SEL op, ... */ )</span><br><span class="line"></span><br><span class="line">objc_msgSendSuper(void /* struct objc_super *super, SEL op, ... */ )</span><br><span class="line"></span><br><span class="line">struct objc_super2 &#123;</span><br><span class="line">    id receiver;</span><br><span class="line">    Class current_class;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>需要注意的是，当我们调用[super method]方法时,底层会转换为objc_msgSendSuper2函数的调用，接收struct objc_super2和SEL两个参数，在内部调用objc_msgSend。其中receiver的值还是self，也就说，super调用的本质还是给self发送消息，只是在方法查找时会跳过self的Class而优先从superClass的方法列表中查找。当前对象无论调用什么方法,receiver都是当前对象。</p>
-<h2 id="消息发送流程"><a href="#消息发送流程" class="headerlink" title="消息发送流程"></a>消息发送流程</h2><p>对象通过isa指针访问类对象，通过类对象可以访问所有继承者链中的类。<br><img src="/images/objc_classrelation.png" alt></p>
-<p>objc_msgSend的执行流程可分为消息发送、动态方法解析和消息转发3个阶段:</p>
-<h3 id="消息发送"><a href="#消息发送" class="headerlink" title="消息发送"></a>消息发送</h3><ol>
-<li>判断receiver是否为空，若为空则直接返回;</li>
-<li>根据receiver的isa找到receiverClass并在其缓存中查找方法,若找到，调用方法，结束查找。</li>
-<li>从receierClass的class_rw_t中查找方法，若找到，调用方法，结束查找并将方法缓存到receiverClass的cache中。(即使调用的是父类的方法，也会缓存到receiverClass中)</li>
-<li>根据reciverClass的super指针往上遍历，重复2，3查找流程。</li>
-<li>还没找到，进入动态方法解析阶段。</li>
-</ol>
-<h3 id="动态方法解析"><a href="#动态方法解析" class="headerlink" title="动态方法解析"></a>动态方法解析</h3><ol>
-<li>判断是否已经进行过动态解析，如果是，进入消息转发阶段。</li>
-<li>调用 + (BOOL)resolveInstanceMethod:(SEL)sel 或 + (BOOL)resolveClassMethod:(SEL)sel。开发者可以在此动态添加方法实现</li>
-<li>标记为已经进行过动态解析。</li>
-<li>重新走消息发送流程。如果确实动态添加了方法实现，此时消息发送流程中能找到方法并缓存，如果没有添加，进入消息转发阶段。</li>
-</ol>
-<h3 id="消息转发"><a href="#消息转发" class="headerlink" title="消息转发"></a>消息转发</h3><ol>
-<li>调用- (id)forwardingTargetForSelector:(SEL)aSelector方法来尝试确定能处理方法的其他对象。如果返回值不为空，效果类似于objc_msgSend(返回值,SEL)。若为空，进入下一环节。</li>
-<li>调用- (NSMethodSignature *)methodSignatureForSelector:方法来确定SEL的方法签名。官方文档对此有如下描述: This method is used in situations where an NSInvocation object must be created, such as during message forwarding.可见主要是为了将消息调用封装成NSInvocation对象搜集方法签名信息。如果有返回值，进入下一环节，否则就会抛出UnRecognize selector的错误。</li>
-<li>调用-/+ (void)forwardInvocation方法。NSInvocation对象包括了消息的所有元素：调用者、选择器、参数和返回值。因此拿到NSInvocation后可以自定义处理逻辑。至此，方法调用完毕。</li>
-</ol>
+        <h2 id="单线程模型与事件循环"><a href="#单线程模型与事件循环" class="headerlink" title="单线程模型与事件循环"></a>单线程模型与事件循环</h2><p><img src="/images/flutter_thread_loop.png" alt></p>
+<p>Dart是单线程模型，没有子线程。这意味着代码是有序的,按照在main函数出现的次序一个接一个执行到函数结算,不会被其他代码中断。也不存在多线程中的资源竞争问题。</p>
+<p>需要注意的是,Dart支持异步,单线程和异步并不冲突。Dart的异步是基于事件的异步模型,等待过程不是阻塞的,在等待异步任务的结果时,会继续执行事件队列中的其他任务。给人的感觉像是同时做多件事情,但始终只有一个线程在处理。</p>
+<p>如上图所示,Dart也是Event-Looper以及Event-Queue的模型，所有的事件都通过事件循环依次执行。其中存在两个任务队列:Event Queue和microtask Queue。在每一次事件循环中,总是优先执行完Microtask Queue中的Event后才会执行Event Queue中的Event。</p>
+<p>Microtask queue(微任务队列)优先级是最高的,只要队列中还有任务,就可以一直占有事件循环。如果微任务太多,执行时间总和就越久,其他事件任务的延迟也就越久,对应于UI层的表现就是卡顿。使用scheduleMicrotask函数，可以创建一个微任务,但需谨慎使用。Flutter内部也仅仅是在手势识别、文本输入、滚动视图等需要高优先执行的场景使用。</p>
+<p>我们平常使用最多的是Event Queue(事件队列),如I/O、绘制、定时器等都在事件队列中处理。经常使用的Future,也是event任务的封装。当代码执行到Future时,会将任务加入到Event Queue的队尾,然后继续执行后面的代码。</p>
+<p>来看一个代码示例:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Future(() =&gt; print(&quot;running in future 1&quot;));</span><br><span class="line">Future(() =&gt; print(&quot;running in future 2&quot;))</span><br><span class="line">    .then((_) =&gt; print(&quot;then 1&quot;))</span><br><span class="line">    .then((_) =&gt; print(&quot;then 2&quot;));</span><br><span class="line">print(&quot;end&quot;);</span><br><span class="line"></span><br><span class="line">/*</span><br><span class="line">输出结果:</span><br><span class="line">end</span><br><span class="line">running in future 1</span><br><span class="line">running in future 2</span><br><span class="line">then 1</span><br><span class="line">then 2</span><br><span class="line">*/</span><br></pre></td></tr></table></figure></p>
+<p>当我们声明一个Future时,它被放入事件队列,然后立即返回,后面的代码继续同步执行,输出end。在后面的事件循环中,future1和future2被依次取出,同步执行Future的函数体以及后续的then。这意味着,then和Future函数体共用一个事件循环。如果Future有多个then,在一个事件循环里,他们会按照链式调用的先后顺序同步执行。</p>
+<p>再来看另一段代码:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">Future(() =&gt; print(&quot;running in future 1&quot;))</span><br><span class="line">      .then((_) =&gt; taskPrint())</span><br><span class="line">      .then((_) =&gt; print(&quot;then 2&quot;));</span><br><span class="line">Future(() =&gt; print(&quot;running in future 2&quot;));</span><br><span class="line">print(&quot;end&quot;);</span><br><span class="line"></span><br><span class="line">void taskPrint() async &#123;</span><br><span class="line">  print(&quot;will start  print task&quot;);</span><br><span class="line">  await Future(() =&gt; print(&quot;exec print task&quot;));</span><br><span class="line">  print(&quot;print task end&quot;);</span><br><span class="line">&#125;</span><br><span class="line">/*</span><br><span class="line">输出结果:</span><br><span class="line">end</span><br><span class="line">running in future 1</span><br><span class="line">will start  print task</span><br><span class="line">running in future 2</span><br><span class="line">exec print task</span><br><span class="line">print task end</span><br><span class="line">then 2</span><br><span class="line">*/</span><br></pre></td></tr></table></figure></p>
+<p>咋一看可能不是很理解taskPrint中的输出,但只要牢牢把握住,dart是基于事件的异步模型,不会真的阻塞等待。因此执行到await时,后续的任务被放入事件队列,继续从队列中取出其他任务执行,所以先输出了”running in future 2”。在下一个事件循环中,后面两句以及then2被同步执行。</p>
+<h2 id="isolate"><a href="#isolate" class="headerlink" title="isolate"></a>isolate</h2><p>基于事件的异步模型，只适合I/O密集型的耗时操作，因为I/O耗时操作，往往是把时间浪费在等待对方传送数据或者返回结果。而如果是计算密集型的操作，则应当尽可能利用处理器的多核，实现并行计算。</p>
+<p>Isolate是分离的运行线程，并且不和主线程的内存堆共享内存。这意味着不能访问主线程中的变量或者使用setState来更新UI。同时也不存在锁竞争的问题。每个Isolate都有自己的事件循环,isolate之间只能通过发送消息通信。</p>
 
       
 
@@ -221,11 +207,7 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">底层原理</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">runtime</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">Flutter</a>
         		</li>
       		
 		</ul>
@@ -281,7 +263,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://xuzhenhao.github.io/2018/04/07/objc_message/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=https://xuzhenhao.github.io/2019/12/27/flutter-thread/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -295,18 +277,9 @@
   
 <nav id="article-nav">
   
-    <a href="/2018/04/19/kvc_kvo/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          深入理解runtime-KVC和KVO
-        
-      </div>
-    </a>
   
-  
-    <a href="/2018/03/24/objc_category/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">深入理解runtime:分类及关联对象</div>
+    <a href="/2019/12/15/flutter_hybrid/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Flutter系列-原生项目集成flutter混合开发</div>
       <i class="icon-circle-right"></i>
     </a>
   
